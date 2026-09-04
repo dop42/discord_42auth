@@ -1,7 +1,6 @@
 import type { Messages } from './types';
 
 export const fr: Messages = {
-	'cmd.auth': 'Vérifie ton compte 42 pour accéder à ce serveur',
 	'cmd.config': "Afficher la configuration de l'authentification 42 de ce serveur",
 	'cmd.panel': 'Publier le panneau de vérification dans ce salon',
 
@@ -40,7 +39,7 @@ export const fr: Messages = {
 	'page.cancelled.title': 'Authentification annulée',
 	'page.cancelled.body': "Tu as refusé l'accès à ton compte 42.",
 	'page.invalid.title': 'Lien invalide',
-	'page.invalid.body': 'Ce lien a expiré ou est malformé. Reprends-en un sur le panneau de vérification, ou lance /auth.',
+	'page.invalid.body': 'Ce lien a expiré ou est malformé. Reclique sur le bouton de vérification.',
 	'page.refused.title': 'Accès refusé',
 	'page.notConfigured.title': 'Serveur non configuré',
 	'page.notConfigured.body': "Aucun rôle n'est configuré. Demande à un admin de définir ROLE_ID sur le déploiement.",

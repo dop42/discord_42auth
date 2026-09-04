@@ -25,11 +25,6 @@ function described(key: MessageKey) {
  */
 export const commands = [
 	{
-		name: 'auth',
-		...described('cmd.auth'),
-		dm_permission: false,
-	},
-	{
 		name: 'config',
 		...described('cmd.config'),
 		dm_permission: false,

@@ -1,7 +1,6 @@
 import type { Messages } from './types';
 
 export const ptBR: Messages = {
-	'cmd.auth': 'Verifique sua conta 42 para ter acesso a este servidor',
 	'cmd.config': 'Mostrar as configurações de autenticação 42 deste servidor',
 	'cmd.panel': 'Publicar o painel de verificação neste canal',
 
@@ -40,7 +39,7 @@ export const ptBR: Messages = {
 	'page.cancelled.title': 'Autenticação cancelada',
 	'page.cancelled.body': 'Você negou o acesso à sua conta 42.',
 	'page.invalid.title': 'Link inválido',
-	'page.invalid.body': 'Este link expirou ou está malformado. Pegue outro no painel de verificação, ou rode /auth.',
+	'page.invalid.body': 'Este link expirou ou está malformado. Aperte o botão de verificação de novo.',
 	'page.refused.title': 'Acesso negado',
 	'page.notConfigured.title': 'Servidor não configurado',
 	'page.notConfigured.body': 'Nenhum cargo foi configurado. Peça a um admin para definir ROLE_ID no deploy.',

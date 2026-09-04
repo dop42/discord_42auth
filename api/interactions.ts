@@ -16,9 +16,8 @@ const MAX_SKEW_SECONDS = 5 * 60;
  * @author dop42
  * @method handle
  * @description Answers every Discord interaction, after proving the request came from Discord.
- * @remarks Registered as the Interactions Endpoint URL. Routes both slash commands and the
- * verification panel's button, which land on the same handler because their payloads carry
- * the same fields. A signature stays valid forever, so
+ * @remarks Registered as the Interactions Endpoint URL. Routes the slash commands and the
+ * verification panel's button, which is the only way a member starts an authentication. A signature stays valid forever, so
  * freshness is the only thing bounding how long a captured request can be replayed. The
  * guild check should be unreachable, since commands are registered on one guild only; it is
  * there so that inviting the bot elsewhere cannot grant anything. Neither command performs
@@ -64,8 +63,6 @@ export async function handle(request: Request): Promise<Response> {
 		}
 
 		switch (interaction.data?.name) {
-			case 'auth':
-				return handleAuth(interaction);
 			case 'config':
 				return handleConfig(interaction);
 			case 'panel':

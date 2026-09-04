@@ -1,7 +1,6 @@
 import type { Messages } from './types';
 
 export const de: Messages = {
-	'cmd.auth': 'Verifiziere deinen 42-Account, um Zugang zu diesem Server zu erhalten',
 	'cmd.config': 'Die 42-Authentifizierungseinstellungen dieses Servers anzeigen',
 	'cmd.panel': 'Das Verifizierungs-Panel in diesem Kanal posten',
 
@@ -40,7 +39,7 @@ export const de: Messages = {
 	'page.cancelled.title': 'Authentifizierung abgebrochen',
 	'page.cancelled.body': 'Du hast den Zugriff auf deinen 42-Account verweigert.',
 	'page.invalid.title': 'Ungültiger Link',
-	'page.invalid.body': 'Dieser Link ist abgelaufen oder fehlerhaft. Hol dir einen neuen über das Verifizierungs-Panel oder mit /auth.',
+	'page.invalid.body': 'Dieser Link ist abgelaufen oder fehlerhaft. Drücke erneut auf den Verifizierungs-Button.',
 	'page.refused.title': 'Zugang verweigert',
 	'page.notConfigured.title': 'Server nicht konfiguriert',
 	'page.notConfigured.body': 'Es ist keine Rolle eingerichtet. Bitte einen Admin, ROLE_ID im Deployment zu setzen.',

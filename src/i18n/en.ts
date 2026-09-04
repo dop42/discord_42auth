@@ -6,7 +6,6 @@
  */
 export const en = {
 	// Slash command descriptions.
-	'cmd.auth': 'Verify your 42 account to get access to this server',
 	'cmd.config': 'Show the 42 authentication settings of this server',
 	'cmd.panel': 'Post the verification panel in this channel',
 
@@ -15,7 +14,7 @@ export const en = {
 	'error.wrongGuild': 'This bot is configured for another server.',
 	'error.unknown': 'Something went wrong. Ask an admin to check the deployment logs.',
 
-	// Verification link, handed out by /auth and by the panel button.
+	// Verification link, handed out by the panel button.
 	'auth.notConfigured': 'This server is not configured yet — an admin must set `ROLE_ID` on the deployment.',
 	'auth.notice': 'Log in with the button below. This link is personal and expires in five minutes — never share it.',
 	'auth.button': 'Log in on the 42 intranet',
@@ -52,7 +51,7 @@ export const en = {
 	'page.cancelled.title': 'Authentication cancelled',
 	'page.cancelled.body': 'You denied access to your 42 account.',
 	'page.invalid.title': 'Invalid link',
-	'page.invalid.body': 'This link is expired or malformed. Get a new one from the verification panel, or run /auth.',
+	'page.invalid.body': 'This link is expired or malformed. Press the verification button again.',
 	'page.refused.title': 'Access refused',
 	'page.notConfigured.title': 'Server not configured',
 	'page.notConfigured.body': 'No role is set up yet. Ask an admin to set ROLE_ID on the deployment.',

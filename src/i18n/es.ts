@@ -1,7 +1,6 @@
 import type { Messages } from './types';
 
 export const es: Messages = {
-	'cmd.auth': 'Verifica tu cuenta 42 para acceder a este servidor',
 	'cmd.config': 'Mostrar la configuración de la autenticación 42 de este servidor',
 	'cmd.panel': 'Publicar el panel de verificación en este canal',
 
@@ -40,7 +39,7 @@ export const es: Messages = {
 	'page.cancelled.title': 'Autenticación cancelada',
 	'page.cancelled.body': 'Has denegado el acceso a tu cuenta 42.',
 	'page.invalid.title': 'Enlace inválido',
-	'page.invalid.body': 'Este enlace ha caducado o está malformado. Consigue otro en el panel de verificación, o ejecuta /auth.',
+	'page.invalid.body': 'Este enlace ha caducado o está malformado. Vuelve a pulsar el botón de verificación.',
 	'page.refused.title': 'Acceso denegado',
 	'page.notConfigured.title': 'Servidor sin configurar',
 	'page.notConfigured.body': 'No hay ningún rol configurado. Pide a un admin que defina ROLE_ID en el despliegue.',

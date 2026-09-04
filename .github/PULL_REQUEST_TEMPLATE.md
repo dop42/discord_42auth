@@ -38,7 +38,7 @@ explanation field
 - [ ] `npm test` passes
 - [ ] Deployed to my own Vercel project and Discord application
 - [ ] Ran `npm run register` (required if `src/commands/definitions.ts` changed)
-- [ ] Ran the panel button and `/auth` end to end with a real 42 account and got the role
+- [ ] Ran the panel button end to end with a real 42 account and got the role
 - [ ] Tested at least one refusal path (wrong campus, alumni, expired link)
 
 explanation field

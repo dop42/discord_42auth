@@ -6,7 +6,7 @@ const MODES = ['off', 'login', 'full'] as const;
 type NicknameMode = (typeof MODES)[number];
 
 export interface Settings {
-	/** Role granted once the 42 account is verified. Without it `/auth` is disabled. */
+	/** Role granted once the 42 account is verified. Without it verification is disabled. */
 	roleId?: string;
 	/** Campus name as it appears on the intra, compared case-insensitively. Undefined means any. */
 	campus?: string;

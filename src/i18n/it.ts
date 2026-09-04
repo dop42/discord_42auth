@@ -1,7 +1,6 @@
 import type { Messages } from './types';
 
 export const it: Messages = {
-	'cmd.auth': 'Verifica il tuo account 42 per accedere a questo server',
 	'cmd.config': "Mostra la configurazione dell'autenticazione 42 di questo server",
 	'cmd.panel': 'Pubblica il pannello di verifica in questo canale',
 
@@ -40,7 +39,7 @@ export const it: Messages = {
 	'page.cancelled.title': 'Autenticazione annullata',
 	'page.cancelled.body': "Hai negato l'accesso al tuo account 42.",
 	'page.invalid.title': 'Link non valido',
-	'page.invalid.body': 'Questo link è scaduto o malformato. Prendine uno nuovo dal pannello di verifica, o esegui /auth.',
+	'page.invalid.body': 'Questo link è scaduto o malformato. Premi di nuovo il pulsante di verifica.',
 	'page.refused.title': 'Accesso negato',
 	'page.notConfigured.title': 'Server non configurato',
 	'page.notConfigured.body': 'Nessun ruolo è configurato. Chiedi a un admin di impostare ROLE_ID nel deploy.',

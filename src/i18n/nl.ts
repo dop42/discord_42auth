@@ -1,7 +1,6 @@
 import type { Messages } from './types';
 
 export const nl: Messages = {
-	'cmd.auth': 'Verifieer je 42-account om toegang te krijgen tot deze server',
 	'cmd.config': 'De 42-authenticatie-instellingen van deze server tonen',
 	'cmd.panel': 'Het verificatiepaneel in dit kanaal plaatsen',
 
@@ -40,7 +39,7 @@ export const nl: Messages = {
 	'page.cancelled.title': 'Authenticatie geannuleerd',
 	'page.cancelled.body': 'Je hebt toegang tot je 42-account geweigerd.',
 	'page.invalid.title': 'Ongeldige link',
-	'page.invalid.body': 'Deze link is verlopen of ongeldig. Haal een nieuwe via het verificatiepaneel, of voer /auth uit.',
+	'page.invalid.body': 'Deze link is verlopen of ongeldig. Druk opnieuw op de verificatieknop.',
 	'page.refused.title': 'Toegang geweigerd',
 	'page.notConfigured.title': 'Server niet ingesteld',
 	'page.notConfigured.body': 'Er is nog geen rol ingesteld. Vraag een admin om ROLE_ID in de deployment te zetten.',

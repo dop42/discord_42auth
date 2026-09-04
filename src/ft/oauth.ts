@@ -14,9 +14,9 @@ export class UsedCodeError extends Error {}
 /**
  * @author dop42
  * @method authorizeUrl
- * @description Builds the intranet login URL that `/auth` hands to the member.
+ * @description Builds the intranet login URL handed to the member who pressed the button.
  * @remarks The state travels to the intranet and back untouched, so the callback verifies
- * the same signature `/auth` issued. Only the `public` scope is requested.
+ * the same signature the button issued. Only the `public` scope is requested.
  * @param state {string}
  * @returns {string}
  */

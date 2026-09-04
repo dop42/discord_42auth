@@ -39,7 +39,7 @@ export const env = {
 	get ftClientSecret() {
 		return required('FT_CLIENT_SECRET');
 	},
-	/** HMAC key for the `/auth` links. Rotating it invalidates every link already handed out. */
+	/** HMAC key for the verification links. Rotating it invalidates every link already handed out. */
 	get stateSecret() {
 		const secret = required('STATE_SECRET');
 		if (secret.length < 32) {

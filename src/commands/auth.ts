@@ -9,9 +9,9 @@ import { createState } from '../state';
  * @author dop42
  * @method handleAuth
  * @description Hands the member a personal, short-lived verification link.
- * @remarks Serves both `/auth` and the panel button, which carry the same fields. The reply
- * is ephemeral because the link is a credential: whoever completes the 42 login on it grants
- * the role to this member, not to themselves.
+ * @remarks Reached by pressing the panel button. The reply is ephemeral because the link is
+ * a credential: whoever completes the 42 login on it grants the role to this member, not to
+ * themselves.
  * @param interaction {Interaction}
  * @returns {Response}
  * @throws {Error}
