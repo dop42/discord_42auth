@@ -20,7 +20,7 @@ export const ptBR: Messages = {
 	'config.noPermission': 'Você precisa da permissão **Gerenciar servidor** para ver as configurações.',
 
 	'show.role': 'Cargo',
-	'show.role.unset': '_não definido, `/auth` está desativado_',
+	'show.role.unset': '_não definido, a verificação está desativada_',
 	'show.campus': 'Campus',
 	'show.campus.any': '_todos_',
 	'show.students': 'Somente estudantes ativos',
@@ -40,7 +40,7 @@ export const ptBR: Messages = {
 	'page.cancelled.title': 'Autenticação cancelada',
 	'page.cancelled.body': 'Você negou o acesso à sua conta 42.',
 	'page.invalid.title': 'Link inválido',
-	'page.invalid.body': 'Este link expirou ou está malformado. Rode /auth novamente.',
+	'page.invalid.body': 'Este link expirou ou está malformado. Pegue outro no painel de verificação, ou rode /auth.',
 	'page.refused.title': 'Acesso negado',
 	'page.notConfigured.title': 'Servidor não configurado',
 	'page.notConfigured.body': 'Nenhum cargo foi configurado. Peça a um admin para definir ROLE_ID no deploy.',

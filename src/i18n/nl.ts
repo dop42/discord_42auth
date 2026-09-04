@@ -20,7 +20,7 @@ export const nl: Messages = {
 	'config.noPermission': 'Je hebt de permissie **Server beheren** nodig om de instellingen te zien.',
 
 	'show.role': 'Rol',
-	'show.role.unset': '_niet ingesteld, `/auth` is uitgeschakeld_',
+	'show.role.unset': '_niet ingesteld, verificatie is uitgeschakeld_',
 	'show.campus': 'Campus',
 	'show.campus.any': '_alle_',
 	'show.students': 'Alleen actieve studenten',
@@ -40,7 +40,7 @@ export const nl: Messages = {
 	'page.cancelled.title': 'Authenticatie geannuleerd',
 	'page.cancelled.body': 'Je hebt toegang tot je 42-account geweigerd.',
 	'page.invalid.title': 'Ongeldige link',
-	'page.invalid.body': 'Deze link is verlopen of ongeldig. Voer /auth opnieuw uit.',
+	'page.invalid.body': 'Deze link is verlopen of ongeldig. Haal een nieuwe via het verificatiepaneel, of voer /auth uit.',
 	'page.refused.title': 'Toegang geweigerd',
 	'page.notConfigured.title': 'Server niet ingesteld',
 	'page.notConfigured.body': 'Er is nog geen rol ingesteld. Vraag een admin om ROLE_ID in de deployment te zetten.',

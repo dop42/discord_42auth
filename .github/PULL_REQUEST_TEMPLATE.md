@@ -8,7 +8,7 @@
 > This bot is an access gate. A bug here does not crash a server, it lets the wrong people in. Changes to `src/state.ts`, `src/rules.ts`, `src/settings.ts`, `src/discord/verify.ts` or `api/` get reviewed on that basis.
 
 > [!CAUTION]
-> Never paste a bot token, a client secret, a `STATE_SECRET`, or a full `/auth` link in this PR — not in the description, not in a screenshot, not in a log excerpt. Crop your URLs before `&state=`.
+> Never paste a bot token, a client secret, a `STATE_SECRET`, or a full verification link in this PR — not in the description, not in a screenshot, not in a log excerpt. Crop your URLs before `&state=`.
 
 ## Type of change
 
@@ -38,7 +38,7 @@ explanation field
 - [ ] `npm test` passes
 - [ ] Deployed to my own Vercel project and Discord application
 - [ ] Ran `npm run register` (required if `src/commands/definitions.ts` changed)
-- [ ] Ran `/auth` end to end with a real 42 account and got the role
+- [ ] Ran the panel button and `/auth` end to end with a real 42 account and got the role
 - [ ] Tested at least one refusal path (wrong campus, alumni, expired link)
 
 explanation field

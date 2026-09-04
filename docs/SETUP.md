@@ -92,7 +92,8 @@ npm run register
 writes an empty file and `npm run register` stops on a missing variable.
 
 Guild commands appear instantly. Run `/config` to check what took effect, then
-`/auth` to try it.
+`/panel` in the channel where members should verify — that message stays there
+and is all they need. `/auth` works too, for anyone who prefers the command.
 
 ---
 
@@ -100,8 +101,12 @@ Guild commands appear instantly. Run `/config` to check what took effect, then
 
 | Command | Who | What |
 | --- | --- | --- |
-| `/auth` | everyone | Returns a private, 5-minute link to verify a 42 account |
+| `/panel` | Manage Server | Posts the verification panel, with the button members press |
+| `/auth` | everyone | Same link, for members who prefer the command |
 | `/config` | Manage Server | Shows what this deployment is set to |
+
+The panel is posted once and serves the whole server: the button carries no
+member data, so the personal link is only minted when someone presses it.
 
 ---
 
@@ -132,7 +137,8 @@ Credentials (`DISCORD_*`, `FT_*`, `STATE_SECRET`, `PUBLIC_URL`) are listed in
 | Discord refuses the endpoint URL | `DISCORD_PUBLIC_KEY` wrong, or deploy not live |
 | Commands do not appear | `npm run register` not run, or `GUILD_ID` is another server |
 | "This bot is configured for another server" | `GUILD_ID` does not match where you typed the command |
-| `/auth` says not configured | `ROLE_ID` missing, or set after the last deploy |
+| `/auth` or the button says not configured | `ROLE_ID` missing, or set after the last deploy |
+| Role granted but no rename | The member owns the server — Discord never lets a bot rename the owner — or the bot lacks **Manage Nicknames** |
 | Settings changed, nothing happened | Environment variables only apply on a **new deployment** |
 | "Authentication failed", logs say "Could not grant the role" | Bot role too low, or **Manage Roles** missing |
 | Every command says "Something went wrong" | A malformed setting — `NICKNAME_MODE` outside `off`/`login`/`full`, an id that is not bare digits, or a `STATE_SECRET` under 32 characters. The deployment logs name it |

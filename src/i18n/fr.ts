@@ -20,7 +20,7 @@ export const fr: Messages = {
 	'config.noPermission': 'Il te faut la permission **Gérer le serveur** pour voir la configuration.',
 
 	'show.role': 'Rôle',
-	'show.role.unset': '_non défini, `/auth` est désactivé_',
+	'show.role.unset': '_non défini, la vérification est désactivée_',
 	'show.campus': 'Campus',
 	'show.campus.any': '_tous_',
 	'show.students': 'Étudiants actifs uniquement',
@@ -40,7 +40,7 @@ export const fr: Messages = {
 	'page.cancelled.title': 'Authentification annulée',
 	'page.cancelled.body': "Tu as refusé l'accès à ton compte 42.",
 	'page.invalid.title': 'Lien invalide',
-	'page.invalid.body': 'Ce lien a expiré ou est malformé. Relance /auth.',
+	'page.invalid.body': 'Ce lien a expiré ou est malformé. Reprends-en un sur le panneau de vérification, ou lance /auth.',
 	'page.refused.title': 'Accès refusé',
 	'page.notConfigured.title': 'Serveur non configuré',
 	'page.notConfigured.body': "Aucun rôle n'est configuré. Demande à un admin de définir ROLE_ID sur le déploiement.",

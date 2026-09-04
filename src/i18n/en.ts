@@ -15,7 +15,7 @@ export const en = {
 	'error.wrongGuild': 'This bot is configured for another server.',
 	'error.unknown': 'Something went wrong. Ask an admin to check the deployment logs.',
 
-	// /auth
+	// Verification link, handed out by /auth and by the panel button.
 	'auth.notConfigured': 'This server is not configured yet — an admin must set `ROLE_ID` on the deployment.',
 	'auth.notice': 'Log in with the button below. This link is personal and expires in five minutes — never share it.',
 	'auth.button': 'Log in on the 42 intranet',
@@ -30,7 +30,7 @@ export const en = {
 
 	// /config — the settings display.
 	'show.role': 'Role',
-	'show.role.unset': '_not set, `/auth` is disabled_',
+	'show.role.unset': '_not set, verification is disabled_',
 	'show.campus': 'Campus',
 	'show.campus.any': '_any_',
 	'show.students': 'Active students only',
@@ -52,7 +52,7 @@ export const en = {
 	'page.cancelled.title': 'Authentication cancelled',
 	'page.cancelled.body': 'You denied access to your 42 account.',
 	'page.invalid.title': 'Invalid link',
-	'page.invalid.body': 'This link is expired or malformed. Run /auth again.',
+	'page.invalid.body': 'This link is expired or malformed. Get a new one from the verification panel, or run /auth.',
 	'page.refused.title': 'Access refused',
 	'page.notConfigured.title': 'Server not configured',
 	'page.notConfigured.body': 'No role is set up yet. Ask an admin to set ROLE_ID on the deployment.',

@@ -17,18 +17,19 @@
 
 **discord_42auth** gates a Discord server behind a **42 intra account**.
 
-A member runs `/auth`, logs in on the intranet, and gets a role. No role is
-granted without a 42 login being completed. Small 42 communities usually have no
-filter at all — anyone with an invite link walks straight in.
+A member presses the button on the verification panel — or runs `/auth` — logs
+in on the intranet, and gets a role. No role is granted without a 42 login being
+completed. Small 42 communities usually have no filter at all: anyone with an
+invite link walks straight in.
 
-Admins run `/config` to see what the deployment is set to.
+Admins post the panel with `/panel`, and check the deployment with `/config`.
 
 It runs as **HTTP interactions on Vercel**: no gateway connection, no server to
 keep alive, no database, free tier friendly. One deployment serves one Discord
 server, so fork it, set a handful of environment variables, and it is yours.
 
 ```text
-/auth ──▶ 42 OAuth ──▶ /api/callback ──▶ role + nickname + log
+panel button or /auth ──▶ 42 OAuth ──▶ /api/callback ──▶ role + nickname + log
 ```
 
 Answers follow the reader's language: English, French, Spanish, German,

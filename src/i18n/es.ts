@@ -20,7 +20,7 @@ export const es: Messages = {
 	'config.noPermission': 'Necesitas el permiso **Gestionar servidor** para ver la configuración.',
 
 	'show.role': 'Rol',
-	'show.role.unset': '_sin definir, `/auth` está desactivado_',
+	'show.role.unset': '_sin definir, la verificación está desactivada_',
 	'show.campus': 'Campus',
 	'show.campus.any': '_cualquiera_',
 	'show.students': 'Solo estudiantes activos',
@@ -40,7 +40,7 @@ export const es: Messages = {
 	'page.cancelled.title': 'Autenticación cancelada',
 	'page.cancelled.body': 'Has denegado el acceso a tu cuenta 42.',
 	'page.invalid.title': 'Enlace inválido',
-	'page.invalid.body': 'Este enlace ha caducado o está malformado. Vuelve a ejecutar /auth.',
+	'page.invalid.body': 'Este enlace ha caducado o está malformado. Consigue otro en el panel de verificación, o ejecuta /auth.',
 	'page.refused.title': 'Acceso denegado',
 	'page.notConfigured.title': 'Servidor sin configurar',
 	'page.notConfigured.body': 'No hay ningún rol configurado. Pide a un admin que defina ROLE_ID en el despliegue.',
