@@ -3,13 +3,19 @@ import type { Messages } from './types';
 export const ptBR: Messages = {
 	'cmd.auth': 'Verifique sua conta 42 para ter acesso a este servidor',
 	'cmd.config': 'Mostrar as configurações de autenticação 42 deste servidor',
+	'cmd.panel': 'Publicar o painel de verificação neste canal',
 
 	'error.notInGuild': 'Este comando só funciona dentro de um servidor.',
 	'error.wrongGuild': 'Este bot está configurado para outro servidor.',
 	'error.unknown': 'Algo deu errado. Peça a um admin para verificar os logs do deploy.',
 
 	'auth.notConfigured': 'Este servidor ainda não está configurado — um admin precisa definir `ROLE_ID` no deploy.',
-	'auth.link': 'Clique aqui para verificar sua conta 42: {url}\n_Este link é pessoal e expira em 5 minutos._',
+	'auth.notice': 'Entre com o botão abaixo. Este link é pessoal e expira em 5 minutos — nunca o compartilhe.',
+	'auth.button': 'Entrar na intra 42',
+
+	'panel.title': 'Verificação 42',
+	'panel.body': 'Vincule sua conta 42 para ter acesso a este servidor.',
+	'panel.button': 'Verificar',
 
 	'config.noPermission': 'Você precisa da permissão **Gerenciar servidor** para ver as configurações.',
 

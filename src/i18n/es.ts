@@ -3,13 +3,19 @@ import type { Messages } from './types';
 export const es: Messages = {
 	'cmd.auth': 'Verifica tu cuenta 42 para acceder a este servidor',
 	'cmd.config': 'Mostrar la configuración de la autenticación 42 de este servidor',
+	'cmd.panel': 'Publicar el panel de verificación en este canal',
 
 	'error.notInGuild': 'Este comando solo funciona dentro de un servidor.',
 	'error.wrongGuild': 'Este bot está configurado para otro servidor.',
 	'error.unknown': 'Algo salió mal. Pide a un admin que revise los logs del despliegue.',
 
 	'auth.notConfigured': 'Este servidor aún no está configurado — un admin debe definir `ROLE_ID` en el despliegue.',
-	'auth.link': 'Haz clic aquí para verificar tu cuenta 42: {url}\n_Este enlace es personal y caduca en 5 minutos._',
+	'auth.notice': 'Inicia sesión con el botón de abajo. Este enlace es personal y caduca en 5 minutos — no lo compartas nunca.',
+	'auth.button': 'Iniciar sesión en la intra 42',
+
+	'panel.title': 'Verificación 42',
+	'panel.body': 'Vincula tu cuenta 42 para acceder a este servidor.',
+	'panel.button': 'Verificarme',
 
 	'config.noPermission': 'Necesitas el permiso **Gestionar servidor** para ver la configuración.',
 

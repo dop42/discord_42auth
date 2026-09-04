@@ -52,6 +52,7 @@ function snowflake(name: string): string | undefined {
  * @description Reads what this deployment does from its environment variables.
  * @remarks One deployment serves one Discord server, so settings live next to the
  * credentials on Vercel rather than in a database. Changing one needs a redeploy.
+ * `STUDENTS_ONLY` stays on unless it is exactly `false`.
  * @returns {Settings}
  * @throws {Error}
  */
@@ -64,7 +65,6 @@ export function getSettings(): Settings {
 	return {
 		roleId: snowflake('ROLE_ID'),
 		campus: optional('FT_CAMPUS'),
-		// Anything but an explicit "false" keeps the check on.
 		studentsOnly: optional('STUDENTS_ONLY') !== 'false',
 		nickname: nickname as NicknameMode,
 		logChannelId: snowflake('LOG_CHANNEL_ID'),

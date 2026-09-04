@@ -47,14 +47,16 @@ export function createState(member: Omit<AuthState, 'exp'>): string {
  * @author dop42
  * @method readState
  * @description Verifies a state and returns it, or null when it is forged, malformed or expired.
- * @remarks The shape is re-checked after the signature so that a fork changing `createState`
- * cannot turn a typo into a forged snowflake reaching the Discord REST routes.
+ * @remarks Exactly two dot-separated segments are accepted, so trailing junk cannot ride
+ * along on an otherwise valid signature, and the length guard before `timingSafeEqual` is
+ * load-bearing because that function throws on a mismatch. The shape is re-checked after the
+ * signature so that a fork changing `createState` cannot turn a typo into a forged snowflake
+ * reaching the Discord REST routes.
  * @param raw {string | null}
  * @returns {AuthState | null}
  */
 export function readState(raw: string | null): AuthState | null {
 	if (!raw) return null;
-	// Exactly two segments: trailing junk must not ride along on a valid signature.
 	const parts = raw.split('.');
 	if (parts.length !== 2) return null;
 	const [payload, signature] = parts;
@@ -62,7 +64,6 @@ export function readState(raw: string | null): AuthState | null {
 
 	const expected = Buffer.from(sign(payload));
 	const given = Buffer.from(signature);
-	// timingSafeEqual throws on a length mismatch, so this guard is load-bearing.
 	if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null;
 
 	const state = JSON.parse(Buffer.from(payload, 'base64url').toString()) as AuthState;

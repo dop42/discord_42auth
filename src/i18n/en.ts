@@ -8,6 +8,7 @@ export const en = {
 	// Slash command descriptions.
 	'cmd.auth': 'Verify your 42 account to get access to this server',
 	'cmd.config': 'Show the 42 authentication settings of this server',
+	'cmd.panel': 'Post the verification panel in this channel',
 
 	// Errors from the interaction handler and both commands.
 	'error.notInGuild': 'This command only works inside a server.',
@@ -16,7 +17,13 @@ export const en = {
 
 	// /auth
 	'auth.notConfigured': 'This server is not configured yet — an admin must set `ROLE_ID` on the deployment.',
-	'auth.link': 'Click here to verify your 42 account: {url}\n_This link is personal and expires in 5 minutes._',
+	'auth.notice': 'Log in with the button below. This link is personal and expires in five minutes — never share it.',
+	'auth.button': 'Log in on the 42 intranet',
+
+	// Verification panel.
+	'panel.title': '42 verification',
+	'panel.body': 'Link your 42 account to get access to this server.',
+	'panel.button': 'Verify',
 
 	// /config
 	'config.noPermission': 'You need the **Manage Server** permission to see the settings.',

@@ -8,24 +8,29 @@ import { renderPage } from '../src/page';
 import { checkEligibility, nicknameFor, type Eligibility } from '../src/rules';
 import { getSettings } from '../src/settings';
 import { readState, type AuthState } from '../src/state';
+import { toNodeHandler } from '../src/vercel';
 
 /** The refusing arm of `Eligibility`, as the audit log receives it. */
 type Refusal = Extract<Eligibility, { ok: false }>;
 
 /**
  * @author dop42
- * @method handler
+ * @method handle
  * @description Completes a verification: exchanges the code, checks the account, grants the role.
  * @remarks Registered as the redirect URI of the 42 application. The signed state says which
  * Discord member started the flow and in which language to answer; the code proves which 42
- * account they own. Nothing sent by the browser is trusted beyond those two.
+ * account they own. Nothing else the browser sends decides anything: `error` and
+ * `Accept-Language` only choose which page is shown, the latter standing in when no state
+ * names the member. The guild is re-checked even though `createState` can only ever sign
+ * this one, so two deployments sharing a `STATE_SECRET` cannot honour each other's links.
+ * The nickname is built before the grant because it is pure: a throw after `addRole` would
+ * tell the member the authentication failed while they already hold the role.
  * @param request {Request}
  * @returns {Promise<Response>}
  */
-export default async function handler(request: Request): Promise<Response> {
+export async function handle(request: Request): Promise<Response> {
 	const params = new URL(request.url).searchParams;
 	const state = readState(params.get('state'));
-	// Without a valid state we do not know the member: use Accept-Language instead.
 	const locale = state?.locale ?? localeFromHeader(request.headers.get('accept-language'));
 
 	const page = (ok: boolean, title: MessageKey, body: MessageKey, values?: Record<string, string>) =>
@@ -36,8 +41,6 @@ export default async function handler(request: Request): Promise<Response> {
 	}
 
 	const code = params.get('code');
-	// The guild is checked even though `createState` can only ever sign this one: two
-	// deployments sharing a STATE_SECRET must not accept each other's links.
 	if (!state || !code || state.guildId !== env.guildId) {
 		return page(false, 'page.invalid.title', 'page.invalid.body');
 	}
@@ -62,8 +65,6 @@ export default async function handler(request: Request): Promise<Response> {
 			);
 		}
 
-		// Built before the grant: it is pure, and a throw after `addRole` would tell the
-		// member the authentication failed while they already hold the role.
 		const nick = nicknameFor(user, settings);
 
 		await addRole(state.guildId, state.userId, settings.roleId);
@@ -84,7 +85,8 @@ export default async function handler(request: Request): Promise<Response> {
  * @method audit
  * @description Records one attempt, accepted or refused, in the log channel.
  * @remarks Uses the server's language rather than the member's: this line is written for
- * the admins reading it. Skipped entirely when no log channel is configured.
+ * the admins reading it. Mentions are disabled so the Discord id shows for the trail
+ * without pinging anyone. Skipped entirely when no log channel is configured.
  * @param channelId {string | undefined}
  * @param state {AuthState}
  * @param login {string}
@@ -114,7 +116,6 @@ async function audit(
 
 	await postMessage(channelId, {
 		flags: MessageFlags.IS_COMPONENTS_V2,
-		// The Discord id is shown for the audit trail, never to ping the member.
 		allowed_mentions: { parse: [] },
 		components: [
 			{
@@ -135,3 +136,5 @@ async function audit(
 		],
 	});
 }
+
+export default toNodeHandler(handle);

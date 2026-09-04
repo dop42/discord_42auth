@@ -3,13 +3,19 @@ import type { Messages } from './types';
 export const de: Messages = {
 	'cmd.auth': 'Verifiziere deinen 42-Account, um Zugang zu diesem Server zu erhalten',
 	'cmd.config': 'Die 42-Authentifizierungseinstellungen dieses Servers anzeigen',
+	'cmd.panel': 'Das Verifizierungs-Panel in diesem Kanal posten',
 
 	'error.notInGuild': 'Dieser Befehl funktioniert nur innerhalb eines Servers.',
 	'error.wrongGuild': 'Dieser Bot ist für einen anderen Server eingerichtet.',
 	'error.unknown': 'Etwas ist schiefgelaufen. Bitte einen Admin, die Deployment-Logs zu prüfen.',
 
 	'auth.notConfigured': 'Dieser Server ist noch nicht eingerichtet — ein Admin muss `ROLE_ID` im Deployment setzen.',
-	'auth.link': 'Klicke hier, um deinen 42-Account zu verifizieren: {url}\n_Dieser Link ist persönlich und läuft in 5 Minuten ab._',
+	'auth.notice': 'Melde dich mit dem Button unten an. Dieser Link ist persönlich und läuft in 5 Minuten ab — teile ihn niemals.',
+	'auth.button': 'Im 42-Intranet anmelden',
+
+	'panel.title': '42-Verifizierung',
+	'panel.body': 'Verknüpfe deinen 42-Account, um Zugang zu diesem Server zu erhalten.',
+	'panel.button': 'Verifizieren',
 
 	'config.noPermission': 'Du brauchst die Berechtigung **Server verwalten**, um die Einstellungen zu sehen.',
 

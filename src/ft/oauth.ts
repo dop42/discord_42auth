@@ -35,9 +35,11 @@ export function authorizeUrl(state: string): string {
  * @author dop42
  * @method exchangeCode
  * @description Trades the callback code for an access token.
- * @remarks The token is returned to the caller and never stored; it is
- * held only for the length of one request. The error carries only a status code, never
- * the code or the secret.
+ * @remarks The token is returned to the caller and never stored; it is held only for the
+ * length of one request, and the errors carry a status code, never the code or the secret.
+ * A refusal naming `invalid_grant` becomes a `UsedCodeError`, since that is what a member
+ * reloading the result page produces; anything else — a wrong client secret, a redirect URI
+ * mismatch, an outage — is a real failure and must not be blamed on the link.
  * @param code {string}
  * @returns {Promise<string>}
  * @throws {UsedCodeError}
@@ -56,9 +58,6 @@ export async function exchangeCode(code: string): Promise<string> {
 		}),
 	});
 	if (!response.ok) {
-		// `invalid_grant` is the OAuth code for an authorization code that is expired,
-		// revoked or already redeemed. Anything else — bad client secret, redirect URI
-		// mismatch, an outage — is a real failure and must not be blamed on the link.
 		const body = await response.text();
 		if (body.includes('invalid_grant')) {
 			throw new UsedCodeError('42 refused the code: already used or expired');

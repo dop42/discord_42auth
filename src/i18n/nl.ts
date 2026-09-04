@@ -3,13 +3,19 @@ import type { Messages } from './types';
 export const nl: Messages = {
 	'cmd.auth': 'Verifieer je 42-account om toegang te krijgen tot deze server',
 	'cmd.config': 'De 42-authenticatie-instellingen van deze server tonen',
+	'cmd.panel': 'Het verificatiepaneel in dit kanaal plaatsen',
 
 	'error.notInGuild': 'Dit commando werkt alleen binnen een server.',
 	'error.wrongGuild': 'Deze bot is voor een andere server ingesteld.',
 	'error.unknown': 'Er ging iets mis. Vraag een admin om de deployment-logs te bekijken.',
 
 	'auth.notConfigured': 'Deze server is nog niet ingesteld — een admin moet `ROLE_ID` in de deployment zetten.',
-	'auth.link': 'Klik hier om je 42-account te verifiëren: {url}\n_Deze link is persoonlijk en verloopt over 5 minuten._',
+	'auth.notice': 'Log in met de knop hieronder. Deze link is persoonlijk en verloopt over 5 minuten — deel hem nooit.',
+	'auth.button': 'Inloggen op het 42-intranet',
+
+	'panel.title': '42-verificatie',
+	'panel.body': 'Koppel je 42-account om toegang te krijgen tot deze server.',
+	'panel.button': 'Verifiëren',
 
 	'config.noPermission': 'Je hebt de permissie **Server beheren** nodig om de instellingen te zien.',
 

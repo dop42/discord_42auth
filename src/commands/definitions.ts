@@ -1,6 +1,9 @@
 import { Permissions } from '../discord/types';
 import { FALLBACK, localizations, t, type MessageKey } from '../i18n';
 
+/** Identifies the panel button in the interactions Discord sends back. */
+export const AUTH_BUTTON = 'auth';
+
 /**
  * @author dop42
  * @method described
@@ -29,6 +32,12 @@ export const commands = [
 	{
 		name: 'config',
 		...described('cmd.config'),
+		dm_permission: false,
+		default_member_permissions: String(Permissions.MANAGE_GUILD),
+	},
+	{
+		name: 'panel',
+		...described('cmd.panel'),
 		dm_permission: false,
 		default_member_permissions: String(Permissions.MANAGE_GUILD),
 	},

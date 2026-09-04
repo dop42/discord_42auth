@@ -23,6 +23,8 @@ const BAD = '#e74c3c';
  * @author dop42
  * @method layout
  * @description Wraps a body fragment in the shared page shell.
+ * @remarks These pages are reached with a verification code in the URL, so they are sent
+ * uncacheable, unframeable, and without a Referer.
  * @param locale {string}
  * @param accent {string}
  * @param body {string}
@@ -45,8 +47,6 @@ function layout(locale: string, accent: string, body: string, status: number): R
 		status,
 		headers: {
 			'Content-Type': 'text/html; charset=utf-8',
-			// These pages are reached with a verification code in the URL: they must not be
-			// cached, framed, or leaked through a Referer.
 			'Cache-Control': 'no-store',
 			'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'",
 			'X-Frame-Options': 'DENY',
