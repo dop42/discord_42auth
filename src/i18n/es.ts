@@ -1,0 +1,53 @@
+import type { Messages } from './types';
+
+export const es: Messages = {
+	'cmd.auth': 'Verifica tu cuenta 42 para acceder a este servidor',
+	'cmd.config': 'Mostrar la configuración de la autenticación 42 de este servidor',
+
+	'error.notInGuild': 'Este comando solo funciona dentro de un servidor.',
+	'error.wrongGuild': 'Este bot está configurado para otro servidor.',
+	'error.unknown': 'Algo salió mal. Pide a un admin que revise los logs del despliegue.',
+
+	'auth.notConfigured': 'Este servidor aún no está configurado — un admin debe definir `ROLE_ID` en el despliegue.',
+	'auth.link': 'Haz clic aquí para verificar tu cuenta 42: {url}\n_Este enlace es personal y caduca en 5 minutos._',
+
+	'config.noPermission': 'Necesitas el permiso **Gestionar servidor** para ver la configuración.',
+
+	'show.role': 'Rol',
+	'show.role.unset': '_sin definir, `/auth` está desactivado_',
+	'show.campus': 'Campus',
+	'show.campus.any': '_cualquiera_',
+	'show.students': 'Solo estudiantes activos',
+	'show.nickname': 'Apodo',
+	'show.nickname.off': 'sin cambios',
+	'show.nickname.login': 'login de intra (`jdoe`)',
+	'show.nickname.full': 'nombre completo + login (`John Doe (jdoe)`)',
+	'show.logs': 'Canal de registro',
+	'show.logs.none': '_ninguno_',
+	'show.yes': 'sí',
+	'show.no': 'no',
+	'show.hint': 'Estos ajustes vienen de variables de entorno — cámbialos en Vercel y vuelve a desplegar.',
+
+	'rule.inactive': 'Esta cuenta 42 no está activa (alumni o cuenta cerrada).',
+	'rule.wrongCampus': 'Este servidor está restringido al campus {campus}, el tuyo es {userCampus}.',
+
+	'page.cancelled.title': 'Autenticación cancelada',
+	'page.cancelled.body': 'Has denegado el acceso a tu cuenta 42.',
+	'page.invalid.title': 'Enlace inválido',
+	'page.invalid.body': 'Este enlace ha caducado o está malformado. Vuelve a ejecutar /auth.',
+	'page.refused.title': 'Acceso denegado',
+	'page.notConfigured.title': 'Servidor sin configurar',
+	'page.notConfigured.body': 'No hay ningún rol configurado. Pide a un admin que defina ROLE_ID en el despliegue.',
+	'page.success.title': '¡Bienvenido, {login}!',
+	'page.success.body': 'Tu rol ha sido asignado — ya puedes volver a Discord.',
+	'page.failed.title': 'Fallo en la autenticación',
+	'page.failed.body': 'Algo salió mal por nuestra parte. Inténtalo de nuevo en un momento.',
+
+	'log.ok': 'Autenticación correcta',
+	'log.refused': 'Autenticación denegada',
+	'log.discord': 'Discord',
+	'log.account': 'Cuenta 42',
+	'log.campus': 'Campus',
+	'log.reason': 'Motivo',
+	'log.unknown': 'desconocido',
+};

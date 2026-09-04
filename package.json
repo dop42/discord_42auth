@@ -1,0 +1,21 @@
+{
+	"name": "discord_42auth",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Discord bot (HTTP interactions) authenticating members with their 42 intra account.",
+	"license": "MIT",
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"test": "tsx scripts/check-locales.ts",
+		"register": "tsx scripts/register-commands.ts",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@types/node": "^22.10.2",
+		"dotenv": "^16.4.7",
+		"tsx": "^4.19.2",
+		"typescript": "^5.7.2"
+	}
+}

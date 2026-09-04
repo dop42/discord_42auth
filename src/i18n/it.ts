@@ -1,0 +1,53 @@
+import type { Messages } from './types';
+
+export const it: Messages = {
+	'cmd.auth': 'Verifica il tuo account 42 per accedere a questo server',
+	'cmd.config': "Mostra la configurazione dell'autenticazione 42 di questo server",
+
+	'error.notInGuild': 'Questo comando funziona solo in un server.',
+	'error.wrongGuild': 'Questo bot è configurato per un altro server.',
+	'error.unknown': 'Qualcosa è andato storto. Chiedi a un admin di controllare i log del deploy.',
+
+	'auth.notConfigured': 'Questo server non è ancora configurato — un admin deve impostare `ROLE_ID` nel deploy.',
+	'auth.link': 'Clicca qui per verificare il tuo account 42: {url}\n_Questo link è personale e scade tra 5 minuti._',
+
+	'config.noPermission': 'Ti serve il permesso **Gestisci server** per vedere le impostazioni.',
+
+	'show.role': 'Ruolo',
+	'show.role.unset': '_non impostato, `/auth` è disattivato_',
+	'show.campus': 'Campus',
+	'show.campus.any': '_tutti_',
+	'show.students': 'Solo studenti attivi',
+	'show.nickname': 'Nickname',
+	'show.nickname.off': 'invariato',
+	'show.nickname.login': 'login intra (`jdoe`)',
+	'show.nickname.full': 'nome completo + login (`John Doe (jdoe)`)',
+	'show.logs': 'Canale di log',
+	'show.logs.none': '_nessuno_',
+	'show.yes': 'sì',
+	'show.no': 'no',
+	'show.hint': "Queste impostazioni vengono dalle variabili d'ambiente — modificale su Vercel e ridistribuisci.",
+
+	'rule.inactive': 'Questo account 42 non è attivo (alumni o account chiuso).',
+	'rule.wrongCampus': 'Questo server è riservato al campus {campus}, il tuo è {userCampus}.',
+
+	'page.cancelled.title': 'Autenticazione annullata',
+	'page.cancelled.body': "Hai negato l'accesso al tuo account 42.",
+	'page.invalid.title': 'Link non valido',
+	'page.invalid.body': 'Questo link è scaduto o malformato. Esegui di nuovo /auth.',
+	'page.refused.title': 'Accesso negato',
+	'page.notConfigured.title': 'Server non configurato',
+	'page.notConfigured.body': 'Nessun ruolo è configurato. Chiedi a un admin di impostare ROLE_ID nel deploy.',
+	'page.success.title': 'Benvenuto, {login}!',
+	'page.success.body': 'Il tuo ruolo è stato assegnato — puoi tornare su Discord.',
+	'page.failed.title': 'Autenticazione fallita',
+	'page.failed.body': 'Qualcosa è andato storto dalla nostra parte. Riprova tra poco.',
+
+	'log.ok': 'Autenticazione riuscita',
+	'log.refused': 'Autenticazione rifiutata',
+	'log.discord': 'Discord',
+	'log.account': 'Account 42',
+	'log.campus': 'Campus',
+	'log.reason': 'Motivo',
+	'log.unknown': 'sconosciuto',
+};
