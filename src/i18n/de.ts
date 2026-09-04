@@ -44,8 +44,6 @@ export const de: Messages = {
 	'page.refused.title': 'Zugang verweigert',
 	'page.notConfigured.title': 'Server nicht konfiguriert',
 	'page.notConfigured.body': 'Es ist keine Rolle eingerichtet. Bitte einen Admin, ROLE_ID im Deployment zu setzen.',
-	'page.success.title': 'Willkommen, {login}!',
-	'page.success.body': 'Deine Rolle wurde vergeben — du kannst zu Discord zurückkehren.',
 	'page.failed.title': 'Authentifizierung fehlgeschlagen',
 	'page.failed.body': 'Auf unserer Seite ist etwas schiefgelaufen. Versuche es gleich noch einmal.',
 

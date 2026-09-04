@@ -44,8 +44,6 @@ export const nl: Messages = {
 	'page.refused.title': 'Toegang geweigerd',
 	'page.notConfigured.title': 'Server niet ingesteld',
 	'page.notConfigured.body': 'Er is nog geen rol ingesteld. Vraag een admin om ROLE_ID in de deployment te zetten.',
-	'page.success.title': 'Welkom, {login}!',
-	'page.success.body': 'Je rol is toegekend — je kunt terug naar Discord.',
 	'page.failed.title': 'Authenticatie mislukt',
 	'page.failed.body': 'Er ging iets mis aan onze kant. Probeer het zo meteen opnieuw.',
 

@@ -56,8 +56,6 @@ export const en = {
 	'page.refused.title': 'Access refused',
 	'page.notConfigured.title': 'Server not configured',
 	'page.notConfigured.body': 'No role is set up yet. Ask an admin to set ROLE_ID on the deployment.',
-	'page.success.title': 'Welcome, {login}!',
-	'page.success.body': 'Your role has been granted — you can go back to Discord.',
 	'page.failed.title': 'Authentication failed',
 	'page.failed.body': 'Something went wrong on our side. Try again in a moment.',
 

@@ -4,7 +4,7 @@ import { env } from '../src/env';
 import { fetchMe, primaryCampus } from '../src/ft/api';
 import { exchangeCode, UsedCodeError } from '../src/ft/oauth';
 import { localeFromHeader, t, type MessageKey } from '../src/i18n';
-import { renderPage } from '../src/page';
+import { redirectToGuild, renderPage } from '../src/page';
 import { checkEligibility, nicknameFor, type Eligibility } from '../src/rules';
 import { getSettings } from '../src/settings';
 import { readState, type AuthState } from '../src/state';
@@ -33,22 +33,22 @@ export async function handle(request: Request): Promise<Response> {
 	const state = readState(params.get('state'));
 	const locale = state?.locale ?? localeFromHeader(request.headers.get('accept-language'));
 
-	const page = (ok: boolean, title: MessageKey, body: MessageKey, values?: Record<string, string>) =>
-		renderPage(ok, t(locale, title, values), t(locale, body, values), locale);
+	const page = (title: MessageKey, body: MessageKey) =>
+		renderPage(t(locale, title), t(locale, body), locale);
 
 	if (params.get('error')) {
-		return page(false, 'page.cancelled.title', 'page.cancelled.body');
+		return page('page.cancelled.title', 'page.cancelled.body');
 	}
 
 	const code = params.get('code');
 	if (!state || !code || state.guildId !== env.guildId) {
-		return page(false, 'page.invalid.title', 'page.invalid.body');
+		return page('page.invalid.title', 'page.invalid.body');
 	}
 
 	try {
 		const settings = getSettings();
 		if (!settings.roleId) {
-			return page(false, 'page.notConfigured.title', 'page.notConfigured.body');
+			return page('page.notConfigured.title', 'page.notConfigured.body');
 		}
 
 		const user = await fetchMe(await exchangeCode(code));
@@ -58,7 +58,6 @@ export async function handle(request: Request): Promise<Response> {
 		if (!eligibility.ok) {
 			await audit(settings.logChannelId, state, user.login, campus, eligibility);
 			return renderPage(
-				false,
 				t(locale, 'page.refused.title'),
 				t(locale, eligibility.reason, eligibility.params),
 				locale,
@@ -70,13 +69,13 @@ export async function handle(request: Request): Promise<Response> {
 		await addRole(state.guildId, state.userId, settings.roleId);
 		await audit(settings.logChannelId, state, user.login, campus);
 		if (nick) await setNickname(state.guildId, state.userId, nick);
-		return page(true, 'page.success.title', 'page.success.body', { login: user.login });
+		return redirectToGuild(state.guildId);
 	} catch (error) {
 		console.error(error);
 		if (error instanceof UsedCodeError) {
-			return page(false, 'page.invalid.title', 'page.invalid.body');
+			return page('page.invalid.title', 'page.invalid.body');
 		}
-		return page(false, 'page.failed.title', 'page.failed.body');
+		return page('page.failed.title', 'page.failed.body');
 	}
 }
 

@@ -44,8 +44,6 @@ export const ptBR: Messages = {
 	'page.refused.title': 'Acesso negado',
 	'page.notConfigured.title': 'Servidor não configurado',
 	'page.notConfigured.body': 'Nenhum cargo foi configurado. Peça a um admin para definir ROLE_ID no deploy.',
-	'page.success.title': 'Bem-vindo, {login}!',
-	'page.success.body': 'Seu cargo foi concedido — você já pode voltar ao Discord.',
 	'page.failed.title': 'Falha na autenticação',
 	'page.failed.body': 'Algo deu errado do nosso lado. Tente novamente em instantes.',
 

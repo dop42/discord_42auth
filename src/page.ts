@@ -16,7 +16,6 @@ const ESCAPES: Record<string, string> = {
  */
 const escapeHtml = (text: string) => text.replace(/[&<>"]/g, (char) => ESCAPES[char]!);
 
-const OK = '#2ecc71';
 const BAD = '#e74c3c';
 
 /**
@@ -58,20 +57,35 @@ function layout(locale: string, accent: string, body: string, status: number): R
 
 /**
  * @author dop42
+ * @method redirectToGuild
+ * @description Sends the member back into the Discord server instead of a result page.
+ * @remarks Used on success only. Landing in the server is the confirmation — the role is
+ * granted and the channels are there — so a page saying so would only be an extra tab to
+ * close. Failures still need a page, because they have a reason to explain.
+ * @param guildId {string}
+ * @returns {Response}
+ */
+export function redirectToGuild(guildId: string): Response {
+	return new Response(null, {
+		status: 302,
+		headers: {
+			Location: `https://discord.com/channels/${guildId}`,
+			'Cache-Control': 'no-store',
+			'Referrer-Policy': 'no-referrer',
+		},
+	});
+}
+
+/**
+ * @author dop42
  * @method renderPage
- * @description Renders the page ending the flow, on success or on any refusal.
- * @param ok {boolean}
+ * @description Renders the page a refusal ends on.
  * @param title {string}
  * @param body {string}
  * @param locale {string}
  * @returns {Response}
  */
-export function renderPage(ok: boolean, title: string, body: string, locale: string): Response {
-	return layout(
-		locale,
-		ok ? OK : BAD,
-		`<h1>${escapeHtml(title)}</h1><p>${escapeHtml(body)}</p>`,
-		ok ? 200 : 400,
-	);
+export function renderPage(title: string, body: string, locale: string): Response {
+	return layout(locale, BAD, `<h1>${escapeHtml(title)}</h1><p>${escapeHtml(body)}</p>`, 400);
 }
 
