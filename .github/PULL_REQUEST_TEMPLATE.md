@@ -59,7 +59,7 @@ explanation field
 
 ### If you touched what is stored
 
-- [ ] `docs/RGPD.md` and the `/privacy` page still describe exactly what is kept and for how long
+- [ ] The `/privacy` page still describes exactly what is kept and for how long
 - [ ] Anything new is deleted by `/forget`, by the server data deletion, and by the sweeper
 
 ## Notes if any

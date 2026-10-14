@@ -48,7 +48,6 @@ in a light or dark theme.
 ## Documentation
 
 - [docs/SETUP.md](docs/SETUP.md) — host it, configure it, use it
-- [docs/RGPD.md](docs/RGPD.md) — data protection: roles, retention, what is left to do
 
 ---
 
