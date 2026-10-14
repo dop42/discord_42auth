@@ -134,8 +134,10 @@ exists at all:
 DATABASE_URL=postgresql://auth42@/discord_42auth?host=/var/run/postgresql
 ```
 
-Caddy: the `Caddyfile` of this repository with the domain written in, proxying to
-`127.0.0.1:3000`. Then, from your machine:
+In front of it, either Caddy — the `Caddyfile` of this repository with the domain
+written in, proxying to `127.0.0.1:3000` — or a Cloudflare Tunnel, which keeps the
+machine's address out of DNS and needs no open port (see below). Then, from your
+machine:
 
 ```bash
 ./scripts/deploy.sh <ssh-host>
@@ -146,6 +148,26 @@ It sends the committed `HEAD`, builds it on the server, installs
 `/health` does not answer within 30 seconds, the previous version is put back.
 Logs: `journalctl -u discord_42auth`. The service runs as `auth42`, cannot write
 anywhere, and holds no capability.
+
+### Behind a Cloudflare Tunnel
+
+The reference instance is reached only through a tunnel: `cloudflared` dials out
+to Cloudflare, so ports 80 and 443 stay closed and DNS only shows Cloudflare.
+
+1. Add the domain to Cloudflare and switch its nameservers. Delete any `A`/`AAAA`
+   record of the bot's hostname: it would publish the address.
+2. *Zero Trust → Networks → Tunnels → Create a tunnel* (cloudflared), then run the
+   `cloudflared service install <token>` it shows on the server.
+3. *Public hostname*: the bot's hostname → `HTTP` → `127.0.0.1:3000`, straight to
+   the bot. A local proxy in between would replace the client address with its
+   own, and every visitor would share one rate-limit budget.
+4. *SSL/TLS → Edge Certificates*: **Always Use HTTPS** and **HSTS** on, what Caddy
+   did. Leave **Bot Fight Mode** off: it challenges the requests Discord sends to
+   `/api/interactions`, and the bot stops answering.
+
+Cloudflare appends the visitor's address to `X-Forwarded-For`, and the bot trusts
+that header from loopback only. Once the hostname answers through the tunnel,
+stop Caddy and close 80 and 443.
 
 ---
 

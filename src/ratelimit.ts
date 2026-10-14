@@ -5,9 +5,10 @@ export const PEER_HEADER = 'x-peer-address';
 
 /**
  * Tells whether the TCP peer is a proxy we run, whose `X-Forwarded-For` we trust.
- * @remarks The instance binds loopback (`HOST`), so under systemd only Caddy on the same
- * machine reaches it; under Docker the peer is the compose network's private address. A
- * public peer is a client speaking directly, and its forwarding header is a lie it chose.
+ * @remarks The instance binds loopback (`HOST`), so under systemd only the proxy on the same
+ * machine reaches it (Caddy or `cloudflared`); under Docker the peer is the compose network's
+ * private address. A public peer is a client speaking directly, and its forwarding header is
+ * a lie it chose.
  */
 function isProxy(address: string): boolean {
 	const ip = address.replace(/^::ffff:/, '');
