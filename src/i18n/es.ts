@@ -9,12 +9,15 @@ export const es: Messages = {
 	'error.unknown': 'Algo salió mal. Inténtalo de nuevo en un momento.',
 
 	'auth.notConfigured': 'Este servidor aún no está configurado — un admin debe elegir un rol en el panel web.',
-	'auth.notice': 'Inicia sesión con el botón de abajo. Este enlace es personal y caduca en 5 minutos — no lo compartas nunca.',
-	'auth.privacy': 'La verificación vincula tu cuenta de Discord a tu id y login de 42 mientras sigas en este servidor. `/forget` lo borra. [Privacidad]({privacy})',
+	'auth.title': 'Tu enlace de verificación',
+	'auth.notice': 'Inicia sesión en la intra de 42 con el botón de abajo y vuelve aquí: tu rol se asigna al instante.',
+	'auth.warning': 'Enlace personal, válido 5 minutos. No lo compartas nunca: quien lo use te verifica **a ti**.',
+	'auth.privacy': 'Tu cuenta de Discord queda vinculada a tu login de 42 mientras estés en este servidor · `/forget` la borra · [Privacidad]({privacy})',
 	'auth.button': 'Iniciar sesión en la intra 42',
 
 	'panel.title': 'Verificación 42',
-	'panel.body': 'Vincula tu cuenta 42 para acceder a este servidor.',
+	'panel.body': 'Este servidor está reservado a **estudiantes de 42**.\nVincula tu cuenta de la intra para entrar.',
+	'panel.steps': '**1.** Pulsa **Verificar** abajo\n**2.** Inicia sesión en la intra de 42\n**3.** Tu rol se asigna al instante',
 	'panel.button': 'Verificarme',
 
 	'config.noPermission': 'Necesitas el permiso **Gestionar servidor** para ver la configuración.',
@@ -22,6 +25,7 @@ export const es: Messages = {
 	'forget.none': 'No hay ninguna cuenta 42 vinculada a ti en este servidor.',
 	'forget.roleKept': 'Tu vínculo 42 está borrado, pero no se pudo retirar el rol verificado — pide ayuda a un admin.',
 
+	'show.title': 'Ajustes de este servidor',
 	'show.role': 'Rol',
 	'show.role.unset': '_sin definir, la verificación está desactivada_',
 	'show.campus': 'Campus',
@@ -34,8 +38,13 @@ export const es: Messages = {
 	'show.logs': 'Canal de registro',
 	'show.logs.none': '_ninguno_',
 	'show.yes': 'sí',
+	'show.kind.coalition': 'coalición',
+	'show.kind.cursus': 'cursus',
+	'show.kind.campus': 'campus',
+	'show.rules.none': '_ninguno_',
+	'show.rules': 'Roles adicionales',
 	'show.no': 'no',
-	'show.hint': 'Cambia estos ajustes en el panel web: {url}',
+	'show.dashboard': 'Abrir el panel',
 
 	'rule.inactive': 'Esta cuenta 42 no está activa (alumni o cuenta cerrada).',
 	'rule.wrongCampus': 'Este servidor está restringido al campus {campus}, el tuyo es {userCampus}.',
@@ -54,9 +63,10 @@ export const es: Messages = {
 	'log.ok': 'Autenticación correcta',
 	'log.refused': 'Autenticación denegada',
 	'log.revoked': 'Verificación retirada',
-	'log.discord': 'Discord',
+	'log.member': 'Miembro',
 	'log.account': 'Cuenta 42',
 	'log.campus': 'Campus',
 	'log.reason': 'Motivo',
 	'log.unknown': 'desconocido',
+	'log.id': 'ID de Discord',
 };

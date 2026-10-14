@@ -21,12 +21,9 @@ export function panelComponents(locale: string): unknown[] {
 			components: [
 				{
 					type: ComponentType.TEXT_DISPLAY,
-					content: `### ${t(locale, 'panel.title')}\n${t(locale, 'panel.body')}`,
+					content: `## ${t(locale, 'panel.title')}\n${t(locale, 'panel.body')}`,
 				},
-				{
-					type: ComponentType.TEXT_DISPLAY,
-					content: `-# ${t(locale, 'auth.privacy', { privacy: `${env.publicUrl}/privacy` })}`,
-				},
+				{ type: ComponentType.TEXT_DISPLAY, content: t(locale, 'panel.steps') },
 				{ type: ComponentType.SEPARATOR, divider: true, spacing: 1 },
 				{
 					type: ComponentType.ACTION_ROW,
@@ -38,6 +35,10 @@ export function panelComponents(locale: string): unknown[] {
 							custom_id: AUTH_BUTTON,
 						},
 					],
+				},
+				{
+					type: ComponentType.TEXT_DISPLAY,
+					content: `-# ${t(locale, 'auth.privacy', { privacy: `${env.publicUrl}/privacy` })}`,
 				},
 			],
 		},

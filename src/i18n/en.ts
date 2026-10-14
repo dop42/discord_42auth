@@ -16,13 +16,16 @@ export const en = {
 
 	// Verification link, handed out by the panel button.
 	'auth.notConfigured': 'This server is not configured yet — an admin must choose a role on the dashboard.',
-	'auth.notice': 'Log in with the button below. This link is personal and expires in five minutes — never share it.',
-	'auth.privacy': 'Verifying links your Discord account to your 42 id and login for as long as you stay on this server. `/forget` erases it. [Privacy]({privacy})',
+	'auth.title': 'Your verification link',
+	'auth.notice': 'Log in on the 42 intranet with the button below, then come back here: your role is given right away.',
+	'auth.warning': 'Personal link, valid for 5 minutes. Never share it: whoever uses it verifies **you**.',
+	'auth.privacy': 'Your Discord account stays linked to your 42 login while you are on this server · `/forget` erases it · [Privacy]({privacy})',
 	'auth.button': 'Log in on the 42 intranet',
 
 	// Verification panel.
 	'panel.title': '42 verification',
-	'panel.body': 'Link your 42 account to get access to this server.',
+	'panel.body': 'This server is reserved for **42 students**.\nLink your intra account to get in.',
+	'panel.steps': '**1.** Press **Verify** below\n**2.** Log in on the 42 intranet\n**3.** Your role is given right away',
 	'panel.button': 'Verify',
 
 	// /config
@@ -34,6 +37,7 @@ export const en = {
 	'forget.roleKept': 'Your 42 link is erased, but the verified role could not be removed — ask an admin.',
 
 	// /config — the settings display.
+	'show.title': 'Settings of this server',
 	'show.role': 'Role',
 	'show.role.unset': '_not set, verification is disabled_',
 	'show.campus': 'Campus',
@@ -46,8 +50,13 @@ export const en = {
 	'show.logs': 'Log channel',
 	'show.logs.none': '_none_',
 	'show.yes': 'yes',
+	'show.kind.coalition': 'coalition',
+	'show.kind.cursus': 'cursus',
+	'show.kind.campus': 'campus',
+	'show.rules.none': '_none_',
+	'show.rules': 'Extra roles',
 	'show.no': 'no',
-	'show.hint': 'Change these settings on the dashboard: {url}',
+	'show.dashboard': 'Open the dashboard',
 
 	// Access rules, shown both to the member and in the audit log.
 	'rule.inactive': 'This 42 account is not active (alumni or closed account).',
@@ -69,9 +78,10 @@ export const en = {
 	'log.ok': 'Authentication succeeded',
 	'log.refused': 'Authentication refused',
 	'log.revoked': 'Verification revoked',
-	'log.discord': 'Discord',
+	'log.member': 'Member',
 	'log.account': '42 account',
 	'log.campus': 'Campus',
 	'log.reason': 'Reason',
 	'log.unknown': 'unknown',
+	'log.id': 'Discord ID',
 };

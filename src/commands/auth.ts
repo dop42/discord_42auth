@@ -38,10 +38,9 @@ export async function handleAuth(interaction: Interaction): Promise<Response> {
 			{
 				type: ComponentType.CONTAINER,
 				components: [
-					{ type: ComponentType.TEXT_DISPLAY, content: t(locale, 'auth.notice') },
 					{
 						type: ComponentType.TEXT_DISPLAY,
-						content: `-# ${t(locale, 'auth.privacy', { privacy: `${env.publicUrl}/privacy` })}`,
+						content: `### ${t(locale, 'auth.title')}\n${t(locale, 'auth.notice')}`,
 					},
 					{
 						type: ComponentType.ACTION_ROW,
@@ -53,6 +52,14 @@ export async function handleAuth(interaction: Interaction): Promise<Response> {
 								url: authorizeUrl(state),
 							},
 						],
+					},
+					{ type: ComponentType.SEPARATOR, divider: false, spacing: 1 },
+					{
+						type: ComponentType.TEXT_DISPLAY,
+						content: [
+							`-# ${t(locale, 'auth.warning')}`,
+							`-# ${t(locale, 'auth.privacy', { privacy: `${env.publicUrl}/privacy` })}`,
+						].join('\n'),
 					},
 				],
 			},

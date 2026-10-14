@@ -9,12 +9,15 @@ export const nl: Messages = {
 	'error.unknown': 'Er ging iets mis. Probeer het zo opnieuw.',
 
 	'auth.notConfigured': 'Deze server is nog niet ingesteld — een admin moet een rol kiezen in het dashboard.',
-	'auth.notice': 'Log in met de knop hieronder. Deze link is persoonlijk en verloopt over 5 minuten — deel hem nooit.',
-	'auth.privacy': 'Verificatie koppelt je Discord-account aan je 42-id en login zolang je op deze server blijft. `/forget` wist het. [Privacy]({privacy})',
+	'auth.title': 'Je verificatielink',
+	'auth.notice': 'Log in op het 42-intranet met de knop hieronder en kom dan terug: je rol wordt meteen toegekend.',
+	'auth.warning': 'Persoonlijke link, 5 minuten geldig. Deel hem nooit: wie hem gebruikt, verifieert **jou**.',
+	'auth.privacy': 'Je Discord-account blijft gekoppeld aan je 42-login zolang je op deze server bent · `/forget` wist het · [Privacy]({privacy})',
 	'auth.button': 'Inloggen op het 42-intranet',
 
 	'panel.title': '42-verificatie',
-	'panel.body': 'Koppel je 42-account om toegang te krijgen tot deze server.',
+	'panel.body': 'Deze server is voorbehouden aan **42-studenten**.\nKoppel je intra-account om binnen te komen.',
+	'panel.steps': '**1.** Druk hieronder op **Verifiëren**\n**2.** Log in op het 42-intranet\n**3.** Je rol wordt meteen toegekend',
 	'panel.button': 'Verifiëren',
 
 	'config.noPermission': 'Je hebt de permissie **Server beheren** nodig om de instellingen te zien.',
@@ -22,6 +25,7 @@ export const nl: Messages = {
 	'forget.none': 'Er is op deze server geen 42-account aan je gekoppeld.',
 	'forget.roleKept': 'Je 42-koppeling is gewist, maar de rol kon niet worden verwijderd — vraag een admin.',
 
+	'show.title': 'Instellingen van deze server',
 	'show.role': 'Rol',
 	'show.role.unset': '_niet ingesteld, verificatie is uitgeschakeld_',
 	'show.campus': 'Campus',
@@ -34,8 +38,13 @@ export const nl: Messages = {
 	'show.logs': 'Logkanaal',
 	'show.logs.none': '_geen_',
 	'show.yes': 'ja',
+	'show.kind.coalition': 'coalitie',
+	'show.kind.cursus': 'cursus',
+	'show.kind.campus': 'campus',
+	'show.rules.none': '_geen_',
+	'show.rules': 'Extra rollen',
 	'show.no': 'nee',
-	'show.hint': 'Wijzig deze instellingen in het dashboard: {url}',
+	'show.dashboard': 'Dashboard openen',
 
 	'rule.inactive': 'Dit 42-account is niet actief (alumnus of gesloten account).',
 	'rule.wrongCampus': 'Deze server is beperkt tot campus {campus}, die van jou is {userCampus}.',
@@ -54,9 +63,10 @@ export const nl: Messages = {
 	'log.ok': 'Authenticatie geslaagd',
 	'log.refused': 'Authenticatie geweigerd',
 	'log.revoked': 'Verificatie ingetrokken',
-	'log.discord': 'Discord',
+	'log.member': 'Lid',
 	'log.account': '42-account',
 	'log.campus': 'Campus',
 	'log.reason': 'Reden',
 	'log.unknown': 'onbekend',
+	'log.id': 'Discord-ID',
 };

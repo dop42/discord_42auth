@@ -9,12 +9,15 @@ export const de: Messages = {
 	'error.unknown': 'Etwas ist schiefgelaufen. Versuche es gleich noch einmal.',
 
 	'auth.notConfigured': 'Dieser Server ist noch nicht eingerichtet — ein Admin muss im Dashboard eine Rolle wählen.',
-	'auth.notice': 'Melde dich mit dem Button unten an. Dieser Link ist persönlich und läuft in 5 Minuten ab — teile ihn niemals.',
-	'auth.privacy': 'Die Verifizierung verknüpft dein Discord-Konto mit deiner 42-ID und deinem Login, solange du auf diesem Server bist. `/forget` löscht sie. [Datenschutz]({privacy})',
+	'auth.title': 'Dein Verifizierungslink',
+	'auth.notice': 'Melde dich mit dem Button unten im 42-Intranet an und komm dann zurück: Deine Rolle wird sofort vergeben.',
+	'auth.warning': 'Persönlicher Link, 5 Minuten gültig. Teile ihn nie: Wer ihn benutzt, verifiziert **dich**.',
+	'auth.privacy': 'Dein Discord-Konto bleibt mit deinem 42-Login verknüpft, solange du auf diesem Server bist · `/forget` löscht es · [Datenschutz]({privacy})',
 	'auth.button': 'Im 42-Intranet anmelden',
 
 	'panel.title': '42-Verifizierung',
-	'panel.body': 'Verknüpfe deinen 42-Account, um Zugang zu diesem Server zu erhalten.',
+	'panel.body': 'Dieser Server ist **42-Studierenden** vorbehalten.\nVerknüpfe dein Intra-Konto, um beizutreten.',
+	'panel.steps': '**1.** Drücke unten auf **Verifizieren**\n**2.** Melde dich im 42-Intranet an\n**3.** Deine Rolle wird sofort vergeben',
 	'panel.button': 'Verifizieren',
 
 	'config.noPermission': 'Du brauchst die Berechtigung **Server verwalten**, um die Einstellungen zu sehen.',
@@ -22,6 +25,7 @@ export const de: Messages = {
 	'forget.none': 'Auf diesem Server ist kein 42-Konto mit dir verknüpft.',
 	'forget.roleKept': 'Deine 42-Verknüpfung ist gelöscht, aber die Rolle konnte nicht entfernt werden — frag einen Admin.',
 
+	'show.title': 'Einstellungen dieses Servers',
 	'show.role': 'Rolle',
 	'show.role.unset': '_nicht gesetzt, die Verifizierung ist deaktiviert_',
 	'show.campus': 'Campus',
@@ -34,8 +38,13 @@ export const de: Messages = {
 	'show.logs': 'Protokollkanal',
 	'show.logs.none': '_keiner_',
 	'show.yes': 'ja',
+	'show.kind.coalition': 'Koalition',
+	'show.kind.cursus': 'Cursus',
+	'show.kind.campus': 'Campus',
+	'show.rules.none': '_keine_',
+	'show.rules': 'Zusätzliche Rollen',
 	'show.no': 'nein',
-	'show.hint': 'Ändere diese Einstellungen im Dashboard: {url}',
+	'show.dashboard': 'Dashboard öffnen',
 
 	'rule.inactive': 'Dieser 42-Account ist nicht aktiv (Alumni oder geschlossener Account).',
 	'rule.wrongCampus': 'Dieser Server ist auf den Campus {campus} beschränkt, deiner ist {userCampus}.',
@@ -54,9 +63,10 @@ export const de: Messages = {
 	'log.ok': 'Authentifizierung erfolgreich',
 	'log.refused': 'Authentifizierung abgelehnt',
 	'log.revoked': 'Verifizierung entzogen',
-	'log.discord': 'Discord',
+	'log.member': 'Mitglied',
 	'log.account': '42-Account',
 	'log.campus': 'Campus',
 	'log.reason': 'Grund',
 	'log.unknown': 'unbekannt',
+	'log.id': 'Discord-ID',
 };

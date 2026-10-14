@@ -1,6 +1,6 @@
 import { canManage } from '../discord/permissions';
-import { ephemeral } from '../discord/responses';
-import type { Interaction } from '../discord/types';
+import { componentMessage, ephemeral } from '../discord/responses';
+import { ButtonStyle, ComponentType, type Interaction } from '../discord/types';
 import { env } from '../env';
 import { resolveLocale, t } from '../i18n';
 import { getSettings, type Settings } from '../settings';
@@ -8,7 +8,7 @@ import { getSettings, type Settings } from '../settings';
 /**
  * @author dop42
  * @method handleConfig
- * @description Answers `/config` with what this server is set to, and where to change it.
+ * @description Answers `/config` with what this server is set to, and a button to change it.
  * @remarks The permission is re-tested here because `default_member_permissions` can be
  * overridden per server.
  * @param interaction {Interaction}
@@ -24,29 +24,61 @@ export async function handleConfig(interaction: Interaction): Promise<Response> 
 		return ephemeral(t(locale, 'config.noPermission'));
 	}
 
-	return ephemeral(formatSettings(await getSettings(guildId), guildId, locale));
+	const settings = await getSettings(guildId);
+	return componentMessage(
+		[
+			{
+				type: ComponentType.CONTAINER,
+				components: [
+					{ type: ComponentType.TEXT_DISPLAY, content: `### ${t(locale, 'show.title')}` },
+					{ type: ComponentType.SEPARATOR, divider: true, spacing: 1 },
+					{ type: ComponentType.TEXT_DISPLAY, content: formatSettings(settings, locale) },
+					{ type: ComponentType.SEPARATOR, divider: true, spacing: 1 },
+					{
+						type: ComponentType.ACTION_ROW,
+						components: [
+							{
+								type: ComponentType.BUTTON,
+								style: ButtonStyle.LINK,
+								label: t(locale, 'show.dashboard'),
+								url: `${env.publicUrl}/guilds/${guildId}`,
+							},
+						],
+					},
+				],
+			},
+		],
+		true,
+	);
 }
 
 /**
  * @author dop42
  * @method formatSettings
- * @description Renders the settings as the message `/config` displays.
+ * @description Renders the settings as the lines of the `/config` card.
+ * @remarks Role and channel mentions render as names in the client; the card is ephemeral,
+ * so nobody is pinged.
  * @param settings {Settings}
- * @param guildId {string}
  * @param locale {string}
  * @returns {string}
  */
-function formatSettings(settings: Settings, guildId: string, locale: string): string {
+function formatSettings(settings: Settings, locale: string): string {
 	const nickname = {
 		off: t(locale, 'show.nickname.off'),
 		login: t(locale, 'show.nickname.login'),
 		full: t(locale, 'show.nickname.full'),
 	}[settings.nickname];
+	const kinds = {
+		campus: t(locale, 'show.kind.campus'),
+		cursus: t(locale, 'show.kind.cursus'),
+		coalition: t(locale, 'show.kind.coalition'),
+	};
 
 	const role = settings.roleId ? `<@&${settings.roleId}>` : t(locale, 'show.role.unset');
-	const logs = settings.logChannelId
-		? `<#${settings.logChannelId}>`
-		: t(locale, 'show.logs.none');
+	const logs = settings.logChannelId ? `<#${settings.logChannelId}>` : t(locale, 'show.logs.none');
+	const rules = settings.roleRules.length
+		? settings.roleRules.map((rule) => `- <@&${rule.roleId}> ← ${kinds[rule.kind]} \`${rule.value}\``)
+		: [t(locale, 'show.rules.none')];
 
 	return [
 		`**${t(locale, 'show.role')}** — ${role}`,
@@ -55,6 +87,7 @@ function formatSettings(settings: Settings, guildId: string, locale: string): st
 		`**${t(locale, 'show.nickname')}** — ${nickname}`,
 		`**${t(locale, 'show.logs')}** — ${logs}`,
 		'',
-		`-# ${t(locale, 'show.hint', { url: `${env.publicUrl}/guilds/${guildId}` })}`,
+		`**${t(locale, 'show.rules')}**`,
+		...rules,
 	].join('\n');
 }

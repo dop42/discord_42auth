@@ -9,12 +9,15 @@ export const fr: Messages = {
 	'error.unknown': 'Une erreur est survenue. Réessaie dans un instant.',
 
 	'auth.notConfigured': 'Ce serveur n\'est pas encore configuré — un admin doit choisir un rôle sur le dashboard.',
-	'auth.notice': "Connecte-toi avec le bouton ci-dessous. Ce lien est personnel et expire dans 5 minutes — ne le partage jamais.",
-	'auth.privacy': 'La vérification lie ton compte Discord à ton identifiant et ton login 42 tant que tu restes sur ce serveur. `/forget` l\'efface. [Confidentialité]({privacy})',
+	'auth.title': 'Ton lien de vérification',
+	'auth.notice': "Connecte-toi sur l'intra 42 avec le bouton ci-dessous, puis reviens ici : ton rôle est donné tout de suite.",
+	'auth.warning': "Lien personnel, valable 5 minutes. Ne le partage jamais : celui qui l'utilise te vérifie, **toi**.",
+	'auth.privacy': "Ton compte Discord reste lié à ton login 42 tant que tu es sur ce serveur · `/forget` l'efface · [Confidentialité]({privacy})",
 	'auth.button': "Se connecter sur l'intra 42",
 
 	'panel.title': 'Vérification 42',
-	'panel.body': 'Lie ton compte 42 pour accéder à ce serveur.',
+	'panel.body': "Ce serveur est réservé aux **étudiants de 42**.\nLie ton compte de l'intra pour y accéder.",
+	'panel.steps': "**1.** Clique sur **Se vérifier** ci-dessous\n**2.** Connecte-toi sur l'intra 42\n**3.** Ton rôle est donné tout de suite",
 	'panel.button': 'Se vérifier',
 
 	'config.noPermission': 'Il te faut la permission **Gérer le serveur** pour voir la configuration.',
@@ -22,6 +25,7 @@ export const fr: Messages = {
 	'forget.none': 'Aucun compte 42 n\'est lié à toi sur ce serveur.',
 	'forget.roleKept': 'Ton lien 42 est effacé, mais le rôle vérifié n\'a pas pu être retiré — demande à un admin.',
 
+	'show.title': 'Réglages de ce serveur',
 	'show.role': 'Rôle',
 	'show.role.unset': '_non défini, la vérification est désactivée_',
 	'show.campus': 'Campus',
@@ -34,8 +38,13 @@ export const fr: Messages = {
 	'show.logs': 'Salon de logs',
 	'show.logs.none': '_aucun_',
 	'show.yes': 'oui',
+	'show.kind.coalition': 'coalition',
+	'show.kind.cursus': 'cursus',
+	'show.kind.campus': 'campus',
+	'show.rules.none': '_aucun_',
+	'show.rules': 'Rôles supplémentaires',
 	'show.no': 'non',
-	'show.hint': 'Modifie ces réglages sur le dashboard : {url}',
+	'show.dashboard': 'Ouvrir le dashboard',
 
 	'rule.inactive': "Ce compte 42 n'est pas actif (alumni ou compte fermé).",
 	'rule.wrongCampus': 'Ce serveur est réservé au campus {campus}, le tien est {userCampus}.',
@@ -54,9 +63,10 @@ export const fr: Messages = {
 	'log.ok': 'Authentification réussie',
 	'log.refused': 'Authentification refusée',
 	'log.revoked': 'Vérification retirée',
-	'log.discord': 'Discord',
+	'log.member': 'Membre',
 	'log.account': 'Compte 42',
 	'log.campus': 'Campus',
 	'log.reason': 'Motif',
 	'log.unknown': 'inconnu',
+	'log.id': 'ID Discord',
 };
