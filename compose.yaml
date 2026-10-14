@@ -1,0 +1,61 @@
+# docker compose up -d --build            bot + database, bot on 127.0.0.1:3000
+# docker compose --profile caddy up -d    the same, plus Caddy serving HTTPS on 80/443
+# Behind an existing reverse proxy, leave the profile off and proxy to 127.0.0.1:3000.
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: 10m, max-file: '3' }
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: discord_42auth
+      POSTGRES_USER: discord_42auth
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - db:/var/lib/postgresql/data
+    # No published port: only the bot reaches the database, on the compose network.
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U discord_42auth -d discord_42auth']
+      interval: 5s
+      retries: 10
+    logging: *logging
+
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://discord_42auth:${POSTGRES_PASSWORD}@db:5432/discord_42auth
+    depends_on:
+      db: { condition: service_healthy }
+    ports:
+      - 127.0.0.1:${PORT:-3000}:3000
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    logging: *logging
+
+  caddy:
+    image: caddy:2-alpine
+    profiles: [caddy]
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env to use the caddy profile}
+    ports:
+      - 80:80
+      - 443:443
+      - 443:443/udp
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [bot]
+    logging: *logging
+
+volumes:
+  db:
+  caddy_data:
+  caddy_config:

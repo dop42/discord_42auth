@@ -1,14 +1,18 @@
 # Setup
 
-A Discord application, a 42 application, a Vercel project. No database.
-Around ten minutes.
+One instance serves every Discord server that adds the bot. It runs on your own
+machine with Docker: the bot, a PostgreSQL database, and optionally Caddy for
+HTTPS. Server admins then configure their server from the dashboard, without
+touching any of this.
 
 ---
 
-## 0. Vercel project
+## 0. Machine
 
-Import your fork on <https://vercel.com/new>, or `npm i -g vercel && vercel link`.
-Note the project name: it is the domain used in steps 2 and 5.
+- Docker with the compose plugin.
+- A domain name pointing at the machine, ports 80 and 443 open — or an existing
+  reverse proxy you will point at `127.0.0.1:3000`.
+- `gpg` for the encrypted backups.
 
 ---
 
@@ -17,7 +21,12 @@ Note the project name: it is the domain used in steps 2 and 5.
 <https://discord.com/developers/applications> → **New Application**.
 
 - *General Information* → copy the **Application ID** and the **Public Key**.
-- *Bot* → **Reset Token** → copy it. Keep it secret.
+- *Bot* → **Reset Token** → copy it. Leave **Public Bot** on so admins can add it.
+- *OAuth2* → copy the **Client Secret**, and add the redirect
+  `https://<your-domain>/auth/callback` — this is the dashboard login.
+- *General Information* → fill in **Privacy Policy URL** `https://<your-domain>/privacy`
+  and **Terms of Service URL** `https://<your-domain>/terms`. Discord requires both
+  before a bot can be verified, and they are the pages admins and members are sent to.
 
 ---
 
@@ -25,107 +34,124 @@ Note the project name: it is the domain used in steps 2 and 5.
 
 <https://profile.intra.42.fr/oauth/applications/new>.
 
-- **Redirect URI**: `https://<your-project>.vercel.app/api/callback`
+- **Redirect URI**: `https://<your-domain>/api/callback`
 - **Scope**: `public` — nothing else is needed
 - Copy the **UID** and the **Secret**.
 
 ---
 
-## 3. Invite the bot
+## 3. Configure and start
 
-*OAuth2 → URL Generator*, scopes `bot` + `applications.commands`, permissions
-**Manage Roles** and **Manage Nicknames**. Open the URL, add the bot.
+```bash
+cp .env.example .env
+chmod 600 .env
+openssl rand -hex 32   # three times: STATE_SECRET, POSTGRES_PASSWORD, BACKUP_PASSPHRASE
+$EDITOR .env
+```
 
-> In *Server Settings → Roles*, drag the bot role **above** the role it grants.
-> Discord refuses to manage a role ranked higher than its own — this is the
-> number one cause of "Could not grant the role".
+`OPERATOR_NAME`, `OPERATOR_CONTACT` and `HOSTING_LOCATION` are shown on the
+privacy page: they are who answers data-protection requests.
 
-If you set `LOG_CHANNEL_ID`, the bot also needs **View Channel** and **Send
-Messages** in that channel. It fails quietly otherwise: the role is granted, the
-log line is not written, and only the deployment logs say so.
+```bash
+docker compose --profile caddy up -d --build   # with Caddy getting the certificate
+docker compose up -d --build                   # behind your own proxy, on 127.0.0.1:3000
+```
+
+The database schema is created on the first start. `docker compose logs -f bot`
+should end with `listening on :3000`.
 
 ---
 
-## 4. Deploy
-
-Turn on *User Settings → Advanced → Developer Mode*, then right-click the server
-icon, the role and the log channel → **Copy ID**.
-
-Set these on Vercel (dashboard or `vercel env add`), from steps 1 to 3:
-
-```bash
-DISCORD_APP_ID       DISCORD_PUBLIC_KEY    DISCORD_BOT_TOKEN
-FT_CLIENT_ID         FT_CLIENT_SECRET
-STATE_SECRET         # openssl rand -hex 32
-PUBLIC_URL           # https://<your-project>.vercel.app — optional on Vercel
-GUILD_ID             ROLE_ID
-FT_CAMPUS            STUDENTS_ONLY    NICKNAME_MODE    LOG_CHANNEL_ID   # optional
-```
-
-```bash
-vercel deploy --prod
-```
-
----
-
-## 5. Point Discord at it
+## 4. Point Discord at it
 
 *General Information* → **Interactions Endpoint URL**:
 
 ```text
-https://<your-project>.vercel.app/api/interactions
+https://<your-domain>/api/interactions
 ```
 
 Discord sends a signed ping on save. If it saves, the signature check works.
 
 ---
 
-## 6. Register the commands
+## 5. Register the commands
 
 ```bash
 npm install
-vercel env pull --environment=production .env
 npm run register
 ```
 
-`vercel env pull` defaults to the *development* environment; without the flag it
-writes an empty file and `npm run register` stops on a missing variable.
+Commands are global: they reach every server the bot joins, within a few
+minutes. Run it again whenever `src/commands/definitions.ts` or a `cmd.*`
+translation changes.
 
-Guild commands appear instantly. Run `/config` to check what took effect, then
-`/panel` in the channel where members should verify. That message stays there
-and is all they need — there is no command for them to learn.
+> **Coming from the Vercel version?** Keep `GUILD_ID` in `.env` for this one run:
+> the script also clears that server's old guild commands, which would otherwise
+> show up twice. Then set the old server up from the dashboard like any other.
 
 ---
 
-## Commands
+## 6. Backups
+
+```cron
+0 4 * * * cd /path/to/discord_42auth && ./scripts/backup.sh
+```
+
+Dumps are encrypted with `BACKUP_PASSPHRASE` and deleted after 7 days — the
+retention promised on the privacy page. Copy them off the machine if you want
+them to survive a disk failure; keep the passphrase somewhere else.
+
+---
+
+## For server admins
+
+1. Open the dashboard, log in with Discord. Only servers where you have
+   **Manage Server** are listed.
+2. **Add the bot** to your server from its card.
+3. In *Server Settings → Roles*, drag the bot role **above** the role it grants.
+   The dashboard greys out roles it cannot grant.
+4. Choose the role and the rules, save.
+5. Run `/panel` in the channel where members should verify.
 
 | Command | Who | What |
 | --- | --- | --- |
 | `/panel` | Manage Server | Posts the verification panel, with the button members press |
-| `/config` | Manage Server | Shows what this deployment is set to |
+| `/config` | Manage Server | Shows the settings and links to the dashboard |
+| `/forget` | Everyone | Erases the caller's 42 link on this server and takes the role back |
 
-The panel is posted once and serves the whole server: the button carries no
-member data, so the personal link is only minted when someone presses it.
+### Settings
+
+| Setting | What it does |
+| --- | --- |
+| Role | Granted to verified members. Without it verification is disabled |
+| Campus | Restrict to one campus, spelled as on the intra. Empty accepts any |
+| Active students only | Refuse alumni. Closed accounts are always refused |
+| Nickname | Unchanged, the intra login, or `John Doe (jdoe)` |
+| Log channel | Posts who authenticated as whom. Those messages stay in Discord, under your responsibility |
+
+A 42 account vouches for one member per server. A second Discord account
+verifying with it is refused while the first is still in the server; once the
+first has left, the link moves to the new one.
 
 ---
 
-## Settings
+## Development
 
-No database and no runtime configuration: the bot is configured with
-environment variables, next to its secrets. Changing one means editing it on
-Vercel and **redeploying** — nothing applies to the running deployment.
+```bash
+docker run --rm -d -p 127.0.0.1:5432:5432 -e POSTGRES_PASSWORD=dev --name pg-dev postgres:17-alpine
+# .env: DATABASE_URL=postgres://postgres:dev@localhost:5432/postgres, PUBLIC_URL=http://localhost:5173
+npm run dev                  # server on :3000
+npm --prefix web run dev     # dashboard on :5173, proxying /api and /auth to :3000
+```
 
-| Variable | Required | What it does |
-| --- | --- | --- |
-| `GUILD_ID` | yes | The one server this deployment serves |
-| `ROLE_ID` | yes | Role granted to verified members |
-| `FT_CAMPUS` | no | Restrict to one campus, spelled as on the intra. Empty accepts any |
-| `STUDENTS_ONLY` | no | Refuse alumni and closed accounts. Anything but `false` keeps it on |
-| `NICKNAME_MODE` | no | `off`, `login` (default), or `full` — `John Doe (jdoe)` |
-| `LOG_CHANNEL_ID` | no | Channel logging who authenticated as whom |
+With `PUBLIC_URL=http://localhost:5173`, add `http://localhost:5173/auth/callback`
+as a redirect in the Discord portal to log in locally.
 
-Credentials (`DISCORD_*`, `FT_*`, `STATE_SECRET`, `PUBLIC_URL`) are listed in
-[../.env.example](../.env.example).
+```bash
+npm test                                   # locales + unit tests
+TEST_DATABASE_URL=postgres://… npm test    # + database tests; empties that database
+npm --prefix web run lint && npm --prefix web test && npm --prefix web run e2e
+```
 
 ---
 
@@ -133,16 +159,15 @@ Credentials (`DISCORD_*`, `FT_*`, `STATE_SECRET`, `PUBLIC_URL`) are listed in
 
 | Symptom | Cause |
 | --- | --- |
-| Discord refuses the endpoint URL | `DISCORD_PUBLIC_KEY` wrong, or deploy not live |
-| Commands do not appear | `npm run register` not run, or `GUILD_ID` is another server |
-| "This bot is configured for another server" | `GUILD_ID` does not match where you typed the command |
-| The button says not configured | `ROLE_ID` missing, or set after the last deploy |
-| Role granted but no rename | The member owns the server — Discord never lets a bot rename the owner — or the bot lacks **Manage Nicknames** |
-| Settings changed, nothing happened | Environment variables only apply on a **new deployment** |
+| Discord refuses the endpoint URL | `DISCORD_PUBLIC_KEY` wrong, or the instance is not reachable over HTTPS |
+| Commands do not appear | `npm run register` not run, or Discord still propagating — wait a few minutes |
+| Commands show twice | Old guild commands from the Vercel version: run `npm run register` with `GUILD_ID` set |
+| Dashboard login loops back to the home page | Redirect `…/auth/callback` missing in the Discord portal, or `DISCORD_CLIENT_SECRET` wrong. The bot logs say which |
+| Saving says the request was refused (403) | `PUBLIC_URL` is not exactly the address in the browser bar |
+| The button says not configured | No role chosen on the dashboard |
 | "Authentication failed", logs say "Could not grant the role" | Bot role too low, or **Manage Roles** missing |
-| Every command says "Something went wrong" | A malformed setting — `NICKNAME_MODE` outside `off`/`login`/`full`, an id that is not bare digits, or a `STATE_SECRET` under 32 characters. The deployment logs name it |
-| Role granted, nothing in the log channel | The bot cannot see or write in `LOG_CHANNEL_ID` |
 | Role granted but no rename | The member outranks the bot, or owns the server — harmless |
-| "Invalid link" | Older than five minutes, or `STATE_SECRET` changed since it was issued — press the button again |
-| Everyone refused on campus | `FT_CAMPUS` misspelled — the refusal message shows both names |
+| Role granted, nothing in the log channel | The bot cannot see or write in that channel |
+| "This 42 account is already linked to another member" | That account verified another Discord account still in the server |
+| "Invalid link" | Older than five minutes, or `STATE_SECRET` changed since — press the button again |
 | 42 rejects the redirect URI | It must equal `PUBLIC_URL` + `/api/callback`, exactly |

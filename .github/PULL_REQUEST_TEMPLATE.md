@@ -5,7 +5,7 @@
 >
 > Bear in mind refactors are up to the maintainers and not to contributors — we are the ones supporting this afterwards. If your change is big, consider releasing it under your own fork instead.
 >
-> This bot is an access gate. A bug here does not crash a server, it lets the wrong people in. Changes to `src/state.ts`, `src/rules.ts`, `src/settings.ts`, `src/discord/verify.ts` or `api/` get reviewed on that basis.
+> This bot is an access gate. A bug here does not crash a server, it lets the wrong people in. Changes to `src/state.ts`, `src/rules.ts`, `src/settings.ts`, `src/links.ts`, `src/discord/verify.ts`, `src/discord/permissions.ts`, `src/dashboard/` or `src/routes/` get reviewed on that basis.
 
 > [!CAUTION]
 > Never paste a bot token, a client secret, a `STATE_SECRET`, or a full verification link in this PR — not in the description, not in a screenshot, not in a log excerpt. Crop your URLs before `&state=`.
@@ -36,7 +36,9 @@ explanation field
 
 - [ ] `npm run typecheck` passes
 - [ ] `npm test` passes
-- [ ] Deployed to my own Vercel project and Discord application
+- [ ] `TEST_DATABASE_URL=… npm test` passes (database tests)
+- [ ] If `web/` changed: `npm --prefix web run lint`, `npm --prefix web test` and `npm --prefix web run e2e` pass
+- [ ] Ran it with `docker compose up` against my own Discord application
 - [ ] Ran `npm run register` (required if `src/commands/definitions.ts` changed)
 - [ ] Ran the panel button end to end with a real 42 account and got the role
 - [ ] Tested at least one refusal path (wrong campus, alumni, expired link)
@@ -54,6 +56,11 @@ explanation field
 - [ ] I described what an attacker gains or loses from this change
 - [ ] The link still expires, and still cannot be retargeted at another member
 - [ ] Nothing the member controls is trusted without being signed or re-fetched from the 42 API
+
+### If you touched what is stored
+
+- [ ] `docs/RGPD.md` and the `/privacy` page still describe exactly what is kept and for how long
+- [ ] Anything new is deleted by `/forget`, by the server data deletion, and by the sweeper
 
 ## Notes if any
 explanation field
