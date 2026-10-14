@@ -59,10 +59,10 @@ const reads = new Map<string, { at: number; value: Promise<unknown> }>();
 
 /**
  * Reuses a recent Discord read for the dashboard.
- * @remarks A page load asks for the same server, roles and channels several times, and every
- * API call re-checks the admin's rights through the bot. Fifteen seconds keeps that to one
- * Discord call each while a right taken away, or a role just created, still shows up almost at
- * once. Concurrent callers share the request in flight; a failed read is not kept.
+ * @remarks A page load asks for the same server, roles and channels several times. Fifteen
+ * seconds keeps that to one Discord call each while a role just created still shows up almost
+ * at once. The admin's own membership is never cached: a right taken away must apply on the
+ * next request. Concurrent callers share the request in flight; a failed read is not kept.
  */
 function cached<T>(key: string, read: () => Promise<T>): Promise<T> {
 	const now = Date.now();
@@ -179,9 +179,7 @@ async function authorize(session: Session, guildId: string): Promise<Guild | Res
 		}
 		throw failure;
 	}
-	const member = await cached(`member:${guildId}:${session.userId}`, () =>
-		getMember(guildId, session.userId),
-	);
+	const member = await getMember(guildId, session.userId);
 	if (!member || !canManage(basePermissions(guild, member))) return error(403, 'forbidden');
 	return guild;
 }

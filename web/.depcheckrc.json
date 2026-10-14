@@ -8,6 +8,6 @@
 		"@types/node",
 		"typescript",
 		"vue-eslint-parser",
-		"@shared/api"
+		"@shared/*"
 	]
 }
