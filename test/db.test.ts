@@ -19,6 +19,8 @@ const CHANNEL = '200000000000000005';
 const ADMIN = '200000000000000006';
 const MEMBER = '200000000000000007';
 const LEFT = '200000000000000008';
+const CURSUS_ROLE = '200000000000000010';
+const ORDER_ROLE = '200000000000000011';
 
 Object.assign(process.env, {
 	DATABASE_URL: url ?? '',
@@ -31,7 +33,22 @@ Object.assign(process.env, {
 	STATE_SECRET: 'x'.repeat(32),
 	FT_CLIENT_ID: 'ft',
 	FT_CLIENT_SECRET: 'ft',
+	FT_SPACING_MS: '0',
 });
+
+/** The 42 account every fake login returns; reset before each test. */
+const freshUser = () => ({
+	id: 42,
+	login: 'jdoe',
+	usual_full_name: 'John Doe',
+	'active?': true,
+	'alumni?': false,
+	'staff?': false,
+	campus: [{ id: 1, name: 'Paris' }],
+	campus_users: [{ campus_id: 1, is_primary: true }],
+	cursus_users: [{ end_at: null, cursus: { name: '42cursus', slug: '42cursus' } }],
+});
+let ftUser = freshUser();
 
 /** Members the fake Discord knows about in GUILD. */
 const members = new Map<string, string[]>([
@@ -46,10 +63,10 @@ const writes: string[] = [];
 
 const fakeFetch = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
 	const ok = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
-	if (String(input) === 'https://api.intra.42.fr/oauth/token') return ok({ access_token: 't' });
-	if (String(input) === 'https://api.intra.42.fr/v2/me') {
-		return ok({ id: 42, login: 'jdoe', usual_full_name: 'John Doe', 'active?': true, 'alumni?': false, 'staff?': false, campus: [{ id: 1, name: 'Paris' }], campus_users: [{ campus_id: 1, is_primary: true }] });
-	}
+	if (String(input) === 'https://api.intra.42.fr/oauth/token') return ok({ access_token: 't', expires_in: 7200 });
+	if (String(input) === 'https://api.intra.42.fr/v2/me') return ok(ftUser);
+	if (String(input) === 'https://api.intra.42.fr/v2/users/42') return ok(ftUser);
+	if (String(input) === 'https://api.intra.42.fr/v2/users/42/coalitions') return ok([{ name: 'The Order', slug: 'the-order' }]);
 	const path = String(input).replace('https://discord.com/api/v10', '');
 	if (init?.method && init.method !== 'GET') {
 		writes.push(`${init.method} ${path}`);
@@ -62,9 +79,12 @@ const fakeFetch = async (input: string | URL | Request, init?: RequestInit): Pro
 			name: 'campus',
 			icon: null,
 			owner_id: '1',
+			preferred_locale: 'fr',
 			roles: [
 				{ id: GUILD, name: '@everyone', color: 0, position: 0, permissions: '0', managed: false },
 				{ id: ROLE, name: 'verified', color: 0, position: 1, permissions: '0', managed: false },
+				{ id: CURSUS_ROLE, name: '42cursus', color: 0, position: 1, permissions: '0', managed: false },
+				{ id: ORDER_ROLE, name: 'order', color: 0, position: 1, permissions: '0', managed: false },
 				{ id: BOT_ROLE, name: 'bot', color: 0, position: 2, permissions: '0', managed: true },
 				{ id: HIGH, name: 'admins', color: 0, position: 3, permissions: '32', managed: false },
 			],
@@ -112,6 +132,7 @@ beforeEach(async () => {
 	members.delete(LEFT);
 	botGuilds = [GUILD];
 	writes.length = 0;
+	ftUser = freshUser();
 });
 
 after(async () => {
@@ -121,7 +142,11 @@ after(async () => {
 const call = (path: string, init: RequestInit = {}) =>
 	route(new Request(`${ORIGIN}${path}`, { ...init, headers: { cookie, origin: ORIGIN, ...init.headers } }));
 
-const settings = { roleId: ROLE, campus: 'Paris', studentsOnly: true, nickname: 'login', logChannelId: CHANNEL };
+const settings = { roleId: ROLE, campus: 'Paris', studentsOnly: true, nickname: 'login', logChannelId: CHANNEL, roleRules: [] as unknown[] };
+const rules = [
+	{ kind: 'cursus', value: '42cursus', roleId: CURSUS_ROLE },
+	{ kind: 'coalition', value: 'the-order', roleId: ORDER_ROLE },
+];
 
 test('migrations are idempotent', { skip }, async () => {
 	assert.deepEqual(await db.migrate(), []);
@@ -134,16 +159,16 @@ test('/api/me lists the session servers with the bot presence', { skip }, async 
 	assert.deepEqual(me.guilds.map((g) => [g.id, g.botPresent]), [[GUILD, true]]);
 });
 
-test('no session is a 401', { skip }, async () => {
-	const response = await route(new Request(`${ORIGIN}/api/me`));
-	assert.equal(response.status, 401);
+test('no session: /api/me is empty, the other routes are a 401', { skip }, async () => {
+	assert.equal((await route(new Request(`${ORIGIN}/api/me`))).status, 204);
+	assert.equal((await route(new Request(`${ORIGIN}/api/guilds/${GUILD}`))).status, 401);
 });
 
 test('a guild detail offers only roles under the bot and text channels', { skip }, async () => {
 	const response = await call(`/api/guilds/${GUILD}`);
 	assert.equal(response.status, 200);
 	const detail = (await response.json()) as { roles: Array<{ id: string; assignable: boolean }>; channels: Array<{ id: string }> };
-	assert.deepEqual(detail.roles.map((r) => [r.id, r.assignable]), [[HIGH, false], [BOT_ROLE, false], [ROLE, true]]);
+	assert.deepEqual(detail.roles.map((r) => [r.id, r.assignable]), [[HIGH, false], [BOT_ROLE, false], [ROLE, true], [CURSUS_ROLE, true], [ORDER_ROLE, true]]);
 	assert.deepEqual(detail.channels.map((c) => c.id), [CHANNEL]);
 });
 
@@ -195,7 +220,7 @@ test('the sweeper drops members who left, then servers the bot left', { skip }, 
 	await saveLink({ guildId: GUILD, userId: LEFT, ftId: 2, ftLogin: 'gone' });
 	await db.db().query("UPDATE links SET checked_at = now() - interval '2 days'");
 
-	assert.deepEqual(await sweep(), { sessions: 0, guilds: 0, links: 1 });
+	assert.deepEqual(await sweep(), { sessions: 0, guilds: 0, links: 1, revoked: 0 });
 	assert.equal(await countLinks(GUILD), 1);
 
 	botGuilds = [];
@@ -224,4 +249,79 @@ test('the 42 callback links, grants, and keeps one 42 account to one member', { 
 	members.set(LEFT, []);
 	assert.equal((await verify(LEFT)).status, 302, 'the account is released once its holder left');
 	assert.equal((await findByFtAccount(GUILD, 42))?.userId, LEFT);
+});
+
+test('a role rule naming a role above the bot is refused with its index', { skip }, async () => {
+	const body = { ...settings, roleRules: [rules[0], { ...rules[1], roleId: HIGH }] };
+	const response = await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify(body) });
+	assert.equal(response.status, 400);
+	assert.deepEqual(await response.json(), { error: 'invalid', field: 'roleRules', index: 1 });
+});
+
+test('the callback grants the rule roles the account earns', { skip }, async () => {
+	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify({ ...settings, logChannelId: null, roleRules: rules }) });
+	const { createState } = await import('../src/state');
+	const state = createState({ guildId: GUILD, userId: MEMBER, locale: 'en-US', guildLocale: 'en-US' });
+	assert.equal((await route(new Request(`${ORIGIN}/api/callback?code=c&state=${state}`))).status, 302);
+	for (const role of [ROLE, CURSUS_ROLE, ORDER_ROLE]) {
+		assert.ok(writes.includes(`PUT /guilds/${GUILD}/members/${MEMBER}/roles/${role}`), role);
+	}
+});
+
+test('the members tab lists, searches and unlinks', { skip }, async () => {
+	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify(settings) });
+	const { saveLink, countLinks } = await import('../src/links');
+	await saveLink({ guildId: GUILD, userId: MEMBER, ftId: 1, ftLogin: 'jdoe' });
+	await saveLink({ guildId: GUILD, userId: ADMIN, ftId: 2, ftLogin: 'admin42' });
+
+	const all = (await (await call(`/api/guilds/${GUILD}/members`)).json()) as { total: number; members: Array<{ ftLogin: string }> };
+	assert.equal(all.total, 2);
+	const found = (await (await call(`/api/guilds/${GUILD}/members?q=JD`)).json()) as { total: number; members: Array<{ ftLogin: string }> };
+	assert.deepEqual(found.members.map((m) => m.ftLogin), ['jdoe']);
+
+	members.set(MEMBER, [ROLE]);
+	assert.equal((await call(`/api/guilds/${GUILD}/members/${MEMBER}`, { method: 'DELETE' })).status, 204);
+	assert.ok(writes.includes(`DELETE /guilds/${GUILD}/members/${MEMBER}/roles/${ROLE}`));
+	assert.equal(await countLinks(GUILD), 1);
+	assert.equal((await call(`/api/guilds/${GUILD}/members/${MEMBER}`, { method: 'DELETE' })).status, 404);
+});
+
+test('the panel is posted only in a text channel of the server', { skip }, async () => {
+	const post = (channelId: string) => call(`/api/guilds/${GUILD}/panel`, { method: 'POST', body: JSON.stringify({ channelId }) });
+	assert.equal((await post(CHANNEL)).status, 204);
+	assert.ok(writes.includes(`POST /channels/${CHANNEL}/messages`));
+	assert.equal((await post('200000000000000099')).status, 400);
+});
+
+test('the weekly re-check takes the role back from a closed account and syncs the others', { skip }, async () => {
+	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify({ ...settings, roleRules: [rules[0]] }) });
+	const { saveLink, countLinks } = await import('../src/links');
+	const { sweep } = await import('../src/sweeper');
+	await saveLink({ guildId: GUILD, userId: MEMBER, ftId: 42, ftLogin: 'jdoe' });
+	await db.db().query("UPDATE links SET ft_checked_at = now() - interval '8 days'");
+
+	members.set(MEMBER, [ROLE]);
+	assert.equal((await sweep()).revoked, 0);
+	assert.ok(writes.includes(`PUT /guilds/${GUILD}/members/${MEMBER}/roles/${CURSUS_ROLE}`));
+	assert.equal((await sweep()).revoked, 0, 'checked again only a week later');
+
+	await db.db().query("UPDATE links SET ft_checked_at = now() - interval '8 days'");
+	ftUser['active?'] = false;
+	members.set(MEMBER, [ROLE, CURSUS_ROLE]);
+	writes.length = 0;
+	assert.equal((await sweep()).revoked, 1);
+	assert.equal(await countLinks(GUILD), 0);
+	assert.ok(writes.includes(`DELETE /guilds/${GUILD}/members/${MEMBER}/roles/${ROLE}`));
+	assert.ok(writes.includes(`DELETE /guilds/${GUILD}/members/${MEMBER}/roles/${CURSUS_ROLE}`));
+	assert.ok(writes.includes(`POST /channels/${CHANNEL}/messages`), 'the log channel says why');
+});
+
+test('too many logins from one address are refused', { skip }, async () => {
+	const responses = [];
+	for (let i = 0; i < 25; i++) {
+		responses.push(await route(new Request(`${ORIGIN}/auth/login`, { headers: { 'x-peer-address': '198.51.100.20' } })));
+	}
+	assert.equal(responses[0]?.status, 302);
+	assert.equal(responses.at(-1)?.status, 429);
+	assert.ok(Number(responses.at(-1)?.headers.get('retry-after')) > 0);
 });

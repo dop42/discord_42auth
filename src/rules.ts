@@ -1,4 +1,5 @@
-import { primaryCampus, type FtUser } from './ft/api';
+import type { RoleRule } from '../shared/api';
+import { primaryCampus, type FtCoalition, type FtUser } from './ft/api';
 import type { MessageKey } from './i18n';
 import type { Settings } from './settings';
 
@@ -69,4 +70,41 @@ export function nicknameFor(user: FtUser, settings: Settings): string | null {
 		default:
 			return null;
 	}
+}
+
+/**
+ * @author dop42
+ * @method matchingRoles
+ * @description Returns the extra roles a verified account earns from the server's role rules.
+ * @remarks A cursus counts only while it runs: a student who finished the piscine keeps a
+ * `c-piscine` entry with a past `end_at`, and must not keep the piscine role for it. Names
+ * and slugs are both accepted, so an admin can type either.
+ * @param user {FtUser}
+ * @param coalitions {FtCoalition[]} empty when the server has no coalition rule
+ * @param rules {RoleRule[]}
+ * @param now {Date}
+ * @returns {string[]} role ids, without duplicates
+ */
+export function matchingRoles(
+	user: FtUser,
+	coalitions: FtCoalition[],
+	rules: RoleRule[],
+	now = new Date(),
+): string[] {
+	const lower = (text: string) => text.toLowerCase();
+	const campus = primaryCampus(user)?.name;
+	const cursus = (user.cursus_users ?? [])
+		.filter((entry) => entry.end_at === null || new Date(entry.end_at) > now)
+		.flatMap((entry) => [entry.cursus.name, entry.cursus.slug]);
+	const values = {
+		campus: campus ? [campus] : [],
+		cursus,
+		coalition: coalitions.flatMap((coalition) => [coalition.name, coalition.slug]),
+	};
+
+	const roles = new Set<string>();
+	for (const rule of rules) {
+		if (values[rule.kind].some((value) => lower(value) === lower(rule.value))) roles.add(rule.roleId);
+	}
+	return [...roles];
 }

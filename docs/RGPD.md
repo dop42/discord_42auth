@@ -34,7 +34,8 @@ notification des violations, suppression en fin de service) sont reprises dans
 | Minimisation (art. 5-1-c) | Déjà bonne : scope `public`, aucun jeton stocké | Inchangée. Seuls l'ID Discord, l'ID 42 et le login sont stockés, jamais le nom ni le campus |
 | Cloisonnement | Une instance par serveur | Liens rangés par serveur : un lien fait sur un serveur n'est ni visible ni réutilisé sur un autre |
 | Logs techniques | Contenaient l'ID Discord (`Could not rename …`) | Plus aucun identifiant de personne. Rotation de 10 Mo × 3 par conteneur. Pas de log d'accès Caddy, donc aucune IP gardée |
-| Sécurité (art. 32) | Vercel | HTTPS + HSTS, base sans port publié, cookie de session dont seul le hash est stocké, `HttpOnly` + `Secure` + `SameSite`, contrôle de l'`Origin`, CSP stricte, conteneur en lecture seule sans capacités, sauvegardes chiffrées |
+| Exactitude (art. 5-1-d) | Vérification faite une fois pour toutes | Profil 42 relu chaque semaine avec le jeton de l'application : un compte fermé, devenu alumni ou parti du campus perd le rôle, et les rôles par campus, cursus ou coalition suivent |
+| Sécurité (art. 32) | Vercel | HTTPS + HSTS, limitation du débit par adresse (IP gardée une minute en mémoire, jamais écrite), base sans port publié, cookie de session dont seul le hash est stocké, `HttpOnly` + `Secure` + `SameSite`, contrôle de l'`Origin`, CSP stricte, conteneur en lecture seule sans capacités, sauvegardes chiffrées |
 | Cookies (ePrivacy) | — | Un seul cookie de session, strictement nécessaire, réservé aux admins : pas de bandeau requis. Aucun traceur ni ressource tierce, à part le CDN Discord pour les avatars |
 
 ---
@@ -47,9 +48,9 @@ notification des violations, suppression en fin de service) sont reprises dans
 | Responsables | Les admins de chaque serveur Discord ayant ajouté le bot |
 | Catégories de traitement | 1. Vérification d'appartenance à 42 et attribution d'un rôle. 2. Connexion des admins au dashboard |
 | Personnes concernées | Membres des serveurs qui se vérifient, admins des serveurs |
-| Données | 1. ID Discord, ID et login 42, ID du serveur, dates de vérification et de contrôle. 2. ID Discord, nom d'utilisateur, avatar, liste des serveurs gérés |
+| Données | 1. ID Discord, ID et login 42, ID du serveur, dates de vérification et des contrôles. Lus sans être gardés : profil 42 public (campus, cursus, statut) et coalitions si le serveur s'en sert. 2. ID Discord, nom d'utilisateur, avatar, liste des serveurs gérés |
 | Transferts hors UE | Aucun de la part de l'opérateur (hébergement : `HOSTING_LOCATION`) |
-| Durées | 1. Tant que le membre est sur le serveur et que le bot y est (7 jours max après un départ). 2. 24 h |
+| Durées | 1. Tant que le membre est sur le serveur, que le bot y est et que le compte 42 remplit les règles (7 jours max après un départ, contrôle du compte 42 chaque semaine). 2. 24 h |
 | Sécurité | Voir « Sécurité » ci-dessus |
 
 ---
@@ -69,3 +70,5 @@ notification des violations, suppression en fin de service) sont reprises dans
 
 - **Le salon de logs.** Les messages restent dans Discord, hors de portée du bot. L'admin doit les supprimer selon sa propre politique ; le dashboard suggère 3 mois au maximum.
 - **Le pseudo.** En mode `login` ou `full`, le login 42 du membre devient visible de tout le serveur. C'est un choix de configuration de l'admin, annoncé aux membres sur `/privacy`.
+- **Les rôles supplémentaires.** Un rôle par campus, cursus ou coalition rend cette information visible des autres membres. Même logique : choix de l'admin, annoncé sur `/privacy`.
+- **L'onglet Membres.** Il montre à tous les admins du serveur l'ID Discord et le login 42 de chaque membre vérifié. Délier un membre depuis cet onglet vaut effacement, comme `/forget`.

@@ -68,6 +68,7 @@ export const en = {
 	// Audit log message (Components V2 container).
 	'log.ok': 'Authentication succeeded',
 	'log.refused': 'Authentication refused',
+	'log.revoked': 'Verification revoked',
 	'log.discord': 'Discord',
 	'log.account': '42 account',
 	'log.campus': 'Campus',

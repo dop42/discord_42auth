@@ -53,6 +53,7 @@ export const de: Messages = {
 
 	'log.ok': 'Authentifizierung erfolgreich',
 	'log.refused': 'Authentifizierung abgelehnt',
+	'log.revoked': 'Verifizierung entzogen',
 	'log.discord': 'Discord',
 	'log.account': '42-Account',
 	'log.campus': 'Campus',

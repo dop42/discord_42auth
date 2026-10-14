@@ -23,8 +23,11 @@ communities usually have no filter at all: anyone with an invite link walks
 straight in.
 
 One instance serves every server that adds the bot. Admins log in on the
-**web dashboard** with Discord, pick the role and the rules, and post the panel
-with `/panel`. Members can erase their own link with `/forget`.
+**web dashboard** with Discord, pick the role and the rules, add extra roles by
+campus, cursus or coalition, post the panel, and see or unlink verified members.
+Members can erase their own link with `/forget`. Every account is checked against
+the intra again each week: a closed account, a new alumnus or a finished piscine
+loses what it no longer qualifies for.
 
 It runs as **HTTP interactions** — no gateway connection — on your own machine
 with Docker: the bot, PostgreSQL, and optionally Caddy for HTTPS. A 42 account
@@ -37,7 +40,8 @@ dashboard ──▶ Discord OAuth ──▶ /api/guilds/:id ──▶ settings i
 ```
 
 Answers follow the reader's language: English, French, Spanish, German,
-Italian, Dutch and Portuguese (Brazil).
+Italian, Dutch and Portuguese (Brazil). The dashboard speaks French and English,
+in a light or dark theme.
 
 ---
 

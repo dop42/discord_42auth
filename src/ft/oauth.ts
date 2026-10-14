@@ -1,4 +1,5 @@
 import { env } from '../env';
+import { ftFetch } from './api';
 
 const FT_API = 'https://api.intra.42.fr';
 
@@ -46,7 +47,7 @@ export function authorizeUrl(state: string): string {
  * @throws {Error}
  */
 export async function exchangeCode(code: string): Promise<string> {
-	const response = await fetch(`${FT_API}/oauth/token`, {
+	const response = await ftFetch('/oauth/token', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({

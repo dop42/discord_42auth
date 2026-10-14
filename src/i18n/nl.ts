@@ -53,6 +53,7 @@ export const nl: Messages = {
 
 	'log.ok': 'Authenticatie geslaagd',
 	'log.refused': 'Authenticatie geweigerd',
+	'log.revoked': 'Verificatie ingetrokken',
 	'log.discord': 'Discord',
 	'log.account': '42-account',
 	'log.campus': 'Campus',

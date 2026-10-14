@@ -1,19 +1,16 @@
-import { removeRole, setNickname } from '../discord/rest';
 import { ephemeral } from '../discord/responses';
 import type { Interaction } from '../discord/types';
 import { resolveLocale, t } from '../i18n';
-import { deleteLink, findByMember } from '../links';
+import { unlink } from '../membership';
 import { getSettings } from '../settings';
 
 /**
  * @author dop42
  * @method handleForget
- * @description Erases the caller's link in this server and takes the verified role back.
+ * @description Erases the caller's link in this server and takes the roles it gave back.
  * @remarks The member's own way to exercise the right to erasure, with no admin involved.
- * The link goes first, since that is what was asked for; the role and the nickname follow on
- * a best-effort basis. The nickname is only cleared when it is still one the bot set, so a
- * name the member chose afterwards is left alone. Answering takes up to three REST calls,
- * well inside Discord's three-second budget.
+ * The interaction already carries the member's roles and nickname, so answering takes only
+ * the calls that change something, well inside Discord's three-second budget.
  * @param interaction {Interaction}
  * @returns {Promise<Response>}
  * @throws {Error}
@@ -24,18 +21,11 @@ export async function handleForget(interaction: Interaction): Promise<Response> 
 	const member = interaction.member;
 	if (!guildId || !member) return ephemeral(t(locale, 'error.notInGuild'));
 
-	const userId = member.user.id;
-	const link = await findByMember(guildId, userId);
-	if (!link || !(await deleteLink(guildId, userId))) return ephemeral(t(locale, 'forget.none'));
-
-	const nick = member.nick ?? '';
-	if (nick === link.ftLogin || nick.endsWith(` (${link.ftLogin})`)) {
-		await setNickname(guildId, userId, null);
-	}
-
-	const { roleId } = await getSettings(guildId);
-	if (roleId && !(await removeRole(guildId, userId, roleId))) {
-		return ephemeral(t(locale, 'forget.roleKept'));
-	}
-	return ephemeral(t(locale, 'forget.done'));
+	const result = await unlink(guildId, member.user.id, await getSettings(guildId), {
+		user: member.user,
+		roles: member.roles,
+		nick: member.nick ?? null,
+	});
+	if (!result.linked) return ephemeral(t(locale, 'forget.none'));
+	return ephemeral(t(locale, result.rolesRemoved ? 'forget.done' : 'forget.roleKept'));
 }

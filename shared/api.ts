@@ -5,12 +5,32 @@
  * error on the other. Every route below lives under the same origin as the dashboard and
  * authenticates with the `__Host-session` cookie; a mutating request must also carry an
  * `Origin` header equal to the public URL, which browsers do on their own for `fetch`.
+ * Too many requests from one address answer 429 with a `Retry-After`.
  */
 
 export const NICKNAME_MODES = ['off', 'login', 'full'] as const;
 
 /** `off` leaves the nickname alone, `login` sets the intra login, `full` sets "Full Name (login)". */
 export type NicknameMode = (typeof NICKNAME_MODES)[number];
+
+export const RULE_KINDS = ['campus', 'cursus', 'coalition'] as const;
+
+/**
+ * What a role rule looks at: the primary campus, a cursus the member is currently in
+ * (`42cursus`, `c-piscine`…), or one of their coalitions. Compared case-insensitively with
+ * the name or the slug the intra uses.
+ */
+export type RuleKind = (typeof RULE_KINDS)[number];
+
+/** An extra role granted on top of the verified one, to members matching the condition. */
+export interface RoleRule {
+	kind: RuleKind;
+	value: string;
+	roleId: string;
+}
+
+/** Most rules a server may have. */
+export const MAX_ROLE_RULES = 25;
 
 /** What one Discord server does. Ids are snowflakes as strings; `null` means unset. */
 export interface GuildSettings {
@@ -23,6 +43,8 @@ export interface GuildSettings {
 	nickname: NicknameMode;
 	/** Channel receiving one audit message per attempt. `null` disables the audit log. */
 	logChannelId: string | null;
+	/** Extra roles by campus, cursus or coalition, checked again every week. */
+	roleRules: RoleRule[];
 }
 
 /** `GET /api/meta` — public, no session needed. */
@@ -46,7 +68,7 @@ export interface GuildSummary {
 	inviteUrl: string;
 }
 
-/** `GET /api/me` — 401 `{ error: 'unauthenticated' }` without a session. */
+/** `GET /api/me` — 204 with no body without a session. Other routes answer 401 then. */
 export interface Me {
 	user: { id: string; username: string; avatar: string | null };
 	guilds: GuildSummary[];
@@ -78,9 +100,32 @@ export interface GuildDetail {
 	verifiedCount: number;
 }
 
+/** One verified member, as the members tab lists them. */
+export interface LinkedMember {
+	userId: string;
+	ftLogin: string;
+	/** ISO date of the verification. */
+	verifiedAt: string;
+}
+
+/** `GET /api/guilds/:id/members?q=&page=` — 50 per page, newest first, `q` filters on the login. */
+export interface MemberPage {
+	members: LinkedMember[];
+	total: number;
+	page: number;
+	pageSize: number;
+}
+
+/** `POST /api/guilds/:id/panel` — posts the verification panel in that channel, answers 204. */
+export interface PanelRequest {
+	channelId: string;
+}
+
 /**
  * `PUT /api/guilds/:id` takes a full `GuildSettings` and answers the saved `GuildSettings`.
  * `DELETE /api/guilds/:id` erases the settings and every link of that server, answers 204.
+ * `DELETE /api/guilds/:id/members/:userId` unlinks one member and takes their roles back,
+ * answers 204. A panel the bot cannot post answers 502 `{ error: 'cannot_post' }`.
  * `POST /auth/logout` ends the session, answers 204.
  * `GET /auth/login` starts the Discord login; `GET /auth/callback` ends it on `/`.
  */
@@ -88,5 +133,7 @@ export interface ApiError {
 	/** Stable machine-readable code, e.g. `unauthenticated`, `forbidden`, `invalid`. */
 	error: string;
 	/** For `invalid`: the field that was refused. */
-	field?: keyof GuildSettings;
+	field?: keyof GuildSettings | 'channelId';
+	/** For an invalid `roleRules`: which rule. */
+	index?: number;
 }

@@ -1,10 +1,12 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import type {
+	ApiError,
 	ChannelOption,
 	GuildDetail,
-	GuildSettings,
 	GuildSummary,
+	LinkedMember,
 	Me,
+	MemberPage,
 	Meta,
 	RoleOption,
 } from '../../shared/api';
@@ -16,15 +18,19 @@ import {
 	getChannels,
 	getGuild,
 	getMember,
+	postMessage,
 	readAsUser,
 	type Guild,
 	type OAuthGuild,
 	type OAuthUser,
 } from '../discord/rest';
-import { TEXT_CHANNEL_TYPES } from '../discord/types';
+import { MessageFlags, SNOWFLAKE, TEXT_CHANNEL_TYPES } from '../discord/types';
 import { env } from '../env';
 import { apiJson, cookie, readCookie } from '../http';
-import { countLinks } from '../links';
+import { resolveLocale } from '../i18n';
+import { countLinks, listLinks, PAGE_SIZE } from '../links';
+import { unlink } from '../membership';
+import { panelComponents } from '../panel';
 import { deleteGuild, getSettings, parseSettings, saveSettings } from '../settings';
 import { createSession, endSession, readSession, type Session } from './session';
 
@@ -49,8 +55,14 @@ async function currentBotGuilds(): Promise<Set<string>> {
 	return botGuilds.ids;
 }
 
-const error = (status: number, code: string, field?: keyof GuildSettings) =>
-	apiJson(field ? { error: code, field } : { error: code }, status);
+const error = (status: number, code: string, field?: ApiError['field'], index?: number) => {
+	const body: ApiError = { error: code };
+	if (field) body.field = field;
+	if (index !== undefined) body.index = index;
+	return apiJson(body, status);
+};
+
+const noContent = () => new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
 
 /**
  * @author dop42
@@ -227,13 +239,16 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 		}
 		case 'PUT': {
 			const parsed = parseSettings(await request.json().catch(() => null));
-			if (!parsed.ok) return error(400, 'invalid', parsed.field);
+			if (!parsed.ok) return error(400, 'invalid', parsed.field, parsed.index);
 			const { settings } = parsed;
 
 			const { roles, channels } = await options(guild);
-			if (settings.roleId && !roles.some((r) => r.id === settings.roleId && r.assignable)) {
+			const assignable = (id: string) => roles.some((r) => r.id === id && r.assignable);
+			if (settings.roleId && !assignable(settings.roleId)) {
 				return error(400, 'invalid', 'roleId');
 			}
+			const badRule = settings.roleRules.findIndex((rule) => !assignable(rule.roleId));
+			if (badRule !== -1) return error(400, 'invalid', 'roleRules', badRule);
 			if (settings.logChannelId && !channels.some((c) => c.id === settings.logChannelId)) {
 				return error(400, 'invalid', 'logChannelId');
 			}
@@ -243,10 +258,78 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 		}
 		case 'DELETE':
 			await deleteGuild(guildId);
-			return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
+			return noContent();
 		default:
 			return error(405, 'method_not_allowed');
 	}
+}
+
+/**
+ * @author dop42
+ * @method membersRoute
+ * @description Serves `/api/guilds/:id/members`: one page of the verified members.
+ * @remarks Only what the database holds is shown — the Discord id, the 42 login and the
+ * date. Resolving every member's Discord name would cost one call each; the admin can find
+ * anyone from their id.
+ * @param request {Request}
+ * @param guildId {string}
+ * @returns {Promise<Response>}
+ */
+async function membersRoute(request: Request, guildId: string): Promise<Response> {
+	const params = new URL(request.url).searchParams;
+	const query = (params.get('q') ?? '').trim().slice(0, 64);
+	const page = Math.max(0, Math.min(Number.parseInt(params.get('page') ?? '0', 10) || 0, 10_000));
+	const { links, total } = await listLinks(guildId, query, page);
+	const members: LinkedMember[] = links.map((link) => ({
+		userId: link.userId,
+		ftLogin: link.ftLogin,
+		verifiedAt: link.verifiedAt.toISOString(),
+	}));
+	const body: MemberPage = { members, total, page, pageSize: PAGE_SIZE };
+	return apiJson(body);
+}
+
+/**
+ * @author dop42
+ * @method unlinkRoute
+ * @description Serves `DELETE /api/guilds/:id/members/:userId`: an admin unlinks one member.
+ * @remarks Same effect as the member running `/forget`: the link, the roles and the
+ * nickname the bot gave go. The member can verify again afterwards.
+ * @param guildId {string}
+ * @param userId {string}
+ * @returns {Promise<Response>}
+ */
+async function unlinkRoute(guildId: string, userId: string): Promise<Response> {
+	const settings = await getSettings(guildId);
+	const result = await unlink(guildId, userId, settings, await getMember(guildId, userId));
+	return result.linked ? noContent() : error(404, 'not_linked');
+}
+
+/**
+ * @author dop42
+ * @method panelRoute
+ * @description Serves `POST /api/guilds/:id/panel`: posts the verification panel in a channel.
+ * @remarks The same message `/panel` posts, in the server's language. Only channels the form
+ * offers are accepted; Discord refusing (the bot cannot see or write there) is a 502 the
+ * dashboard explains.
+ * @param request {Request}
+ * @param guild {Guild}
+ * @returns {Promise<Response>}
+ */
+async function panelRoute(request: Request, guild: Guild): Promise<Response> {
+	const body = (await request.json().catch(() => null)) as { channelId?: unknown } | null;
+	const channelId = body?.channelId;
+	if (typeof channelId !== 'string' || !SNOWFLAKE.test(channelId)) {
+		return error(400, 'invalid', 'channelId');
+	}
+	const { channels } = await options(guild);
+	if (!channels.some((channel) => channel.id === channelId)) return error(400, 'invalid', 'channelId');
+
+	const posted = await postMessage(channelId, {
+		flags: MessageFlags.IS_COMPONENTS_V2,
+		components: panelComponents(resolveLocale(guild.preferred_locale)),
+	});
+	return posted ? noContent() : error(502, 'cannot_post');
 }
 
 /**
@@ -284,6 +367,9 @@ export async function handleDashboard(request: Request): Promise<Response | null
 	}
 
 	const session = await readSession(request);
+	// Asking "am I logged in?" is not an error: answering 401 would print one in the console
+	// of every visitor of the landing page.
+	if (!session && pathname === '/api/me' && method === 'GET') return noContent();
 	if (!session) return error(401, 'unauthenticated');
 
 	if (pathname === '/api/me' && method === 'GET') {
@@ -300,8 +386,19 @@ export async function handleDashboard(request: Request): Promise<Response | null
 		return apiJson(me);
 	}
 
-	const match = /^\/api\/guilds\/(\d{17,20})$/.exec(pathname);
-	if (match?.[1]) return guildRoute(request, session, match[1]);
+	const match = /^\/api\/guilds\/(\d{17,20})(?:\/(members|panel)(?:\/(\d{17,20}))?)?$/.exec(pathname);
+	const guildId = match?.[1];
+	if (!match || !guildId) return error(404, 'not_found');
+	const [, , section, userId] = match;
+
+	if (!section) return guildRoute(request, session, guildId);
+
+	const guild = await authorize(session, guildId);
+	if (guild instanceof Response) return guild;
+
+	if (section === 'members' && !userId && method === 'GET') return membersRoute(request, guildId);
+	if (section === 'members' && userId && method === 'DELETE') return unlinkRoute(guildId, userId);
+	if (section === 'panel' && !userId && method === 'POST') return panelRoute(request, guild);
 
 	return error(404, 'not_found');
 }

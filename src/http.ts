@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { PEER_HEADER } from './ratelimit';
 
 /** Largest body accepted; the biggest legitimate one is a Discord interaction, a few KB. */
 const MAX_BODY_BYTES = 64 * 1024;
@@ -26,6 +27,7 @@ export function toNodeHandler(handler: Handler) {
 				if (Array.isArray(value)) value.forEach((item) => headers.append(key, item));
 				else if (value !== undefined) headers.set(key, value);
 			}
+			headers.set(PEER_HEADER, req.socket.remoteAddress ?? '');
 
 			const chunks: Buffer[] = [];
 			let size = 0;

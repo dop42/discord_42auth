@@ -128,17 +128,18 @@ export async function setNickname(
 /**
  * @author dop42
  * @method postMessage
- * @description Posts a message in an audit log channel.
+ * @description Posts a message in a channel: an audit line, or the verification panel.
  * @remarks Never throws: losing a log line must not fail an authentication that succeeded.
  * @param channelId {string}
  * @param body {unknown}
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>} whether Discord accepted it
  */
-export async function postMessage(channelId: string, body: unknown): Promise<void> {
+export async function postMessage(channelId: string, body: unknown): Promise<boolean> {
 	const response = await request('POST', `/channels/${channelId}/messages`, body).catch(() => null);
 	if (!response?.ok) {
-		console.error(`Could not write to a log channel: ${response?.status ?? 'network'}`);
+		console.error(`Could not post in a channel: ${response?.status ?? 'network'}`);
 	}
+	return response?.ok ?? false;
 }
 
 export interface Member {
@@ -184,6 +185,8 @@ export interface Guild {
 	icon: string | null;
 	owner_id: string;
 	roles: Role[];
+	/** Language of the server, e.g. `fr`; the panel is written in it. */
+	preferred_locale: string;
 }
 
 /**

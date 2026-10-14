@@ -53,6 +53,7 @@ export const ptBR: Messages = {
 
 	'log.ok': 'Autenticação bem-sucedida',
 	'log.refused': 'Autenticação recusada',
+	'log.revoked': 'Verificação revogada',
 	'log.discord': 'Discord',
 	'log.account': 'Conta 42',
 	'log.campus': 'Campus',

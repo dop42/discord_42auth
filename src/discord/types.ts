@@ -40,6 +40,8 @@ export interface Interaction {
 	guild_id?: string;
 	member?: {
 		user: { id: string };
+		/** Ids of the roles the member holds. */
+		roles: string[];
 		/** Server nickname, null when the member has none. */
 		nick?: string | null;
 		/** Permissions in the invoking channel, as a decimal string of `Permissions` bits. */

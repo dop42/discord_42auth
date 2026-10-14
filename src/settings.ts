@@ -1,4 +1,12 @@
-import { NICKNAME_MODES, type GuildSettings, type NicknameMode } from '../shared/api';
+import {
+	MAX_ROLE_RULES,
+	NICKNAME_MODES,
+	RULE_KINDS,
+	type GuildSettings,
+	type NicknameMode,
+	type RoleRule,
+	type RuleKind,
+} from '../shared/api';
 import { db } from './db/pool';
 import { SNOWFLAKE } from './discord/types';
 
@@ -11,6 +19,7 @@ export const DEFAULTS: GuildSettings = {
 	studentsOnly: true,
 	nickname: 'login',
 	logChannelId: null,
+	roleRules: [],
 };
 
 const CAMPUS_MAX = 64;
@@ -21,6 +30,7 @@ interface Row {
 	students_only: boolean;
 	nickname_mode: NicknameMode;
 	log_channel_id: string | null;
+	role_rules: RoleRule[];
 }
 
 /**
@@ -32,7 +42,8 @@ interface Row {
  */
 export async function getSettings(guildId: string): Promise<GuildSettings> {
 	const { rows } = await db().query<Row>(
-		'SELECT role_id, campus, students_only, nickname_mode, log_channel_id FROM guilds WHERE guild_id = $1',
+		`SELECT role_id, campus, students_only, nickname_mode, log_channel_id, role_rules
+		 FROM guilds WHERE guild_id = $1`,
 		[guildId],
 	);
 	const row = rows[0];
@@ -43,6 +54,7 @@ export async function getSettings(guildId: string): Promise<GuildSettings> {
 		studentsOnly: row.students_only,
 		nickname: row.nickname_mode,
 		logChannelId: row.log_channel_id,
+		roleRules: row.role_rules,
 	};
 }
 
@@ -56,11 +68,12 @@ export async function getSettings(guildId: string): Promise<GuildSettings> {
  */
 export async function saveSettings(guildId: string, settings: GuildSettings): Promise<void> {
 	await db().query(
-		`INSERT INTO guilds (guild_id, role_id, campus, students_only, nickname_mode, log_channel_id)
-		 VALUES ($1, $2, $3, $4, $5, $6)
+		`INSERT INTO guilds
+			(guild_id, role_id, campus, students_only, nickname_mode, log_channel_id, role_rules)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
 		 ON CONFLICT (guild_id) DO UPDATE SET
 			role_id = $2, campus = $3, students_only = $4, nickname_mode = $5,
-			log_channel_id = $6, updated_at = now()`,
+			log_channel_id = $6, role_rules = $7, updated_at = now()`,
 		[
 			guildId,
 			settings.roleId,
@@ -68,6 +81,7 @@ export async function saveSettings(guildId: string, settings: GuildSettings): Pr
 			settings.studentsOnly,
 			settings.nickname,
 			settings.logChannelId,
+			JSON.stringify(settings.roleRules),
 		],
 	);
 }
@@ -88,7 +102,7 @@ export async function deleteGuild(guildId: string): Promise<void> {
 /** Result of `parseSettings`: the settings, or the first field refused. */
 export type Parsed =
 	| { ok: true; settings: GuildSettings }
-	| { ok: false; field: keyof GuildSettings };
+	| { ok: false; field: keyof GuildSettings; index?: number };
 
 /**
  * @author dop42
@@ -122,6 +136,16 @@ export function parseSettings(body: unknown): Parsed {
 		campus = trimmed || null;
 	}
 
+	if (!Array.isArray(input.roleRules) || input.roleRules.length > MAX_ROLE_RULES) {
+		return { ok: false, field: 'roleRules' };
+	}
+	const roleRules: RoleRule[] = [];
+	for (const [index, rule] of (input.roleRules as unknown[]).entries()) {
+		const parsed = parseRule(rule);
+		if (!parsed) return { ok: false, field: 'roleRules', index };
+		roleRules.push(parsed);
+	}
+
 	return {
 		ok: true,
 		settings: {
@@ -130,6 +154,25 @@ export function parseSettings(body: unknown): Parsed {
 			studentsOnly: input.studentsOnly,
 			nickname: input.nickname as NicknameMode,
 			logChannelId: input.logChannelId as string | null,
+			roleRules,
 		},
 	};
+}
+
+/**
+ * @author dop42
+ * @method parseRule
+ * @description Validates one role rule, or returns null.
+ * @param value {unknown}
+ * @returns {RoleRule | null}
+ */
+function parseRule(value: unknown): RoleRule | null {
+	if (typeof value !== 'object' || value === null) return null;
+	const { kind, value: text, roleId } = value as Record<string, unknown>;
+	if (!RULE_KINDS.includes(kind as RuleKind)) return null;
+	if (typeof roleId !== 'string' || !SNOWFLAKE.test(roleId)) return null;
+	if (typeof text !== 'string') return null;
+	const trimmed = text.trim();
+	if (!trimmed || [...trimmed].length > CAMPUS_MAX) return null;
+	return { kind: kind as RuleKind, value: trimmed, roleId };
 }
