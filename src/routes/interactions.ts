@@ -1,31 +1,30 @@
-import { handleAuth } from '../src/commands/auth';
-import { handleConfig } from '../src/commands/config';
-import { AUTH_BUTTON } from '../src/commands/definitions';
-import { handlePanel } from '../src/commands/panel';
-import { ephemeral, json } from '../src/discord/responses';
-import { InteractionResponseType, InteractionType, type Interaction } from '../src/discord/types';
-import { isValidRequest } from '../src/discord/verify';
-import { env } from '../src/env';
-import { resolveLocale, t } from '../src/i18n';
-import { toNodeHandler } from '../src/vercel';
+import { handleAuth } from '../commands/auth';
+import { handleConfig } from '../commands/config';
+import { AUTH_BUTTON } from '../commands/definitions';
+import { handleForget } from '../commands/forget';
+import { handlePanel } from '../commands/panel';
+import { ephemeral, json } from '../discord/responses';
+import { InteractionResponseType, InteractionType, type Interaction } from '../discord/types';
+import { isValidRequest } from '../discord/verify';
+import { env } from '../env';
+import { resolveLocale, t } from '../i18n';
 
 /** How far a signed request may be from our clock before we refuse it. */
 const MAX_SKEW_SECONDS = 5 * 60;
 
 /**
  * @author dop42
- * @method handle
+ * @method handleInteraction
  * @description Answers every Discord interaction, after proving the request came from Discord.
  * @remarks Registered as the Interactions Endpoint URL. Routes the slash commands and the
- * verification panel's button, which is the only way a member starts an authentication. A signature stays valid forever, so
- * freshness is the only thing bounding how long a captured request can be replayed. The
- * guild check should be unreachable, since commands are registered on one guild only; it is
- * there so that inviting the bot elsewhere cannot grant anything. Neither command performs
- * any I/O, which is why Discord's three-second budget is never a concern.
+ * verification panel's button, which is the only way a member starts an authentication. A
+ * signature stays valid forever, so freshness is the only thing bounding how long a captured
+ * request can be replayed. Every server is served from the same endpoint now; what one does
+ * is read from the database by its id, so an interaction outside a server is refused.
  * @param request {Request}
  * @returns {Promise<Response>}
  */
-export async function handle(request: Request): Promise<Response> {
+export async function handleInteraction(request: Request): Promise<Response> {
 	const body = await request.text();
 	const timestamp = request.headers.get('x-signature-timestamp');
 
@@ -50,23 +49,23 @@ export async function handle(request: Request): Promise<Response> {
 
 	const locale = resolveLocale(interaction.locale);
 
-	if (interaction.guild_id !== env.guildId) {
-		return ephemeral(t(locale, 'error.wrongGuild'));
-	}
+	if (!interaction.guild_id) return ephemeral(t(locale, 'error.notInGuild'));
 
 	try {
 		if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
 			if (interaction.data?.custom_id !== AUTH_BUTTON) {
 				throw new Error(`unknown component: ${interaction.data?.custom_id}`);
 			}
-			return handleAuth(interaction);
+			return await handleAuth(interaction);
 		}
 
 		switch (interaction.data?.name) {
 			case 'config':
-				return handleConfig(interaction);
+				return await handleConfig(interaction);
 			case 'panel':
 				return handlePanel(interaction);
+			case 'forget':
+				return await handleForget(interaction);
 			default:
 				throw new Error(`unknown command: ${interaction.data?.name}`);
 		}
@@ -75,5 +74,3 @@ export async function handle(request: Request): Promise<Response> {
 		return ephemeral(t(locale, 'error.unknown'));
 	}
 }
-
-export default toNodeHandler(handle);

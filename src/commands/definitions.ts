@@ -18,8 +18,8 @@ function described(key: MessageKey) {
 /**
  * The commands this bot registers.
  *
- * @remarks Consumed by `npm run register` only. `api/interactions.ts` dispatches on the
- * command name by hand, so a command added here also needs a `case` there. Names stay in
+ * @remarks Consumed by `npm run register` only. `src/routes/interactions.ts` dispatches on
+ * the command name by hand, so a command added here also needs a `case` there. Names stay in
  * English — Discord requires them lowercase and a localized name would make the
  * documentation unusable — while descriptions follow the reader.
  */
@@ -35,5 +35,10 @@ export const commands = [
 		...described('cmd.panel'),
 		dm_permission: false,
 		default_member_permissions: String(Permissions.MANAGE_GUILD),
+	},
+	{
+		name: 'forget',
+		...described('cmd.forget'),
+		dm_permission: false,
 	},
 ];

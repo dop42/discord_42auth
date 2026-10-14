@@ -2,20 +2,28 @@
 	"name": "discord_42auth",
 	"version": "1.0.0",
 	"private": true,
-	"description": "Discord bot (HTTP interactions) authenticating members with their 42 intra account.",
+	"description": "Discord bot authenticating members with their 42 intra account, with a web dashboard. Self-hosted, multi-server.",
 	"license": "MIT",
 	"engines": {
-		"node": ">=20"
+		"node": ">=22"
 	},
 	"scripts": {
-		"test": "tsx scripts/check-locales.ts",
+		"dev": "tsx watch --env-file=.env src/main.ts",
+		"build": "tsc -p tsconfig.build.json",
+		"build:web": "npm --prefix web ci && npm --prefix web run build",
+		"start": "node dist/src/main.js",
+		"test": "tsx scripts/check-locales.ts && tsx --test test/*.test.ts",
 		"register": "tsx scripts/register-commands.ts",
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@types/node": "^22.10.2",
+		"@types/pg": "8.23.1",
 		"dotenv": "^16.4.7",
 		"tsx": "^4.19.2",
 		"typescript": "^5.7.2"
+	},
+	"dependencies": {
+		"pg": "8.23.1"
 	}
 }

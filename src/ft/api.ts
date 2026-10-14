@@ -2,6 +2,8 @@ const FT_API = 'https://api.intra.42.fr';
 
 /** The fields of `/v2/me` this bot reads. The full profile is received; nothing else is kept. */
 export interface FtUser {
+	/** Stable numeric id; a login can be renamed, this cannot. */
+	id: number;
 	login: string;
 	usual_full_name: string;
 	/** False once the account is closed or deactivated. */

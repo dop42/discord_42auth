@@ -1,34 +1,31 @@
-import { addRole, postMessage, setNickname } from '../src/discord/rest';
-import { ComponentType, MessageFlags } from '../src/discord/types';
-import { env } from '../src/env';
-import { fetchMe, primaryCampus } from '../src/ft/api';
-import { exchangeCode, UsedCodeError } from '../src/ft/oauth';
-import { localeFromHeader, t, type MessageKey } from '../src/i18n';
-import { redirectToGuild, renderPage } from '../src/page';
-import { checkEligibility, nicknameFor, type Eligibility } from '../src/rules';
-import { getSettings } from '../src/settings';
-import { readState, type AuthState } from '../src/state';
-import { toNodeHandler } from '../src/vercel';
+import { addRole, getMember, postMessage, setNickname } from '../discord/rest';
+import { ComponentType, MessageFlags } from '../discord/types';
+import { fetchMe, primaryCampus, type FtUser } from '../ft/api';
+import { exchangeCode, UsedCodeError } from '../ft/oauth';
+import { localeFromHeader, t, type MessageKey } from '../i18n';
+import { deleteLink, findByFtAccount, saveLink } from '../links';
+import { redirectToGuild, renderPage } from '../page';
+import { checkEligibility, nicknameFor, type Eligibility } from '../rules';
+import { getSettings } from '../settings';
+import { readState, type AuthState } from '../state';
 
 /** The refusing arm of `Eligibility`, as the audit log receives it. */
 type Refusal = Extract<Eligibility, { ok: false }>;
 
 /**
  * @author dop42
- * @method handle
+ * @method handleCallback
  * @description Completes a verification: exchanges the code, checks the account, grants the role.
  * @remarks Registered as the redirect URI of the 42 application. The signed state says which
- * Discord member started the flow and in which language to answer; the code proves which 42
- * account they own. Nothing else the browser sends decides anything: `error` and
- * `Accept-Language` only choose which page is shown, the latter standing in when no state
- * names the member. The guild is re-checked even though `createState` can only ever sign
- * this one, so two deployments sharing a `STATE_SECRET` cannot honour each other's links.
- * The nickname is built before the grant because it is pure: a throw after `addRole` would
- * tell the member the authentication failed while they already hold the role.
+ * Discord member started the flow, in which server and in which language to answer; the code
+ * proves which 42 account they own. Nothing else the browser sends decides anything: `error`
+ * and `Accept-Language` only choose which page is shown. The link is saved before the role is
+ * granted, so a member never holds the role without the record that justifies it; the
+ * nickname is built before both because it is pure, so a throw cannot follow a grant.
  * @param request {Request}
  * @returns {Promise<Response>}
  */
-export async function handle(request: Request): Promise<Response> {
+export async function handleCallback(request: Request): Promise<Response> {
 	const params = new URL(request.url).searchParams;
 	const state = readState(params.get('state'));
 	const locale = state?.locale ?? localeFromHeader(request.headers.get('accept-language'));
@@ -41,12 +38,12 @@ export async function handle(request: Request): Promise<Response> {
 	}
 
 	const code = params.get('code');
-	if (!state || !code || state.guildId !== env.guildId) {
+	if (!state || !code) {
 		return page('page.invalid.title', 'page.invalid.body');
 	}
 
 	try {
-		const settings = getSettings();
+		const settings = await getSettings(state.guildId);
 		if (!settings.roleId) {
 			return page('page.notConfigured.title', 'page.notConfigured.body');
 		}
@@ -54,7 +51,8 @@ export async function handle(request: Request): Promise<Response> {
 		const user = await fetchMe(await exchangeCode(code));
 		const campus = primaryCampus(user)?.name;
 
-		const eligibility = checkEligibility(user, settings);
+		let eligibility = checkEligibility(user, settings);
+		if (eligibility.ok) eligibility = await claimAccount(state, user);
 		if (!eligibility.ok) {
 			await audit(settings.logChannelId, state, user.login, campus, eligibility);
 			return renderPage(
@@ -66,6 +64,7 @@ export async function handle(request: Request): Promise<Response> {
 
 		const nick = nicknameFor(user, settings);
 
+		await saveLink({ guildId: state.guildId, userId: state.userId, ftId: user.id, ftLogin: user.login });
 		await addRole(state.guildId, state.userId, settings.roleId);
 		await audit(settings.logChannelId, state, user.login, campus);
 		if (nick) await setNickname(state.guildId, state.userId, nick);
@@ -81,12 +80,35 @@ export async function handle(request: Request): Promise<Response> {
 
 /**
  * @author dop42
+ * @method claimAccount
+ * @description Makes sure a 42 account vouches for one member per server only.
+ * @remarks A 42 account already linked to another member is refused while that member is
+ * still in the server, so one student cannot let a second Discord account in. Once they have
+ * left, the old link is stale and released: that is how a student who lost their Discord
+ * account gets back in without an admin. The same member verifying again passes untouched.
+ * @param state {AuthState}
+ * @param user {FtUser}
+ * @returns {Promise<Eligibility>}
+ */
+async function claimAccount(state: AuthState, user: FtUser): Promise<Eligibility> {
+	const holder = await findByFtAccount(state.guildId, user.id);
+	if (!holder || holder.userId === state.userId) return { ok: true };
+	if (await getMember(state.guildId, holder.userId)) {
+		return { ok: false, reason: 'rule.alreadyLinked' };
+	}
+	await deleteLink(state.guildId, holder.userId);
+	return { ok: true };
+}
+
+/**
+ * @author dop42
  * @method audit
- * @description Records one attempt, accepted or refused, in the log channel.
+ * @description Records one attempt, accepted or refused, in the server's log channel.
  * @remarks Uses the server's language rather than the member's: this line is written for
  * the admins reading it. Mentions are disabled so the Discord id shows for the trail
- * without pinging anyone. Skipped entirely when no log channel is configured.
- * @param channelId {string | undefined}
+ * without pinging anyone. Skipped entirely when no log channel is configured. These messages
+ * are kept by Discord, under the server admins' control, not in this database.
+ * @param channelId {string | null}
  * @param state {AuthState}
  * @param login {string}
  * @param campus {string | undefined}
@@ -94,7 +116,7 @@ export async function handle(request: Request): Promise<Response> {
  * @returns {Promise<void>}
  */
 async function audit(
-	channelId: string | undefined,
+	channelId: string | null,
 	state: AuthState,
 	login: string,
 	campus: string | undefined,
@@ -135,5 +157,3 @@ async function audit(
 		],
 	});
 }
-
-export default toNodeHandler(handle);

@@ -1,30 +1,30 @@
+import { canManage } from '../discord/permissions';
 import { ephemeral } from '../discord/responses';
-import { Permissions, type Interaction } from '../discord/types';
+import type { Interaction } from '../discord/types';
+import { env } from '../env';
 import { resolveLocale, t } from '../i18n';
 import { getSettings, type Settings } from '../settings';
 
 /**
  * @author dop42
  * @method handleConfig
- * @description Answers `/config` with what this deployment is set to.
+ * @description Answers `/config` with what this server is set to, and where to change it.
  * @remarks The permission is re-tested here because `default_member_permissions` can be
- * overridden per guild. Administrator is accepted on its own rather than trusting Discord
- * to have expanded it into every other bit.
+ * overridden per server.
  * @param interaction {Interaction}
- * @returns {Response}
+ * @returns {Promise<Response>}
  * @throws {Error}
  */
-export function handleConfig(interaction: Interaction): Response {
+export async function handleConfig(interaction: Interaction): Promise<Response> {
 	const locale = resolveLocale(interaction.locale);
-	const permissions = BigInt(interaction.member?.permissions ?? '0');
-	if (!interaction.guild_id) return ephemeral(t(locale, 'error.notInGuild'));
+	const guildId = interaction.guild_id;
+	if (!guildId) return ephemeral(t(locale, 'error.notInGuild'));
 
-	const allowed = Permissions.ADMINISTRATOR | Permissions.MANAGE_GUILD;
-	if ((permissions & allowed) === 0n) {
+	if (!canManage(BigInt(interaction.member?.permissions ?? '0'))) {
 		return ephemeral(t(locale, 'config.noPermission'));
 	}
 
-	return ephemeral(formatSettings(getSettings(), locale));
+	return ephemeral(formatSettings(await getSettings(guildId), guildId, locale));
 }
 
 /**
@@ -32,10 +32,11 @@ export function handleConfig(interaction: Interaction): Response {
  * @method formatSettings
  * @description Renders the settings as the message `/config` displays.
  * @param settings {Settings}
+ * @param guildId {string}
  * @param locale {string}
  * @returns {string}
  */
-function formatSettings(settings: Settings, locale: string): string {
+function formatSettings(settings: Settings, guildId: string, locale: string): string {
 	const nickname = {
 		off: t(locale, 'show.nickname.off'),
 		login: t(locale, 'show.nickname.login'),
@@ -54,6 +55,6 @@ function formatSettings(settings: Settings, locale: string): string {
 		`**${t(locale, 'show.nickname')}** — ${nickname}`,
 		`**${t(locale, 'show.logs')}** — ${logs}`,
 		'',
-		`-# ${t(locale, 'show.hint')}`,
+		`-# ${t(locale, 'show.hint', { url: `${env.publicUrl}/guilds/${guildId}` })}`,
 	].join('\n');
 }

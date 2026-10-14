@@ -23,7 +23,7 @@ export class UsedCodeError extends Error {}
 export function authorizeUrl(state: string): string {
 	const params = new URLSearchParams({
 		client_id: env.ftClientId,
-		redirect_uri: env.redirectUri,
+		redirect_uri: env.ftRedirectUri,
 		response_type: 'code',
 		scope: 'public',
 		state,
@@ -54,7 +54,7 @@ export async function exchangeCode(code: string): Promise<string> {
 			client_id: env.ftClientId,
 			client_secret: env.ftClientSecret,
 			code,
-			redirect_uri: env.redirectUri,
+			redirect_uri: env.ftRedirectUri,
 		}),
 	});
 	if (!response.ok) {

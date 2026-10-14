@@ -1,5 +1,6 @@
 import { componentMessage, ephemeral } from '../discord/responses';
 import { ButtonStyle, ComponentType, type Interaction } from '../discord/types';
+import { env } from '../env';
 import { authorizeUrl } from '../ft/oauth';
 import { resolveLocale, t } from '../i18n';
 import { getSettings } from '../settings';
@@ -11,18 +12,19 @@ import { createState } from '../state';
  * @description Hands the member a personal, short-lived verification link.
  * @remarks Reached by pressing the panel button. The reply is ephemeral because the link is
  * a credential: whoever completes the 42 login on it grants the role to this member, not to
- * themselves.
+ * themselves. It is also where the member is told what is kept about them before they act,
+ * which is the information the GDPR requires at collection time.
  * @param interaction {Interaction}
- * @returns {Response}
+ * @returns {Promise<Response>}
  * @throws {Error}
  */
-export function handleAuth(interaction: Interaction): Response {
+export async function handleAuth(interaction: Interaction): Promise<Response> {
 	const locale = resolveLocale(interaction.locale);
 	const guildId = interaction.guild_id;
 	const member = interaction.member;
 	if (!guildId || !member) return ephemeral(t(locale, 'error.notInGuild'));
 
-	if (!getSettings().roleId) return ephemeral(t(locale, 'auth.notConfigured'));
+	if (!(await getSettings(guildId)).roleId) return ephemeral(t(locale, 'auth.notConfigured'));
 
 	const state = createState({
 		guildId,
@@ -37,6 +39,10 @@ export function handleAuth(interaction: Interaction): Response {
 				type: ComponentType.CONTAINER,
 				components: [
 					{ type: ComponentType.TEXT_DISPLAY, content: t(locale, 'auth.notice') },
+					{
+						type: ComponentType.TEXT_DISPLAY,
+						content: `-# ${t(locale, 'auth.privacy', { privacy: `${env.publicUrl}/privacy` })}`,
+					},
 					{
 						type: ComponentType.ACTION_ROW,
 						components: [

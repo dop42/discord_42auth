@@ -7,17 +7,34 @@
  * @throws {Error}
  */
 function required(name: string): string {
-	const value = process.env[name];
+	const value = process.env[name]?.trim();
 	if (!value) throw new Error(`Missing environment variable: ${name}`);
 	return value;
 }
 
 /**
- * Credentials and deployment URLs.
+ * @author dop42
+ * @method secret
+ * @description Reads a random secret, refusing one too short to be one.
+ * @param name {string}
+ * @returns {string}
+ * @throws {Error}
+ */
+function secret(name: string): string {
+	const value = required(name);
+	if (value.length < 32) {
+		throw new Error(`${name} must be at least 32 characters: openssl rand -hex 32`);
+	}
+	return value;
+}
+
+/**
+ * Credentials, deployment URLs and the operator's identity.
  *
- * @remarks Read through getters so that importing a module never fails at build time —
- * only the code paths actually needing a variable complain when it is missing. Every getter
- * here can therefore throw; callers do not repeat that in their own `@throws`.
+ * @remarks Read through getters so that importing a module never fails — only the code paths
+ * actually needing a variable complain when it is missing. Every getter here can therefore
+ * throw; callers do not repeat that in their own `@throws`. What each Discord server does is
+ * not here any more: it lives in the database and is edited from the dashboard.
  */
 export const env = {
 	get discordAppId() {
@@ -29,9 +46,9 @@ export const env = {
 	get discordBotToken() {
 		return required('DISCORD_BOT_TOKEN');
 	},
-	/** The one server this deployment serves. Commands are registered there only. */
-	get guildId() {
-		return required('GUILD_ID');
+	/** OAuth2 secret of the same Discord application, for the dashboard login. */
+	get discordClientSecret() {
+		return required('DISCORD_CLIENT_SECRET');
 	},
 	get ftClientId() {
 		return required('FT_CLIENT_ID');
@@ -41,24 +58,39 @@ export const env = {
 	},
 	/** HMAC key for the verification links. Rotating it invalidates every link already handed out. */
 	get stateSecret() {
-		const secret = required('STATE_SECRET');
-		if (secret.length < 32) {
-			throw new Error('STATE_SECRET must be at least 32 characters: openssl rand -hex 32');
-		}
-		return secret;
+		return secret('STATE_SECRET');
+	},
+	/** `postgres://user:password@host:5432/db`. */
+	get databaseUrl() {
+		return required('DATABASE_URL');
 	},
 
-	/** Public base URL of the deployment, without a trailing slash. */
+	/** Public base URL of the instance, without a trailing slash. */
 	get publicUrl() {
-		const explicit = process.env.PUBLIC_URL;
-		if (explicit) return explicit.replace(/\/$/, '');
-		const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-		if (vercel) return `https://${vercel}`;
-		throw new Error('Missing environment variable: PUBLIC_URL');
+		return required('PUBLIC_URL').replace(/\/$/, '');
+	},
+	/** Port the HTTP server listens on, behind the reverse proxy. */
+	get port() {
+		return Number(process.env.PORT ?? 3000);
 	},
 
-	/** URL registered as the redirect URI of the 42 OAuth application. */
-	get redirectUri() {
+	/** Redirect URI of the 42 OAuth application. */
+	get ftRedirectUri() {
 		return `${this.publicUrl}/api/callback`;
+	},
+	/** Redirect URI of the Discord OAuth2 dashboard login. */
+	get discordRedirectUri() {
+		return `${this.publicUrl}/auth/callback`;
+	},
+
+	/** Who runs the instance and answers data-protection requests; shown on /privacy. */
+	get operatorName() {
+		return required('OPERATOR_NAME');
+	},
+	get operatorContact() {
+		return required('OPERATOR_CONTACT');
+	},
+	get hosting() {
+		return required('HOSTING_LOCATION');
 	},
 };

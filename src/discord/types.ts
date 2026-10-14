@@ -23,13 +23,25 @@ export const ComponentType = {
 export const ButtonStyle = { PRIMARY: 1, LINK: 5 } as const;
 
 /** Permission bits this bot checks or requires. */
-export const Permissions = { ADMINISTRATOR: 1n << 3n, MANAGE_GUILD: 1n << 5n } as const;
+export const Permissions = {
+	ADMINISTRATOR: 1n << 3n,
+	MANAGE_GUILD: 1n << 5n,
+	VIEW_CHANNEL: 1n << 10n,
+	SEND_MESSAGES: 1n << 11n,
+	MANAGE_NICKNAMES: 1n << 27n,
+	MANAGE_ROLES: 1n << 28n,
+} as const;
+
+/** Channel types the audit log can be posted in: text and announcement. */
+export const TEXT_CHANNEL_TYPES = new Set([0, 5]);
 
 export interface Interaction {
 	type: number;
 	guild_id?: string;
 	member?: {
 		user: { id: string };
+		/** Server nickname, null when the member has none. */
+		nick?: string | null;
 		/** Permissions in the invoking channel, as a decimal string of `Permissions` bits. */
 		permissions: string;
 	};
