@@ -105,6 +105,42 @@ them to survive a disk failure; keep the passphrase somewhere else.
 
 ---
 
+## Without Docker (systemd)
+
+The same instance runs fine as a plain systemd service, which is how the reference
+instance is hosted. One-time setup on a Debian server, as root:
+
+```bash
+apt install postgresql caddy git gnupg
+useradd --system --home-dir /srv/discord_42auth --shell /usr/sbin/nologin auth42
+mkdir -p /srv/discord_42auth
+su postgres -c "createuser auth42 && createdb -O auth42 discord_42auth"
+# Node 22 for root through nvm: the deploy script builds with it.
+```
+
+`/srv/discord_42auth/.env`, owned `root:auth42`, mode `640`: the variables of
+`.env.example`, with the database reached over the local socket, so no password
+exists at all:
+
+```dotenv
+DATABASE_URL=postgresql://auth42@/discord_42auth?host=/var/run/postgresql
+```
+
+Caddy: the `Caddyfile` of this repository with the domain written in, proxying to
+`127.0.0.1:3000`. Then, from your machine:
+
+```bash
+./scripts/deploy.sh <ssh-host>
+```
+
+It sends the committed `HEAD`, builds it on the server, installs
+`deploy/discord_42auth.service`, swaps the new version in and restarts it. If
+`/health` does not answer within 30 seconds, the previous version is put back.
+Logs: `journalctl -u discord_42auth`. The service runs as `auth42`, cannot write
+anywhere, and holds no capability.
+
+---
+
 ## For server admins
 
 1. Open the dashboard, log in with Discord. Only servers where you have

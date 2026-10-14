@@ -1,0 +1,38 @@
+# Service systemd du bot, pour un hébergement sans Docker. Installé par scripts/deploy.sh.
+# Logs : journalctl -u discord_42auth
+[Unit]
+Description=discord_42auth — Discord bot and dashboard
+After=network-online.target postgresql.service
+Wants=network-online.target
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=auth42
+Group=auth42
+WorkingDirectory=/srv/discord_42auth/app
+ExecStart=/usr/local/bin/node --env-file=/srv/discord_42auth/.env dist/src/main.js
+Restart=on-failure
+RestartSec=5
+# Laisse le temps de finir les vérifications en cours (le serveur se ferme proprement sur SIGTERM).
+TimeoutStopSec=15
+
+# Le bot ne lit que son code et son .env, n'écrit nulle part, et ne parle qu'au réseau.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+MemoryMax=400M
+
+[Install]
+WantedBy=multi-user.target
