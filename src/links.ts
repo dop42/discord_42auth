@@ -7,14 +7,7 @@ export interface Link {
 	ftLogin: string;
 }
 
-/**
- * @author dop42
- * @method findByFtAccount
- * @description Returns the member a 42 account is linked to in one server, if any.
- * @param guildId {string}
- * @param ftId {number}
- * @returns {Promise<Link | undefined>}
- */
+/** Returns the member a 42 account is linked to in one server, if any. */
 export async function findByFtAccount(guildId: string, ftId: number): Promise<Link | undefined> {
 	const { rows } = await db().query<{ user_id: string; ft_login: string }>(
 		'SELECT user_id, ft_login FROM links WHERE guild_id = $1 AND ft_id = $2',
@@ -24,14 +17,7 @@ export async function findByFtAccount(guildId: string, ftId: number): Promise<Li
 	return row && { guildId, userId: row.user_id, ftId, ftLogin: row.ft_login };
 }
 
-/**
- * @author dop42
- * @method findByMember
- * @description Returns the 42 account a member is linked to in one server, if any.
- * @param guildId {string}
- * @param userId {string}
- * @returns {Promise<Link | undefined>}
- */
+/** Returns the 42 account a member is linked to in one server, if any. */
 export async function findByMember(guildId: string, userId: string): Promise<Link | undefined> {
 	const { rows } = await db().query<{ ft_id: number; ft_login: string }>(
 		'SELECT ft_id, ft_login FROM links WHERE guild_id = $1 AND user_id = $2',
@@ -42,14 +28,10 @@ export async function findByMember(guildId: string, userId: string): Promise<Lin
 }
 
 /**
- * @author dop42
- * @method saveLink
- * @description Records that a member proved a 42 account, replacing their previous link.
+ * Records that a member proved a 42 account, replacing their previous link.
  * @remarks A member verifying again with another 42 account moves their link rather than
  * holding two. The `(guild_id, ft_id)` uniqueness is enforced by the database: the caller
  * must have released the 42 account from any other member first.
- * @param link {Link}
- * @returns {Promise<void>}
  */
 export async function saveLink(link: Link): Promise<void> {
 	await db().query(
@@ -61,12 +43,8 @@ export async function saveLink(link: Link): Promise<void> {
 }
 
 /**
- * @author dop42
- * @method deleteLink
- * @description Forgets one member's link in one server.
- * @param guildId {string}
- * @param userId {string}
- * @returns {Promise<boolean>} whether there was one
+ * Forgets one member's link in one server.
+ * @returns whether there was one
  */
 export async function deleteLink(guildId: string, userId: string): Promise<boolean> {
 	const { rowCount } = await db().query('DELETE FROM links WHERE guild_id = $1 AND user_id = $2', [
@@ -76,13 +54,7 @@ export async function deleteLink(guildId: string, userId: string): Promise<boole
 	return (rowCount ?? 0) > 0;
 }
 
-/**
- * @author dop42
- * @method countLinks
- * @description Counts the members linked in one server, for the dashboard.
- * @param guildId {string}
- * @returns {Promise<number>}
- */
+/** Counts the members linked in one server, for the dashboard. */
 export async function countLinks(guildId: string): Promise<number> {
 	const { rows } = await db().query<{ count: string }>(
 		'SELECT count(*) FROM links WHERE guild_id = $1',
@@ -95,14 +67,9 @@ export async function countLinks(guildId: string): Promise<number> {
 export const PAGE_SIZE = 50;
 
 /**
- * @author dop42
- * @method listLinks
- * @description Lists the members linked in one server, newest first, for the members tab.
+ * Lists the members linked in one server, newest first, for the members tab.
  * @remarks `query` matches anywhere in the 42 login, or a whole Discord id.
- * @param guildId {string}
- * @param query {string}
- * @param page {number} from 0
- * @returns {Promise<{ links: Array<Link & { verifiedAt: Date }>; total: number }>}
+ * @param page from 0
  */
 export async function listLinks(
 	guildId: string,

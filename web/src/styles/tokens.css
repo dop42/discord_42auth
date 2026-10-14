@@ -1,4 +1,4 @@
-/* Noir, blanc et gris. Les accents jouent sur l'intensité et les dégradés, jamais sur la teinte.
+/* Noir, blanc et gris. Les accents jouent sur l'intensité et les dégradés ; seul le danger porte une teinte.
    Thème clair par défaut ; le sombre suit le système, sauf choix explicite (data-theme sur <html>). */
 :root {
 	--font-display: 'Unbounded Variable', 'Unbounded', system-ui, sans-serif;
@@ -39,7 +39,7 @@
 	--danger: #e11d48;
 	--danger-soft: #fff1f2;
 
-	/* Les dégradés qui changent de sens avec le thème. */
+	/* Les dégradés, redéfinis par thème. */
 	--switch-on: linear-gradient(135deg, #0a0a0a, #404040);
 	--line: linear-gradient(90deg, #0a0a0a, #a3a3a3, #e5e5e5, #525252, #0a0a0a);
 	--ping: radial-gradient(circle at 35% 35%, #737373, #0a0a0a);

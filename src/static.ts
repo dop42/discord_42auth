@@ -34,14 +34,10 @@ const PAGE_HEADERS = {
 };
 
 /**
- * @author dop42
- * @method serveStatic
- * @description Serves the built dashboard, falling back to `index.html` for its routes.
+ * Serves the built dashboard, falling back to `index.html` for its routes.
  * @remarks A path resolving outside the build directory is refused before touching the disk.
  * Hashed assets are immutable and cached for a year; `index.html` is never cached, so a new
  * build reaches browsers on the next load.
- * @param request {Request}
- * @returns {Promise<Response>}
  */
 export async function serveStatic(request: Request): Promise<Response> {
 	if (request.method !== 'GET' && request.method !== 'HEAD') {

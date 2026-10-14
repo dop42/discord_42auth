@@ -18,17 +18,12 @@ const TITLES = { ok: 'log.ok', refused: 'log.refused', revoked: 'log.revoked' } 
 const COLORS = { ok: 0x57f287, refused: 0xed4245, revoked: 0xe67e22 } as const;
 
 /**
- * @author dop42
- * @method audit
- * @description Records one event in the server's log channel.
+ * Records one event in the server's log channel.
  * @remarks Uses the server's language rather than the member's: this line is written for
  * the admins reading it. Mentions are disabled so the Discord id shows for the trail
  * without pinging anyone. Skipped entirely when no log channel is configured. These messages
  * are kept by Discord, under the server admins' control, not in this database.
- * @param channelId {string | null}
- * @param locale {string} the server's language
- * @param entry {AuditEntry}
- * @returns {Promise<void>}
+ * @param locale the server's language
  */
 export async function audit(channelId: string | null, locale: string, entry: AuditEntry): Promise<void> {
 	if (!channelId) return;

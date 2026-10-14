@@ -4,14 +4,10 @@ import { isIP } from 'node:net';
 export const PEER_HEADER = 'x-peer-address';
 
 /**
- * @author dop42
- * @method isProxy
- * @description Tells whether the TCP peer is a proxy we run, whose `X-Forwarded-For` we trust.
+ * Tells whether the TCP peer is a proxy we run, whose `X-Forwarded-For` we trust.
  * @remarks The instance binds loopback (`HOST`), so under systemd only Caddy on the same
  * machine reaches it; under Docker the peer is the compose network's private address. A
  * public peer is a client speaking directly, and its forwarding header is a lie it chose.
- * @param address {string}
- * @returns {boolean}
  */
 function isProxy(address: string): boolean {
 	const ip = address.replace(/^::ffff:/, '');
@@ -23,14 +19,10 @@ function isProxy(address: string): boolean {
 }
 
 /**
- * @author dop42
- * @method clientAddress
- * @description Returns the address a request comes from, as far as it can be trusted.
+ * Returns the address a request comes from, as far as it can be trusted.
  * @remarks Behind our proxy, the last `X-Forwarded-For` entry is the one the proxy itself
  * appended; anything before it was sent by the client. The address is held in memory for a
  * minute to count requests, and never logged nor stored.
- * @param request {Request}
- * @returns {string}
  */
 export function clientAddress(request: Request): string {
 	const peer = request.headers.get(PEER_HEADER) ?? '';
@@ -57,12 +49,8 @@ export class RateLimiter {
 	) {}
 
 	/**
-	 * @author dop42
-	 * @method take
-	 * @description Counts one request for a key.
-	 * @param key {string}
-	 * @param now {number}
-	 * @returns {number} 0 when allowed, otherwise the seconds to wait
+	 * Counts one request for a key.
+	 * @returns 0 when allowed, otherwise the seconds to wait
 	 */
 	take(key: string, now = Date.now()): number {
 		if (this.windows.size > 10_000) {
@@ -86,13 +74,9 @@ const logins = new RateLimiter(20, 60_000);
 const api = new RateLimiter(120, 60_000);
 
 /**
- * @author dop42
- * @method limit
- * @description Refuses a request over its address's budget, or returns null to let it through.
+ * Refuses a request over its address's budget, or returns null to let it through.
  * @remarks Discord's interactions are signed and come from Discord's own addresses, so they
  * are left alone, as are the static files.
- * @param request {Request}
- * @returns {Response | null}
  */
 export function limit(request: Request): Response | null {
 	const { pathname } = new URL(request.url);

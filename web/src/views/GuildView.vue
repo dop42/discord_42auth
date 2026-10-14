@@ -108,14 +108,16 @@ async function onErased(): Promise<void> {
 				:to="{ name: 'guild', params: { id } }"
 				:class="['tab', { 'tab--on': tab === 'settings' }]"
 				:aria-current="tab === 'settings' ? 'page' : undefined"
-				>{{ prefs.t['tabs.settings'] }}</RouterLink
-			>
+				>{{ prefs.t['tabs.settings']
+				}}<span v-if="tab === 'settings'" class="tab__line sheen-line" aria-hidden="true"
+			/></RouterLink>
 			<RouterLink
 				:to="{ name: 'members', params: { id } }"
 				:class="['tab', { 'tab--on': tab === 'members' }]"
 				:aria-current="tab === 'members' ? 'page' : undefined"
-				>{{ prefs.t['tabs.members'] }}</RouterLink
-			>
+				>{{ prefs.t['tabs.members']
+				}}<span v-if="tab === 'members'" class="tab__line sheen-line" aria-hidden="true"
+			/></RouterLink>
 		</nav>
 
 		<template v-if="tab === 'settings'">
@@ -174,19 +176,15 @@ async function onErased(): Promise<void> {
 }
 
 /* Le trait de l'onglet actif reprend le dégradé de l'en-tête. */
-.tab--on::after {
-	content: '';
+.tab__line {
 	position: absolute;
 	right: 1rem;
 	bottom: -1px;
 	left: 1rem;
 	height: 2px;
-	background: var(--line);
-	background-size: 200% 100%;
-	animation: sheen-slide 4s linear infinite;
 }
 
-.tab--on:first-child::after {
+.tab:first-child .tab__line {
 	left: 0;
 }
 

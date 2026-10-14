@@ -33,13 +33,7 @@ interface Row {
 	role_rules: RoleRule[];
 }
 
-/**
- * @author dop42
- * @method getSettings
- * @description Reads what one server does, or the defaults when it was never configured.
- * @param guildId {string}
- * @returns {Promise<GuildSettings>}
- */
+/** Reads what one server does, or the defaults when it was never configured. */
 export async function getSettings(guildId: string): Promise<GuildSettings> {
 	const { rows } = await db().query<Row>(
 		`SELECT role_id, campus, students_only, nickname_mode, log_channel_id, role_rules
@@ -58,14 +52,7 @@ export async function getSettings(guildId: string): Promise<GuildSettings> {
 	};
 }
 
-/**
- * @author dop42
- * @method saveSettings
- * @description Creates or replaces the settings of one server.
- * @param guildId {string}
- * @param settings {GuildSettings}
- * @returns {Promise<void>}
- */
+/** Creates or replaces the settings of one server. */
 export async function saveSettings(guildId: string, settings: GuildSettings): Promise<void> {
 	await db().query(
 		`INSERT INTO guilds
@@ -87,13 +74,9 @@ export async function saveSettings(guildId: string, settings: GuildSettings): Pr
 }
 
 /**
- * @author dop42
- * @method deleteGuild
- * @description Erases everything kept about one server: its settings and every link made there.
+ * Erases everything kept about one server: its settings and every link made there.
  * @remarks Used when an admin asks for it from the dashboard and when the sweeper finds the
  * bot was removed. The links go with the row through `ON DELETE CASCADE`.
- * @param guildId {string}
- * @returns {Promise<void>}
  */
 export async function deleteGuild(guildId: string): Promise<void> {
 	await db().query('DELETE FROM guilds WHERE guild_id = $1', [guildId]);
@@ -105,14 +88,10 @@ export type Parsed =
 	| { ok: false; field: keyof GuildSettings; index?: number };
 
 /**
- * @author dop42
- * @method parseSettings
- * @description Validates settings sent by the dashboard, shape only.
+ * Validates settings sent by the dashboard, shape only.
  * @remarks Whether the role and the channel exist in the server is checked by the caller,
  * which has the server's lists at hand. Ids end up interpolated into REST paths, so anything
  * but a bare snowflake is refused here. A blank campus means "any".
- * @param body {unknown}
- * @returns {Parsed}
  */
 export function parseSettings(body: unknown): Parsed {
 	if (typeof body !== 'object' || body === null) return { ok: false, field: 'roleId' };
@@ -159,13 +138,7 @@ export function parseSettings(body: unknown): Parsed {
 	};
 }
 
-/**
- * @author dop42
- * @method parseRule
- * @description Validates one role rule, or returns null.
- * @param value {unknown}
- * @returns {RoleRule | null}
- */
+/** Validates one role rule, or returns null. */
 function parseRule(value: unknown): RoleRule | null {
 	if (typeof value !== 'object' || value === null) return null;
 	const { kind, value: text, roleId } = value as Record<string, unknown>;

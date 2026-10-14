@@ -11,9 +11,7 @@ import { getSettings } from '../settings';
 import { readState, type AuthState } from '../state';
 
 /**
- * @author dop42
- * @method handleCallback
- * @description Completes a verification: exchanges the code, checks the account, grants the role.
+ * Completes a verification: exchanges the code, checks the account, grants the role.
  * @remarks Registered as the redirect URI of the 42 application. The signed state says which
  * Discord member started the flow, in which server and in which language to answer; the code
  * proves which 42 account they own. Nothing else the browser sends decides anything: `error`
@@ -22,8 +20,6 @@ import { readState, type AuthState } from '../state';
  * nickname is built before both because it is pure, so a throw cannot follow a grant. The
  * rule roles come after the verified role and are best-effort: the weekly re-check
  * completes whatever failed.
- * @param request {Request}
- * @returns {Promise<Response>}
  */
 export async function handleCallback(request: Request): Promise<Response> {
 	const params = new URL(request.url).searchParams;
@@ -93,16 +89,11 @@ export async function handleCallback(request: Request): Promise<Response> {
 }
 
 /**
- * @author dop42
- * @method claimAccount
- * @description Makes sure a 42 account vouches for one member per server only.
+ * Makes sure a 42 account vouches for one member per server only.
  * @remarks A 42 account already linked to another member is refused while that member is
  * still in the server, so one student cannot let a second Discord account in. Once they have
  * left, the old link is stale and released: that is how a student who lost their Discord
  * account gets back in without an admin. The same member verifying again passes untouched.
- * @param state {AuthState}
- * @param user {FtUser}
- * @returns {Promise<Eligibility>}
  */
 async function claimAccount(state: AuthState, user: FtUser): Promise<Eligibility> {
 	const holder = await findByFtAccount(state.guildId, user.id);

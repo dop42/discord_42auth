@@ -107,7 +107,7 @@ ol {
 	white-space: nowrap;
 }
 
-/* En-tête de section partagé : titre gras + chapeau léger, comme sur unbbound. */
+/* En-tête de section partagé : titre gras + chapeau léger. */
 .section-head {
 	display: flex;
 	flex-direction: column;
@@ -133,7 +133,7 @@ ol {
 	font-weight: 700;
 }
 
-/* Reflet liquide : deux couches de nappes colorées, plus grandes que l'élément, qui tournent
+/* Reflet liquide : deux couches de nappes de gris, plus grandes que l'élément, qui tournent
    en sens opposés et gonflent légèrement. Seuls transform et opacity bougent : fluide, même sur mobile. */
 .liquid {
 	position: relative;
@@ -185,16 +185,32 @@ ol {
 	animation-direction: reverse;
 }
 
-/* Version légère pour les grandes zones et les traits : un dégradé qui glisse, sans calque géant. */
-.sheen-line,
-.sheen-wash {
-	/* Trait : de l'encre qui s'éclaircit et revient, en boucle. */
-	background-image: var(--line);
-	background-size: 200% 100%;
-	animation: sheen-slide 4s linear infinite;
+/* Trait : de l'encre qui s'éclaircit et revient, en boucle. Le dégradé est peint une fois sur
+   un calque quatre fois plus large qui glisse en transform : aucun repaint, même sur un trait
+   affiché en permanence. L'élément doit être positionné (absolute ou relative). */
+.sheen-line {
+	overflow: hidden;
 }
 
+.sheen-line::before {
+	content: '';
+	position: absolute;
+	inset: 0 auto 0 0;
+	width: 400%;
+	background: var(--line);
+	background-size: 50% 100%;
+	animation: sheen-line-slide 4s linear infinite;
+}
+
+@keyframes sheen-line-slide {
+	to {
+		transform: translateX(-50%);
+	}
+}
+
+/* Grandes zones : un dégradé qui glisse, joué seulement au survol (voir .wash). */
 .sheen-wash {
+	animation: sheen-slide 6s linear infinite;
 	background-image: linear-gradient(
 		115deg,
 		var(--sheen-1),
@@ -205,7 +221,6 @@ ol {
 		var(--sheen-1)
 	);
 	background-size: 200% 200%;
-	animation-duration: 6s;
 }
 
 @keyframes sheen-slide {
@@ -240,7 +255,7 @@ ol {
 @media (prefers-reduced-motion: reduce) {
 	.liquid::before,
 	.liquid::after,
-	.sheen-line,
+	.sheen-line::before,
 	.sheen-wash {
 		animation: none !important;
 	}

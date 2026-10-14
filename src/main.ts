@@ -6,12 +6,9 @@ import { route } from './server';
 import { startSweeper } from './sweeper';
 
 /**
- * @author dop42
- * @method main
- * @description Migrates the database, then serves until told to stop.
+ * Migrates the database, then serves until told to stop.
  * @remarks On SIGTERM the server stops accepting connections and finishes the ones in
  * flight before the pool is closed, so a restart never cuts a verification in half.
- * @returns {Promise<void>}
  */
 async function main(): Promise<void> {
 	const applied = await migrate();

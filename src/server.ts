@@ -5,15 +5,11 @@ import { handleInteraction } from './routes/interactions';
 import { serveStatic } from './static';
 
 /**
- * @author dop42
- * @method route
- * @description Dispatches every request the instance receives.
+ * Dispatches every request the instance receives.
  * @remarks `/api/interactions` and `/api/callback` are the URLs registered in the Discord
  * portal and the 42 application. `/health` answers without touching the database, for the
  * deploy script and the Docker healthcheck. Every other path goes through the per-address
  * rate limit first.
- * @param request {Request}
- * @returns {Promise<Response>}
  */
 export async function route(request: Request): Promise<Response> {
 	const { pathname } = new URL(request.url);

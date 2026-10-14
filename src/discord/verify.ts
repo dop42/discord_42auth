@@ -4,17 +4,10 @@ import { createPublicKey, verify } from 'node:crypto';
 const SPKI_PREFIX = Buffer.from('302a300506032b6570032100', 'hex');
 
 /**
- * @author dop42
- * @method isValidRequest
- * @description Verifies that a request really was signed by Discord.
+ * Verifies that a request really was signed by Discord.
  * @remarks Any request failing this must be answered with a 401, otherwise anyone could
  * impersonate Discord and drive the bot. Fails closed: a missing header, a malformed
  * signature or an unusable public key all return false rather than throwing.
- * @param rawBody {string}
- * @param signature {string | null}
- * @param timestamp {string | null}
- * @param publicKey {string}
- * @returns {boolean}
  */
 export function isValidRequest(
 	rawBody: string,

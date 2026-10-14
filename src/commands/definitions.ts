@@ -4,13 +4,7 @@ import { FALLBACK, localizations, t, type MessageKey } from '../i18n';
 /** Identifies the panel button in the interactions Discord sends back. */
 export const AUTH_BUTTON = 'auth';
 
-/**
- * @author dop42
- * @method described
- * @description Builds a command description together with its translations.
- * @param key {MessageKey}
- * @returns {{ description: string; description_localizations: Record<string, string> }}
- */
+/** Builds a command description together with its translations. */
 function described(key: MessageKey) {
 	return { description: t(FALLBACK, key), description_localizations: localizations(key) };
 }

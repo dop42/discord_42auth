@@ -13,13 +13,9 @@ const FT_API = 'https://api.intra.42.fr';
 export class UsedCodeError extends Error {}
 
 /**
- * @author dop42
- * @method authorizeUrl
- * @description Builds the intranet login URL handed to the member who pressed the button.
+ * Builds the intranet login URL handed to the member who pressed the button.
  * @remarks The state travels to the intranet and back untouched, so the callback verifies
  * the same signature the button issued. Only the `public` scope is requested.
- * @param state {string}
- * @returns {string}
  */
 export function authorizeUrl(state: string): string {
 	const params = new URLSearchParams({
@@ -33,18 +29,13 @@ export function authorizeUrl(state: string): string {
 }
 
 /**
- * @author dop42
- * @method exchangeCode
- * @description Trades the callback code for an access token.
+ * Trades the callback code for an access token.
  * @remarks The token is returned to the caller and never stored; it is held only for the
  * length of one request, and the errors carry a status code, never the code or the secret.
  * A refusal naming `invalid_grant` becomes a `UsedCodeError`, since that is what a member
  * reloading the result page produces; anything else — a wrong client secret, a redirect URI
  * mismatch, an outage — is a real failure and must not be blamed on the link.
- * @param code {string}
- * @returns {Promise<string>}
  * @throws {UsedCodeError}
- * @throws {Error}
  */
 export async function exchangeCode(code: string): Promise<string> {
 	const response = await ftFetch('/oauth/token', {

@@ -76,7 +76,6 @@ function onChannel(event: Event): void {
 
 <template>
 	<form v-if="store.draft" class="form" novalidate @submit.prevent="store.save()">
-		<!-- Role -->
 		<div class="row">
 			<div class="row__label">
 				<label for="role" class="row__title">{{ prefs.t['settings.role'] }}</label>
@@ -117,7 +116,6 @@ function onChannel(event: Event): void {
 			</div>
 		</div>
 
-		<!-- Extra roles -->
 		<fieldset class="row">
 			<div class="row__label">
 				<legend class="row__title">{{ prefs.t['settings.rules'] }}</legend>
@@ -209,7 +207,6 @@ function onChannel(event: Event): void {
 			</div>
 		</fieldset>
 
-		<!-- Campus -->
 		<div class="row">
 			<div class="row__label">
 				<label for="campus" class="row__title">{{ prefs.t['settings.campus'] }}</label>
@@ -232,7 +229,6 @@ function onChannel(event: Event): void {
 			</div>
 		</div>
 
-		<!-- Students only -->
 		<div class="row">
 			<div class="row__label">
 				<span id="students-label" class="row__title">{{
@@ -263,7 +259,6 @@ function onChannel(event: Event): void {
 			</div>
 		</div>
 
-		<!-- Nickname -->
 		<fieldset class="row" :aria-invalid="invalid('nickname')">
 			<div class="row__label">
 				<legend class="row__title">{{ prefs.t['settings.nickname'] }}</legend>
@@ -298,7 +293,6 @@ function onChannel(event: Event): void {
 			</div>
 		</fieldset>
 
-		<!-- Log channel -->
 		<div class="row">
 			<div class="row__label">
 				<label for="logs" class="row__title">{{ prefs.t['settings.logs'] }}</label>
@@ -682,6 +676,11 @@ fieldset.row > .row__label > legend {
 
 .bar--dirty .bar__line {
 	opacity: 1;
+}
+
+/* Invisible tant que rien n'est modifié : inutile de l'animer. */
+.bar:not(.bar--dirty) .bar__line::before {
+	animation-play-state: paused;
 }
 
 .bar__status {

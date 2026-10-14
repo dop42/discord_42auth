@@ -4,23 +4,14 @@ import type { MessageKey } from '../src/i18n/types';
 
 const DISCORD_DESCRIPTION_MAX = 100;
 
-/**
- * @author dop42
- * @method placeholders
- * @description Lists the sorted `{placeholder}` names a message uses.
- * @param text {string}
- * @returns {Array<string | undefined>}
- */
+/** Lists the sorted `{placeholder}` names a message uses. */
 const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 
 /**
- * @author dop42
- * @method main
- * @description Guards the locale bundles against the two mistakes TypeScript cannot catch.
+ * Guards the locale bundles against the two mistakes TypeScript cannot catch.
  * @remarks A `cmd.*` translation longer than Discord's 100 characters would fail
  * `npm run register` with an opaque error, and a renamed `{placeholder}` would silently
  * show braces to users. Nothing else in the repo catches either.
- * @returns {void}
  */
 function main(): void {
 	const problems: string[] = [];

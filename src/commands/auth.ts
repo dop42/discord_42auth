@@ -7,16 +7,11 @@ import { getSettings } from '../settings';
 import { createState } from '../state';
 
 /**
- * @author dop42
- * @method handleAuth
- * @description Hands the member a personal, short-lived verification link.
+ * Hands the member a personal, short-lived verification link.
  * @remarks Reached by pressing the panel button. The reply is ephemeral because the link is
  * a credential: whoever completes the 42 login on it grants the role to this member, not to
  * themselves. It is also where the member is told what is kept about them before they act,
  * which is the information the GDPR requires at collection time.
- * @param interaction {Interaction}
- * @returns {Promise<Response>}
- * @throws {Error}
  */
 export async function handleAuth(interaction: Interaction): Promise<Response> {
 	const locale = resolveLocale(interaction.locale);

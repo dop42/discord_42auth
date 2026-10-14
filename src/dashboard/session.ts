@@ -24,12 +24,9 @@ export interface Session {
 const hash = (token: string) => createHash('sha256').update(token).digest();
 
 /**
- * @author dop42
- * @method createSession
- * @description Opens a dashboard session and returns the cookie that carries it.
+ * Opens a dashboard session and returns the cookie that carries it.
  * @remarks The cookie holds 32 random bytes; the database holds only their hash.
- * @param session {Session}
- * @returns {Promise<string>} a Set-Cookie value
+ * @returns a Set-Cookie value
  */
 export async function createSession(session: Session): Promise<string> {
 	const token = randomBytes(32).toString('base64url');
@@ -48,13 +45,7 @@ export async function createSession(session: Session): Promise<string> {
 	return cookie(SESSION_COOKIE, token, SESSION_SECONDS);
 }
 
-/**
- * @author dop42
- * @method readSession
- * @description Returns the session a request carries, or null when it has none or it expired.
- * @param request {Request}
- * @returns {Promise<Session | null>}
- */
+/** Returns the session a request carries, or null when it has none or it expired. */
 export async function readSession(request: Request): Promise<Session | null> {
 	const token = readCookie(request, SESSION_COOKIE);
 	if (!token) return null;
@@ -74,11 +65,8 @@ export async function readSession(request: Request): Promise<Session | null> {
 }
 
 /**
- * @author dop42
- * @method endSession
- * @description Deletes the session a request carries and returns the cookie clearing it.
- * @param request {Request}
- * @returns {Promise<string>} a Set-Cookie value
+ * Deletes the session a request carries and returns the cookie clearing it.
+ * @returns a Set-Cookie value
  */
 export async function endSession(request: Request): Promise<string> {
 	const token = readCookie(request, SESSION_COOKIE);

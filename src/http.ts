@@ -8,15 +8,11 @@ const MAX_BODY_BYTES = 64 * 1024;
 export type Handler = (request: Request) => Promise<Response>;
 
 /**
- * @author dop42
- * @method toNodeHandler
- * @description Adapts a Web-style handler to Node's `(req, res)` server callback.
+ * Adapts a Web-style handler to Node's `(req, res)` server callback.
  * @remarks Converting once here keeps every route written against `Request`/`Response`,
  * which is what the tests exercise. A body over the cap is refused before it is buffered
  * whole. A handler that throws answers a bare 500: the error goes to the logs, never to the
  * client.
- * @param handler {Handler}
- * @returns {(req: IncomingMessage, res: ServerResponse) => Promise<void>}
  */
 export function toNodeHandler(handler: Handler) {
 	return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
@@ -62,28 +58,14 @@ export function toNodeHandler(handler: Handler) {
 	};
 }
 
-/**
- * @author dop42
- * @method apiJson
- * @description Answers a dashboard API call with a JSON body that is never cached.
- * @param body {unknown}
- * @param status {number}
- * @returns {Response}
- */
+/** Answers a dashboard API call with a JSON body that is never cached. */
 export const apiJson = (body: unknown, status = 200) =>
 	new Response(JSON.stringify(body), {
 		status,
 		headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
 	});
 
-/**
- * @author dop42
- * @method readCookie
- * @description Reads one cookie from a request.
- * @param request {Request}
- * @param name {string}
- * @returns {string | undefined}
- */
+/** Reads one cookie from a request. */
 export function readCookie(request: Request, name: string): string | undefined {
 	for (const part of (request.headers.get('cookie') ?? '').split(';')) {
 		const [key, ...value] = part.trim().split('=');
@@ -93,15 +75,10 @@ export function readCookie(request: Request, name: string): string | undefined {
 }
 
 /**
- * @author dop42
- * @method cookie
- * @description Serializes a `__Host-` cookie: Secure, HttpOnly, whole site, no Domain.
+ * Serializes a `__Host-` cookie: Secure, HttpOnly, whole site, no Domain.
  * @remarks SameSite=Lax rather than Strict: the login comes back from discord.com as a
  * top-level navigation, which Strict would strip the cookie from.
- * @param name {string}
- * @param value {string}
- * @param maxAge {number} seconds; 0 deletes the cookie
- * @returns {string}
+ * @param maxAge seconds; 0 deletes the cookie
  */
 export const cookie = (name: string, value: string, maxAge: number) =>
 	`${name}=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;

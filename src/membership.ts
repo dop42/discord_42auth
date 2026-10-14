@@ -2,13 +2,7 @@ import type { GuildSettings } from '../shared/api';
 import { addRole, removeRole, setNickname, type Member } from './discord/rest';
 import { deleteLink, findByMember } from './links';
 
-/**
- * @author dop42
- * @method ruleRoleIds
- * @description Returns the roles the server's role rules hand out, without the verified role.
- * @param settings {GuildSettings}
- * @returns {Set<string>}
- */
+/** Returns the roles the server's role rules hand out, without the verified role. */
 function ruleRoleIds(settings: GuildSettings): Set<string> {
 	const ids = new Set(settings.roleRules.map((rule) => rule.roleId));
 	if (settings.roleId) ids.delete(settings.roleId);
@@ -16,17 +10,11 @@ function ruleRoleIds(settings: GuildSettings): Set<string> {
 }
 
 /**
- * @author dop42
- * @method syncRuleRoles
- * @description Gives a verified member the rule roles they earn and takes back the others.
+ * Gives a verified member the rule roles they earn and takes back the others.
  * @remarks Only roles named by a rule are touched; whatever else the member holds is the
- * admins' business. Best-effort per role: a role the bot cannot manage any more is logged
- * and skipped, the next re-check tries again.
- * @param guildId {string}
- * @param member {Member}
- * @param wanted {string[]} from `matchingRoles`
- * @param settings {GuildSettings}
- * @returns {Promise<void>}
+ * admins' business. Best-effort per role: a role the bot cannot manage any more is skipped,
+ * and the next re-check tries again.
+ * @param wanted from `matchingRoles`
  */
 export async function syncRuleRoles(
 	guildId: string,
@@ -48,18 +36,13 @@ export async function syncRuleRoles(
 }
 
 /**
- * @author dop42
- * @method unlink
- * @description Forgets a member's link and takes back every role and nickname it gave them.
+ * Forgets a member's link and takes back every role and nickname it gave them.
  * @remarks The link goes first, since that is what was asked for; the roles and the nickname
  * follow on a best-effort basis. The nickname is only cleared when it is still one the bot
  * set, so a name the member chose afterwards is left alone. A member who already left has
  * nothing to take back.
- * @param guildId {string}
- * @param userId {string}
- * @param settings {GuildSettings}
- * @param member {Member | null} null when they are not in the server any more
- * @returns {Promise<{ linked: boolean; rolesRemoved: boolean }>} whether there was a link,
+ * @param member null when they are not in the server any more
+ * @returns whether there was a link,
  * and whether every role came off
  */
 export async function unlink(

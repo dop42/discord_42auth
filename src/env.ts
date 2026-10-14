@@ -1,25 +1,11 @@
-/**
- * @author dop42
- * @method required
- * @description Reads an environment variable that the bot cannot run without.
- * @param name {string}
- * @returns {string}
- * @throws {Error}
- */
+/** Reads an environment variable that the bot cannot run without. */
 function required(name: string): string {
 	const value = process.env[name]?.trim();
 	if (!value) throw new Error(`Missing environment variable: ${name}`);
 	return value;
 }
 
-/**
- * @author dop42
- * @method secret
- * @description Reads a random secret, refusing one too short to be one.
- * @param name {string}
- * @returns {string}
- * @throws {Error}
- */
+/** Reads a random secret, refusing one too short to be one. */
 function secret(name: string): string {
 	const value = required(name);
 	if (value.length < 32) {

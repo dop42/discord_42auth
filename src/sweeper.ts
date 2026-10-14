@@ -30,16 +30,13 @@ export interface SweepResult {
 }
 
 /**
- * @author dop42
- * @method sweep
- * @description Deletes what the bot no longer has a reason to keep.
+ * Deletes what the bot no longer has a reason to keep.
  * @remarks This is the retention policy, enforced. Expired dashboard sessions go first. Then
  * every server the bot was removed from loses its settings and links — only when Discord
  * returned the bot's full server list, never on a partial one. Last, the links least
  * recently checked are re-checked against the server: a member who left loses their link.
  * Only "Unknown Member" deletes; any other answer leaves the row for the next run, and a 429
  * ends the run early. Then `recheck` looks the oldest 42 accounts up again.
- * @returns {Promise<SweepResult>}
  */
 export async function sweep(): Promise<SweepResult> {
 	const deleted = { sessions: 0, guilds: 0, links: 0, revoked: 0 };
@@ -89,16 +86,13 @@ export async function sweep(): Promise<SweepResult> {
 }
 
 /**
- * @author dop42
- * @method recheck
- * @description Looks the 42 accounts verified longest ago up again, and acts on what changed.
+ * Looks the 42 accounts verified longest ago up again, and acts on what changed.
  * @remarks A verification is a snapshot: an account closed, gone alumni or moved to another
  * campus since must not keep the role. Each account is re-judged with the server's current
  * rules; a refused one is unlinked exactly as `/forget` would, and the log channel says why.
  * A kept one has its rule roles brought up to date — a piscine that ended, a new coalition.
  * Accounts are checked once a week, through the background lane of the 42 rate limiter.
  * Any 42 or Discord failure ends the run and leaves the rest for the next hour.
- * @returns {Promise<{ left: number; revoked: number }>}
  */
 async function recheck(): Promise<{ left: number; revoked: number }> {
 	const result = { left: 0, revoked: 0 };
@@ -181,10 +175,8 @@ async function recheck(): Promise<{ left: number; revoked: number }> {
 }
 
 /**
- * @author dop42
- * @method startSweeper
- * @description Runs `sweep` a minute after boot, then every hour, never two at once.
- * @returns {() => void} stops the timers
+ * Runs `sweep` a minute after boot, then every hour, never two at once.
+ * @returns stops the timers
  */
 export function startSweeper(): () => void {
 	let running = false;

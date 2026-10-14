@@ -13,16 +13,12 @@ import { resolveLocale, t } from '../i18n';
 const MAX_SKEW_SECONDS = 5 * 60;
 
 /**
- * @author dop42
- * @method handleInteraction
- * @description Answers every Discord interaction, after proving the request came from Discord.
+ * Answers every Discord interaction, after proving the request came from Discord.
  * @remarks Registered as the Interactions Endpoint URL. Routes the slash commands and the
  * verification panel's button, which is the only way a member starts an authentication. A
  * signature stays valid forever, so freshness is the only thing bounding how long a captured
  * request can be replayed. Every server is served from the same endpoint now; what one does
  * is read from the database by its id, so an interaction outside a server is refused.
- * @param request {Request}
- * @returns {Promise<Response>}
  */
 export async function handleInteraction(request: Request): Promise<Response> {
 	const body = await request.text();

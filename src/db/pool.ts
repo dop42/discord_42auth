@@ -9,27 +9,18 @@ const MIGRATIONS = join(process.cwd(), 'migrations');
 
 let pool: Pool | undefined;
 
-/**
- * @author dop42
- * @method db
- * @description Returns the shared connection pool, opening it on first use.
- * @returns {Pool}
- */
+/** Returns the shared connection pool, opening it on first use. */
 export function db(): Pool {
 	pool ??= new Pool({ connectionString: env.databaseUrl, max: 10 });
 	return pool;
 }
 
 /**
- * @author dop42
- * @method migrate
- * @description Applies every migration not applied yet, each in its own transaction.
+ * Applies every migration not applied yet, each in its own transaction.
  * @remarks Run at boot, before the server listens. An advisory lock keeps two instances
  * starting together from applying the same file twice. A failing file rolls back alone and
  * stops the boot, so the bot never serves against a half-migrated schema.
- * @param directory {string | undefined}
- * @returns {Promise<string[]>} the files applied by this call
- * @throws {Error}
+ * @returns the files applied by this call
  */
 export async function migrate(directory = MIGRATIONS): Promise<string[]> {
 	const client = await db().connect();
@@ -64,12 +55,7 @@ export async function migrate(directory = MIGRATIONS): Promise<string[]> {
 	}
 }
 
-/**
- * @author dop42
- * @method closeDb
- * @description Closes the pool, letting the process exit.
- * @returns {Promise<void>}
- */
+/** Closes the pool, letting the process exit. */
 export async function closeDb(): Promise<void> {
 	await pool?.end();
 	pool = undefined;

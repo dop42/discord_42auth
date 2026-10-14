@@ -32,6 +32,17 @@ RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 CapabilityBoundingSet=
 AmbientCapabilities=
 SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+PrivateDevices=true
+ProtectKernelLogs=true
+ProtectClock=true
+ProtectHostname=true
+RestrictNamespaces=true
+ProtectProc=invisible
+ProcSubset=pid
+UMask=0077
+# Pas de MemoryDenyWriteExecute : le JIT de V8 a besoin de pages à la fois écrites et exécutées.
 MemoryMax=400M
 
 [Install]

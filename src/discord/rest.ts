@@ -9,16 +9,9 @@ const TIMEOUT_MS = 10_000;
 const UNKNOWN_MEMBER = 10007;
 
 /**
- * @author dop42
- * @method request
- * @description Calls the Discord REST API with the bot token.
+ * Calls the Discord REST API with the bot token.
  * @remarks One retry on 429, after the delay Discord asks for when it is short. Longer
  * waits are not worth holding a request for, so the 429 is handed back to the caller.
- * @param method {string}
- * @param path {string}
- * @param body {unknown | undefined}
- * @returns {Promise<Response>}
- * @throws {TypeError}
  */
 async function request(method: string, path: string, body?: unknown): Promise<Response> {
 	const send = () =>
@@ -40,14 +33,7 @@ async function request(method: string, path: string, body?: unknown): Promise<Re
 	return send();
 }
 
-/**
- * @author dop42
- * @method read
- * @description GETs a bot route and parses it, failing on anything but a 2xx.
- * @param path {string}
- * @returns {Promise<T>}
- * @throws {Error}
- */
+/** GETs a bot route and parses it, failing on anything but a 2xx. */
 async function read<T>(path: string): Promise<T> {
 	const response = await request('GET', path);
 	if (!response.ok) throw new DiscordError(response.status, path);
@@ -65,16 +51,9 @@ export class DiscordError extends Error {
 }
 
 /**
- * @author dop42
- * @method addRole
- * @description Grants the verified role to a member.
+ * Grants the verified role to a member.
  * @remarks Fails when the bot role sits below the granted role, which is the most common
  * setup mistake; the error text says so because it surfaces in the logs.
- * @param guildId {string}
- * @param userId {string}
- * @param roleId {string}
- * @returns {Promise<void>}
- * @throws {Error}
  */
 export async function addRole(guildId: string, userId: string, roleId: string): Promise<void> {
 	const response = await request('PUT', `/guilds/${guildId}/members/${userId}/roles/${roleId}`);
@@ -86,15 +65,10 @@ export async function addRole(guildId: string, userId: string, roleId: string): 
 }
 
 /**
- * @author dop42
- * @method removeRole
- * @description Takes the verified role back from a member, best-effort.
+ * Takes the verified role back from a member, best-effort.
  * @remarks Never throws: it runs after the link is already forgotten, which is the part the
  * member asked for. A role left behind is visible and an admin can remove it.
- * @param guildId {string}
- * @param userId {string}
- * @param roleId {string}
- * @returns {Promise<boolean>} whether Discord accepted it
+ * @returns whether Discord accepted it
  */
 export async function removeRole(guildId: string, userId: string, roleId: string): Promise<boolean> {
 	const response = await request(
@@ -105,16 +79,10 @@ export async function removeRole(guildId: string, userId: string, roleId: string
 }
 
 /**
- * @author dop42
- * @method setNickname
- * @description Renames a member, or clears their nickname when given null.
+ * Renames a member, or clears their nickname when given null.
  * @remarks Best-effort, and deliberately never throws: the role is what grants access, and
  * it has already been given by the time this runs. The log line names neither the member nor
  * the server — the operator's logs are not a place for personal data.
- * @param guildId {string}
- * @param userId {string}
- * @param nick {string | null}
- * @returns {Promise<void>}
  */
 export async function setNickname(
 	guildId: string,
@@ -130,13 +98,9 @@ export async function setNickname(
 }
 
 /**
- * @author dop42
- * @method postMessage
- * @description Posts a message in a channel: an audit line, or the verification panel.
+ * Posts a message in a channel: an audit line, or the verification panel.
  * @remarks Never throws: losing a log line must not fail an authentication that succeeded.
- * @param channelId {string}
- * @param body {unknown}
- * @returns {Promise<boolean>} whether Discord accepted it
+ * @returns whether Discord accepted it
  */
 export async function postMessage(channelId: string, body: unknown): Promise<boolean> {
 	const response = await request('POST', `/channels/${channelId}/messages`, body).catch(() => null);
@@ -153,14 +117,9 @@ export interface Member {
 }
 
 /**
- * @author dop42
- * @method getMember
- * @description Fetches one member, or null when they are not in the server.
+ * Fetches one member, or null when they are not in the server.
  * @remarks Only "Unknown Member" means absent. Any other failure — a 429, an outage, the bot
  * having been removed — throws, so the sweeper never deletes a link on a guess.
- * @param guildId {string}
- * @param userId {string}
- * @returns {Promise<Member | null>}
  * @throws {DiscordError}
  */
 export async function getMember(guildId: string, userId: string): Promise<Member | null> {
@@ -194,11 +153,7 @@ export interface Guild {
 }
 
 /**
- * @author dop42
- * @method getGuild
- * @description Fetches a server the bot is in, with its roles.
- * @param guildId {string}
- * @returns {Promise<Guild>}
+ * Fetches a server the bot is in, with its roles.
  * @throws {DiscordError}
  */
 export const getGuild = (guildId: string) => read<Guild>(`/guilds/${guildId}`);
@@ -211,22 +166,15 @@ export interface Channel {
 }
 
 /**
- * @author dop42
- * @method getChannels
- * @description Lists every channel of a server the bot is in.
- * @param guildId {string}
- * @returns {Promise<Channel[]>}
+ * Lists every channel of a server the bot is in.
  * @throws {DiscordError}
  */
 export const getChannels = (guildId: string) => read<Channel[]>(`/guilds/${guildId}/channels`);
 
 /**
- * @author dop42
- * @method botGuildIds
- * @description Lists every server the bot is currently in.
+ * Lists every server the bot is currently in.
  * @remarks Paginated by 200, Discord's maximum. Throws rather than returning a partial list:
  * the sweeper deletes the data of every server missing from it.
- * @returns {Promise<Set<string>>}
  * @throws {DiscordError}
  */
 export async function botGuildIds(): Promise<Set<string>> {
@@ -259,14 +207,9 @@ export interface OAuthGuild {
 }
 
 /**
- * @author dop42
- * @method exchangeDiscordCode
- * @description Trades a dashboard login code for a user access token.
+ * Trades a dashboard login code for a user access token.
  * @remarks The token is used for two reads during the login and then dropped; it is never
  * stored. Later permission checks go through the bot instead.
- * @param code {string}
- * @returns {Promise<string>}
- * @throws {Error}
  */
 export async function exchangeDiscordCode(code: string): Promise<string> {
 	const response = await fetch(`${DISCORD_API}/oauth2/token`, {
@@ -287,12 +230,7 @@ export async function exchangeDiscordCode(code: string): Promise<string> {
 }
 
 /**
- * @author dop42
- * @method readAsUser
- * @description GETs a route with a user's OAuth2 token.
- * @param token {string}
- * @param path {string}
- * @returns {Promise<T>}
+ * GETs a route with a user's OAuth2 token.
  * @throws {DiscordError}
  */
 export async function readAsUser<T>(token: string, path: string): Promise<T> {

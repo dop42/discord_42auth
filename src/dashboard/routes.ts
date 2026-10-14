@@ -42,17 +42,39 @@ const BOT_GUILDS_TTL_MS = 60 * 1000;
 let botGuilds: { ids: Set<string>; at: number } | undefined;
 
 /**
- * @author dop42
- * @method currentBotGuilds
- * @description Returns the servers the bot is in, cached for a minute.
+ * Returns the servers the bot is in, cached for a minute.
  * @remarks The home page needs it on every load, and Discord rate-limits the route.
- * @returns {Promise<Set<string>>}
  */
 async function currentBotGuilds(): Promise<Set<string>> {
 	if (!botGuilds || Date.now() - botGuilds.at > BOT_GUILDS_TTL_MS) {
 		botGuilds = { ids: await botGuildIds(), at: Date.now() };
 	}
 	return botGuilds.ids;
+}
+
+/** How long a Discord read made for the dashboard may be reused. */
+const CACHE_MS = 15_000;
+
+const reads = new Map<string, { at: number; value: Promise<unknown> }>();
+
+/**
+ * Reuses a recent Discord read for the dashboard.
+ * @remarks A page load asks for the same server, roles and channels several times, and every
+ * API call re-checks the admin's rights through the bot. Fifteen seconds keeps that to one
+ * Discord call each while a right taken away, or a role just created, still shows up almost at
+ * once. Concurrent callers share the request in flight; a failed read is not kept.
+ */
+function cached<T>(key: string, read: () => Promise<T>): Promise<T> {
+	const now = Date.now();
+	for (const [stale, entry] of reads) if (now - entry.at > CACHE_MS) reads.delete(stale);
+	const hit = reads.get(key);
+	if (hit) return hit.value as Promise<T>;
+	const value = read();
+	reads.set(key, { at: now, value });
+	value.catch(() => {
+		if (reads.get(key)?.value === value) reads.delete(key);
+	});
+	return value;
 }
 
 const error = (status: number, code: string, field?: ApiError['field'], index?: number) => {
@@ -65,24 +87,17 @@ const error = (status: number, code: string, field?: ApiError['field'], index?: 
 const noContent = () => new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
 
 /**
- * @author dop42
- * @method sameOrigin
- * @description Tells whether a state-changing request was sent by the dashboard itself.
+ * Tells whether a state-changing request was sent by the dashboard itself.
  * @remarks The session cookie is SameSite=Lax, which already keeps it off cross-site POSTs;
  * this is the second lock, and the one that also covers same-site subdomains.
- * @param request {Request}
- * @returns {boolean}
  */
 const sameOrigin = (request: Request) => request.headers.get('origin') === env.publicUrl;
 
 /**
- * @author dop42
- * @method login
- * @description Starts the Discord login of the dashboard.
+ * Starts the Discord login of the dashboard.
  * @remarks The state is a random nonce mirrored in a ten-minute cookie, so a callback can
  * only finish a login this browser started. Only `identify` and `guilds` are requested: who
  * the admin is, and which servers they could manage.
- * @returns {Response}
  */
 function login(): Response {
 	const nonce = randomBytes(16).toString('base64url');
@@ -105,13 +120,9 @@ function login(): Response {
 }
 
 /**
- * @author dop42
- * @method loginCallback
- * @description Finishes the Discord login and opens a session.
+ * Finishes the Discord login and opens a session.
  * @remarks The admin's token is used for the two reads below and then dropped. Any failure
  * lands back on the home page logged out rather than on an error page: retrying is one click.
- * @param request {Request}
- * @returns {Promise<Response>}
  */
 async function loginCallback(request: Request): Promise<Response> {
 	const params = new URL(request.url).searchParams;
@@ -152,42 +163,34 @@ async function loginCallback(request: Request): Promise<Response> {
 }
 
 /**
- * @author dop42
- * @method authorize
- * @description Proves, through the bot, that the session's user may manage a server now.
+ * Proves, through the bot, that the session's user may manage a server now.
  * @remarks The list kept in the session is a snapshot from the login; permissions may have
  * been taken away since, so every guild route asks Discord again. Discord answering 403 or
  * 404 for the server means the bot is not in it.
- * @param session {Session}
- * @param guildId {string}
- * @returns {Promise<Guild | Response>} the server, or the error response to send
+ * @returns the server, or the error response to send
  */
 async function authorize(session: Session, guildId: string): Promise<Guild | Response> {
 	let guild: Guild;
 	try {
-		guild = await getGuild(guildId);
+		guild = await cached(`guild:${guildId}`, () => getGuild(guildId));
 	} catch (failure) {
 		if (failure instanceof DiscordError && (failure.status === 403 || failure.status === 404)) {
 			return error(404, 'bot_absent');
 		}
 		throw failure;
 	}
-	const member = await getMember(guildId, session.userId);
+	const member = await cached(`member:${guildId}:${session.userId}`, () =>
+		getMember(guildId, session.userId),
+	);
 	if (!member || !canManage(basePermissions(guild, member))) return error(403, 'forbidden');
 	return guild;
 }
 
-/**
- * @author dop42
- * @method options
- * @description Lists the roles and channels the settings form may offer.
- * @param guild {Guild}
- * @returns {Promise<{ roles: RoleOption[]; channels: ChannelOption[] }>}
- */
+/** Lists the roles and channels the settings form may offer. */
 async function options(guild: Guild): Promise<{ roles: RoleOption[]; channels: ChannelOption[] }> {
 	const [bot, channels] = await Promise.all([
-		getMember(guild.id, env.discordAppId),
-		getChannels(guild.id),
+		cached(`member:${guild.id}:${env.discordAppId}`, () => getMember(guild.id, env.discordAppId)),
+		cached(`channels:${guild.id}`, () => getChannels(guild.id)),
 	]);
 	const top = bot ? highestPosition(guild, bot) : 0;
 
@@ -208,15 +211,7 @@ async function options(guild: Guild): Promise<{ roles: RoleOption[]; channels: C
 	};
 }
 
-/**
- * @author dop42
- * @method guildRoute
- * @description Serves `/api/guilds/:id`: read, save, or erase one server's settings.
- * @param request {Request}
- * @param session {Session}
- * @param guildId {string}
- * @returns {Promise<Response>}
- */
+/** Serves `/api/guilds/:id`: read, save, or erase one server's settings. */
 async function guildRoute(request: Request, session: Session, guildId: string): Promise<Response> {
 	const guild = await authorize(session, guildId);
 	if (guild instanceof Response) return guild;
@@ -265,15 +260,10 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 }
 
 /**
- * @author dop42
- * @method membersRoute
- * @description Serves `/api/guilds/:id/members`: one page of the verified members.
+ * Serves `/api/guilds/:id/members`: one page of the verified members.
  * @remarks Only what the database holds is shown — the Discord id, the 42 login and the
  * date. Resolving every member's Discord name would cost one call each; the admin can find
  * anyone from their id.
- * @param request {Request}
- * @param guildId {string}
- * @returns {Promise<Response>}
  */
 async function membersRoute(request: Request, guildId: string): Promise<Response> {
 	const params = new URL(request.url).searchParams;
@@ -290,14 +280,9 @@ async function membersRoute(request: Request, guildId: string): Promise<Response
 }
 
 /**
- * @author dop42
- * @method unlinkRoute
- * @description Serves `DELETE /api/guilds/:id/members/:userId`: an admin unlinks one member.
+ * Serves `DELETE /api/guilds/:id/members/:userId`: an admin unlinks one member.
  * @remarks Same effect as the member running `/forget`: the link, the roles and the
  * nickname the bot gave go. The member can verify again afterwards.
- * @param guildId {string}
- * @param userId {string}
- * @returns {Promise<Response>}
  */
 async function unlinkRoute(guildId: string, userId: string): Promise<Response> {
 	const settings = await getSettings(guildId);
@@ -306,15 +291,10 @@ async function unlinkRoute(guildId: string, userId: string): Promise<Response> {
 }
 
 /**
- * @author dop42
- * @method panelRoute
- * @description Serves `POST /api/guilds/:id/panel`: posts the verification panel in a channel.
+ * Serves `POST /api/guilds/:id/panel`: posts the verification panel in a channel.
  * @remarks The same message `/panel` posts, in the server's language. Only channels the form
  * offers are accepted; Discord refusing (the bot cannot see or write there) is a 502 the
  * dashboard explains.
- * @param request {Request}
- * @param guild {Guild}
- * @returns {Promise<Response>}
  */
 async function panelRoute(request: Request, guild: Guild): Promise<Response> {
 	const body = (await request.json().catch(() => null)) as { channelId?: unknown } | null;
@@ -332,13 +312,7 @@ async function panelRoute(request: Request, guild: Guild): Promise<Response> {
 	return posted ? noContent() : error(502, 'cannot_post');
 }
 
-/**
- * @author dop42
- * @method handleDashboard
- * @description Serves the dashboard's login routes and JSON API, or null for any other path.
- * @param request {Request}
- * @returns {Promise<Response | null>}
- */
+/** Serves the dashboard's login routes and JSON API, or null for any other path. */
 export async function handleDashboard(request: Request): Promise<Response | null> {
 	const { pathname } = new URL(request.url);
 	const method = request.method;

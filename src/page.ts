@@ -6,29 +6,18 @@ const ESCAPES: Record<string, string> = {
 };
 
 /**
- * @author dop42
- * @method escapeHtml
- * @description Escapes text for an HTML body or a double-quoted attribute.
+ * Escapes text for an HTML body or a double-quoted attribute.
  * @remarks Single quotes are deliberately left alone: every attribute in this file is
  * double-quoted, and there is no scriptable context on these pages.
- * @param text {string}
- * @returns {string}
  */
 const escapeHtml = (text: string) => text.replace(/[&<>"]/g, (char) => ESCAPES[char]!);
 
 const BAD = '#e74c3c';
 
 /**
- * @author dop42
- * @method layout
- * @description Wraps a body fragment in the shared page shell.
+ * Wraps a body fragment in the shared page shell.
  * @remarks These pages are reached with a verification code in the URL, so they are sent
  * uncacheable, unframeable, and without a Referer.
- * @param locale {string}
- * @param accent {string}
- * @param body {string}
- * @param status {number}
- * @returns {Response}
  */
 function layout(locale: string, accent: string, body: string, status: number): Response {
 	const html = `<!doctype html>
@@ -56,14 +45,10 @@ function layout(locale: string, accent: string, body: string, status: number): R
 }
 
 /**
- * @author dop42
- * @method redirectToGuild
- * @description Sends the member back into the Discord server instead of a result page.
+ * Sends the member back into the Discord server instead of a result page.
  * @remarks Used on success only. Landing in the server is the confirmation — the role is
  * granted and the channels are there — so a page saying so would only be an extra tab to
  * close. Failures still need a page, because they have a reason to explain.
- * @param guildId {string}
- * @returns {Response}
  */
 export function redirectToGuild(guildId: string): Response {
 	return new Response(null, {
@@ -76,15 +61,7 @@ export function redirectToGuild(guildId: string): Response {
 	});
 }
 
-/**
- * @author dop42
- * @method renderPage
- * @description Renders the page a refusal ends on.
- * @param title {string}
- * @param body {string}
- * @param locale {string}
- * @returns {Response}
- */
+/** Renders the page a refusal ends on. */
 export function renderPage(title: string, body: string, locale: string): Response {
 	return layout(locale, BAD, `<h1>${escapeHtml(title)}</h1><p>${escapeHtml(body)}</p>`, 400);
 }

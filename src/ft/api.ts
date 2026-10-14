@@ -54,12 +54,7 @@ const lanes: Record<Priority, Array<() => void>> = { interactive: [], background
 let nextSlot = 0;
 let pumping = false;
 
-/**
- * @author dop42
- * @method pump
- * @description Hands out the call slots, one every `spacing()` ms, interactive lane first.
- * @returns {Promise<void>}
- */
+/** Hands out the call slots, one every `spacing()` ms, interactive lane first. */
 async function pump(): Promise<void> {
 	if (pumping) return;
 	pumping = true;
@@ -75,15 +70,10 @@ async function pump(): Promise<void> {
 }
 
 /**
- * @author dop42
- * @method ftFetch
- * @description Calls the 42 API through the shared rate limiter.
+ * Calls the 42 API through the shared rate limiter.
  * @remarks Every call of the process goes through here, so the limit holds however many
  * verifications arrive at once. A 429 is retried once, after the delay 42 asks for.
- * @param path {string} absolute URL or path under the API
- * @param init {RequestInit}
- * @param priority {Priority}
- * @returns {Promise<Response>}
+ * @param path absolute URL or path under the API
  */
 export async function ftFetch(
 	path: string,
@@ -104,11 +94,7 @@ export async function ftFetch(
 }
 
 /**
- * @author dop42
- * @method fetchMe
- * @description Fetches the profile of the user who just completed the OAuth flow.
- * @param accessToken {string}
- * @returns {Promise<FtUser>}
+ * Fetches the profile of the user who just completed the OAuth flow.
  * @throws {FtError}
  */
 export async function fetchMe(accessToken: string): Promise<FtUser> {
@@ -118,15 +104,9 @@ export async function fetchMe(accessToken: string): Promise<FtUser> {
 }
 
 /**
- * @author dop42
- * @method fetchCoalitions
- * @description Lists the coalitions of a user, with the member's token or the app's.
+ * Lists the coalitions of a user, with the member's token or the app's.
  * @remarks Only called when the server has a coalition rule: it is one more call per
  * verification.
- * @param userId {number}
- * @param accessToken {string}
- * @param priority {Priority}
- * @returns {Promise<FtCoalition[]>}
  * @throws {FtError}
  */
 export async function fetchCoalitions(
@@ -146,12 +126,9 @@ export async function fetchCoalitions(
 let appToken: { value: string; expiresAt: number } | undefined;
 
 /**
- * @author dop42
- * @method fetchAppToken
- * @description Returns a client-credentials token of the 42 application, cached until it expires.
+ * Returns a client-credentials token of the 42 application, cached until it expires.
  * @remarks Used by the weekly re-checks, which run with no member around to log in. It reads
  * public profiles only, the same `public` scope the members granted.
- * @returns {Promise<string>}
  * @throws {FtError}
  */
 export async function fetchAppToken(): Promise<string> {
@@ -180,12 +157,9 @@ export async function fetchAppToken(): Promise<string> {
 }
 
 /**
- * @author dop42
- * @method fetchUser
- * @description Looks a 42 account up again by id, for the weekly re-check.
- * @param userId {number}
- * @param accessToken {string} the application token
- * @returns {Promise<FtUser | null>} null when the account no longer exists
+ * Looks a 42 account up again by id, for the weekly re-check.
+ * @param accessToken the application token
+ * @returns null when the account no longer exists
  * @throws {FtError}
  */
 export async function fetchUser(userId: number, accessToken: string): Promise<FtUser | null> {
@@ -200,16 +174,12 @@ export async function fetchUser(userId: number, accessToken: string): Promise<Ft
 }
 
 /**
- * @author dop42
- * @method primaryCampus
- * @description Returns the campus flagged primary, or undefined when none is.
+ * Returns the campus flagged primary, or undefined when none is.
  * @remarks `user.campus` also lists every campus the account ever passed through — piscine,
  * exchange, transfer — so the campus check and the audit log both go through this one
  * function to make sure they can never disagree. Returning undefined rather than guessing
  * the first entry keeps an account with no primary link from being judged on its piscine
  * campus; `checkEligibility` then refuses it whenever a campus is configured.
- * @param user {FtUser}
- * @returns {{ id: number; name: string } | undefined}
  */
 export function primaryCampus(user: FtUser): { id: number; name: string } | undefined {
 	const link = user.campus_users.find((entry) => entry.is_primary);

@@ -30,13 +30,9 @@ export const bundles: Record<string, Messages> = {
 export const FALLBACK = 'en-US';
 
 /**
- * @author dop42
- * @method resolveLocale
- * @description Maps a Discord locale onto a bundle that is actually shipped.
+ * Maps a Discord locale onto a bundle that is actually shipped.
  * @remarks Exact code first, then any bundle sharing its language
  * (`en-GB` to `en-US`, `es-419` to `es-ES`), then English.
- * @param raw {string | undefined}
- * @returns {string}
  */
 export function resolveLocale(raw: string | undefined): string {
 	if (!raw) return FALLBACK;
@@ -46,15 +42,9 @@ export function resolveLocale(raw: string | undefined): string {
 }
 
 /**
- * @author dop42
- * @method t
- * @description Translates a key, replacing every `{placeholder}` with the given values.
+ * Translates a key, replacing every `{placeholder}` with the given values.
  * @remarks Falls back to English for an unknown locale. A missing key cannot happen:
  * `Messages` makes one a compile error.
- * @param locale {string}
- * @param key {MessageKey}
- * @param params {Record<string, string | number> | undefined}
- * @returns {string}
  */
 export function t(
 	locale: string,
@@ -68,12 +58,8 @@ export function t(
 }
 
 /**
- * @author dop42
- * @method localizations
- * @description Returns one key translated into every locale but the fallback.
+ * Returns one key translated into every locale but the fallback.
  * @remarks Shaped for Discord's `description_localizations` field.
- * @param key {MessageKey}
- * @returns {Record<string, string>}
  */
 export function localizations(key: MessageKey): Record<string, string> {
 	return Object.fromEntries(
@@ -84,13 +70,9 @@ export function localizations(key: MessageKey): Record<string, string> {
 }
 
 /**
- * @author dop42
- * @method localeFromHeader
- * @description Picks a locale from the first language of an Accept-Language header, ignoring q-weights.
+ * Picks a locale from the first language of an Accept-Language header, ignoring q-weights.
  * @remarks Used when no state tells us the member's language, which happens on an
  * expired or forged link.
- * @param acceptLanguage {string | null}
- * @returns {string}
  */
 export function localeFromHeader(acceptLanguage: string | null): string {
 	const first = acceptLanguage?.split(',')[0]?.split(';')[0]?.trim();

@@ -59,7 +59,7 @@ systemctl restart discord_42auth
 healthy() {
 	i=0
 	while [ $i -lt 30 ]; do
-		if [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/health)" = 200 ]; then return 0; fi
+		if [ "$(curl -s --max-time 2 -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/health)" = 200 ]; then return 0; fi
 		i=$((i + 1))
 		sleep 1
 	done
@@ -77,6 +77,10 @@ if [ -d "$ROOT/app.prev" ]; then
 	rm -rf "$ROOT/app.failed"
 	mv "$ROOT/app" "$ROOT/app.failed"
 	mv "$ROOT/app.prev" "$ROOT/app"
+	# L'unité de la version précédente revient avec elle : une option systemd refusée par
+	# l'hôte ne doit pas faire tomber aussi l'ancienne version.
+	install -m 644 "$ROOT/app/deploy/discord_42auth.service" /etc/systemd/system/discord_42auth.service
+	systemctl daemon-reload
 	systemctl restart discord_42auth
 	healthy && echo "↺ version précédente ($(cat "$ROOT/app/REVISION" 2>/dev/null || echo ?)) en ligne" >&2
 fi

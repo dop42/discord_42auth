@@ -6,14 +6,9 @@ import { resolveLocale, t } from '../i18n';
 import { getSettings, type Settings } from '../settings';
 
 /**
- * @author dop42
- * @method handleConfig
- * @description Answers `/config` with what this server is set to, and a button to change it.
+ * Answers `/config` with what this server is set to, and a button to change it.
  * @remarks The permission is re-tested here because `default_member_permissions` can be
  * overridden per server.
- * @param interaction {Interaction}
- * @returns {Promise<Response>}
- * @throws {Error}
  */
 export async function handleConfig(interaction: Interaction): Promise<Response> {
 	const locale = resolveLocale(interaction.locale);
@@ -53,14 +48,9 @@ export async function handleConfig(interaction: Interaction): Promise<Response> 
 }
 
 /**
- * @author dop42
- * @method formatSettings
- * @description Renders the settings as the lines of the `/config` card.
+ * Renders the settings as the lines of the `/config` card.
  * @remarks Role and channel mentions render as names in the client; the card is ephemeral,
  * so nobody is pinged.
- * @param settings {Settings}
- * @param locale {string}
- * @returns {string}
  */
 function formatSettings(settings: Settings, locale: string): string {
 	const nickname = {

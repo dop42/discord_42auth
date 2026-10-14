@@ -5,15 +5,10 @@ import { unlink } from '../membership';
 import { getSettings } from '../settings';
 
 /**
- * @author dop42
- * @method handleForget
- * @description Erases the caller's link in this server and takes the roles it gave back.
+ * Erases the caller's link in this server and takes the roles it gave back.
  * @remarks The member's own way to exercise the right to erasure, with no admin involved.
  * The interaction already carries the member's roles and nickname, so answering takes only
  * the calls that change something, well inside Discord's three-second budget.
- * @param interaction {Interaction}
- * @returns {Promise<Response>}
- * @throws {Error}
  */
 export async function handleForget(interaction: Interaction): Promise<Response> {
 	const locale = resolveLocale(interaction.locale);
