@@ -72,7 +72,12 @@ export async function sweep(): Promise<SweepResult> {
 				deleted.links++;
 			}
 		} catch (failure) {
-			if (failure instanceof DiscordError && failure.status === 429) break;
+			// A refusal for one member leaves the row for the next run; a 429, a timeout or an
+			// outage ends this run, since every member after it would fail the same way.
+			if (!(failure instanceof DiscordError) || failure.status === 429) {
+				console.error(`sweep stopped: ${(failure as Error).message}`);
+				break;
+			}
 		}
 		await pause();
 	}
@@ -160,8 +165,12 @@ async function recheck(): Promise<{ left: number; revoked: number }> {
 				[link.guild_id, link.user_id, user?.login ?? link.ft_login],
 			);
 		} catch (failure) {
-			if (failure instanceof FtError || failure instanceof DiscordError) {
-				console.error(`recheck stopped: ${failure.message}`);
+			if (
+				failure instanceof FtError ||
+				failure instanceof DiscordError ||
+				(failure as Error).name === 'TimeoutError'
+			) {
+				console.error(`recheck stopped: ${(failure as Error).message}`);
 				break;
 			}
 			throw failure;

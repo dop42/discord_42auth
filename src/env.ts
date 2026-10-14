@@ -69,6 +69,11 @@ export const env = {
 	get publicUrl() {
 		return required('PUBLIC_URL').replace(/\/$/, '');
 	},
+	/** Address the HTTP server binds: loopback by default, so only the reverse proxy on the
+	 * same machine reaches it. Docker sets `0.0.0.0`, the published port being loopback. */
+	get host() {
+		return process.env.HOST?.trim() || '127.0.0.1';
+	},
 	/** Port the HTTP server listens on, behind the reverse proxy. */
 	get port() {
 		return Number(process.env.PORT ?? 3000);

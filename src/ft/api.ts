@@ -47,6 +47,9 @@ export type Priority = 'interactive' | 'background';
  */
 const spacing = () => Number(process.env.FT_SPACING_MS ?? 550);
 
+/** Longest wait for one 42 call: a hung connection must not hold a request or the sweeper forever. */
+const TIMEOUT_MS = 10_000;
+
 const lanes: Record<Priority, Array<() => void>> = { interactive: [], background: [] };
 let nextSlot = 0;
 let pumping = false;
@@ -93,7 +96,7 @@ export async function ftFetch(
 			lanes[priority].push(resolve);
 			void pump();
 		});
-		const response = await fetch(url, init);
+		const response = await fetch(url, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
 		if (response.status !== 429 || attempt > 0) return response;
 		const wait = Math.min(Number(response.headers.get('retry-after')) || 1, 5);
 		nextSlot = Math.max(nextSlot, Date.now() + wait * 1000);

@@ -7,9 +7,9 @@ export const PEER_HEADER = 'x-peer-address';
  * @author dop42
  * @method isProxy
  * @description Tells whether the TCP peer is a proxy we run, whose `X-Forwarded-For` we trust.
- * @remarks The instance listens on loopback only, or on the compose network behind Caddy;
- * both reach it from a loopback or a private address. A public peer is a client speaking
- * directly, and its forwarding header is a lie it chose.
+ * @remarks The instance binds loopback (`HOST`), so under systemd only Caddy on the same
+ * machine reaches it; under Docker the peer is the compose network's private address. A
+ * public peer is a client speaking directly, and its forwarding header is a lie it chose.
  * @param address {string}
  * @returns {boolean}
  */

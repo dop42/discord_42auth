@@ -118,6 +118,7 @@ export const en: Messages = {
 	'settings.reset': 'Discard',
 	'settings.save': 'Save',
 	'settings.saving': 'Saving…',
+	'settings.leaveConfirm': 'Some changes are not saved. Leave anyway?',
 	'settings.saved': 'Settings saved.',
 	'settings.invalid': 'The server refused this field.',
 	'settings.error': 'Saving failed. Try again.',

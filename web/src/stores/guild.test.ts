@@ -72,4 +72,48 @@ describe('guild store', () => {
 		await store.load('1');
 		expect(store.loadState).toBe('notFound');
 	});
+
+	it('keeps edits typed while a save is in flight', async () => {
+		const store = useGuildStore();
+		store.hydrate(sampleDetail());
+		if (store.draft) store.draft.campus = 'Paris';
+		let answer: (response: Response) => void = () => undefined;
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(() => new Promise<Response>((resolve) => (answer = resolve))),
+		);
+		const saving = store.save();
+		if (store.draft) store.draft.campus = 'Lyon';
+		answer(json(200, { ...sampleDetail().settings, campus: 'Paris' }));
+		await saving;
+		expect(store.detail?.settings.campus).toBe('Paris');
+		expect(store.draft?.campus).toBe('Lyon');
+		expect(store.dirty).toBe(true);
+	});
+
+	it('drops the reply of a server the user already left', async () => {
+		const store = useGuildStore();
+		const answers: Array<(response: Response) => void> = [];
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(() => new Promise<Response>((resolve) => answers.push(resolve))),
+		);
+		const first = store.load('1');
+		const second = store.load('2');
+		const other = { ...sampleDetail(), guild: { id: '2', name: 'B', icon: null } };
+		answers[1]?.(json(200, other));
+		await second;
+		answers[0]?.(json(200, sampleDetail()));
+		await first;
+		expect(store.detail?.guild.id).toBe('2');
+	});
+
+	it('forgets the settings of an erased server', async () => {
+		const store = useGuildStore();
+		store.hydrate(sampleDetail());
+		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(204)));
+		expect(await store.erase()).toBe(true);
+		expect(store.detail).toBeNull();
+		expect(store.draft).toBeNull();
+	});
 });

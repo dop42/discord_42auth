@@ -10,8 +10,7 @@ import { startSweeper } from './sweeper';
  * @method main
  * @description Migrates the database, then serves until told to stop.
  * @remarks On SIGTERM the server stops accepting connections and finishes the ones in
- * flight before the pool is closed, so `docker compose down` never cuts a verification in
- * half.
+ * flight before the pool is closed, so a restart never cuts a verification in half.
  * @returns {Promise<void>}
  */
 async function main(): Promise<void> {
@@ -20,7 +19,7 @@ async function main(): Promise<void> {
 
 	const stopSweeper = startSweeper();
 	const server = createServer(toNodeHandler(route));
-	server.listen(env.port, () => console.log(`listening on :${env.port}`));
+	server.listen(env.port, env.host, () => console.log(`listening on ${env.host}:${env.port}`));
 
 	const stop = () => {
 		stopSweeper();

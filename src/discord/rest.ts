@@ -2,6 +2,9 @@ import { env } from '../env';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 
+/** Longest wait for one Discord call: a hung connection must not hold a request or the sweeper forever. */
+const TIMEOUT_MS = 10_000;
+
 /** A Discord error code meaning the member is not (or no longer) in the server. */
 const UNKNOWN_MEMBER = 10007;
 
@@ -26,6 +29,7 @@ async function request(method: string, path: string, body?: unknown): Promise<Re
 				'Content-Type': 'application/json',
 			},
 			body: body === undefined ? undefined : JSON.stringify(body),
+			signal: AbortSignal.timeout(TIMEOUT_MS),
 		});
 
 	const response = await send();
@@ -275,6 +279,7 @@ export async function exchangeDiscordCode(code: string): Promise<string> {
 			code,
 			redirect_uri: env.discordRedirectUri,
 		}),
+		signal: AbortSignal.timeout(TIMEOUT_MS),
 	});
 	if (!response.ok) throw new Error(`Discord token exchange failed with ${response.status}`);
 	const { access_token } = (await response.json()) as { access_token: string };
@@ -293,6 +298,7 @@ export async function exchangeDiscordCode(code: string): Promise<string> {
 export async function readAsUser<T>(token: string, path: string): Promise<T> {
 	const response = await fetch(`${DISCORD_API}${path}`, {
 		headers: { Authorization: `Bearer ${token}` },
+		signal: AbortSignal.timeout(TIMEOUT_MS),
 	});
 	if (!response.ok) throw new DiscordError(response.status, path);
 	return (await response.json()) as T;

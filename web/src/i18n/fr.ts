@@ -121,6 +121,7 @@ export const fr = {
 	'settings.reset': 'Annuler',
 	'settings.save': 'Enregistrer',
 	'settings.saving': 'Enregistrement…',
+	'settings.leaveConfirm': 'Des modifications ne sont pas enregistrées. Quitter quand même ?',
 	'settings.saved': 'Réglages enregistrés.',
 	'settings.invalid': 'Ce champ a été refusé par le serveur.',
 	'settings.error': 'L’enregistrement a échoué. Réessayez.',

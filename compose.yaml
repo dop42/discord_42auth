@@ -29,6 +29,8 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgres://discord_42auth:${POSTGRES_PASSWORD}@db:5432/discord_42auth
+      # Inside the container; the port is only published on the host's loopback.
+      HOST: 0.0.0.0
     depends_on:
       db: { condition: service_healthy }
     ports:

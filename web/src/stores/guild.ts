@@ -68,15 +68,21 @@ export const useGuildStore = defineStore('guild', () => {
 		invalidIndex.value = null;
 	}
 
+	/** Bumped by every load, so a reply for a server the user already left is dropped. */
+	let loading = 0;
+
 	async function load(id: string): Promise<void> {
+		const ticket = ++loading;
 		loadState.value = 'loading';
 		detail.value = null;
 		draft.value = null;
 		try {
-			hydrate(await api.guild(id));
+			const value = await api.guild(id);
+			if (ticket !== loading) return;
+			hydrate(value);
 			loadState.value = 'ready';
 		} catch (error) {
-			if (fail(error)) return;
+			if (ticket !== loading || fail(error)) return;
 			const status = error instanceof HttpError ? error.status : 0;
 			loadState.value = status === 403 ? 'forbidden' : status === 404 ? 'notFound' : 'error';
 		}
@@ -84,6 +90,8 @@ export const useGuildStore = defineStore('guild', () => {
 
 	async function save(): Promise<void> {
 		if (!detail.value || !draft.value) return;
+		const sent = copy(draft.value);
+		const ticket = loading;
 		const settings: GuildSettings = {
 			...copy(draft.value),
 			campus: draft.value.campus?.trim() ? draft.value.campus.trim() : null,
@@ -93,8 +101,11 @@ export const useGuildStore = defineStore('guild', () => {
 		invalidIndex.value = null;
 		try {
 			const saved = await api.saveGuild(detail.value.guild.id, settings);
+			// Another server was opened meanwhile: this reply is not about the form on screen.
+			if (ticket !== loading) return;
 			detail.value = { ...detail.value, settings: saved };
-			draft.value = copy(saved);
+			// Edits typed while the request was in flight stay in the form, still unsaved.
+			if (same(draft.value, sent)) draft.value = copy(saved);
 			saveState.value = 'saved';
 		} catch (error) {
 			if (fail(error)) return;
@@ -129,6 +140,10 @@ export const useGuildStore = defineStore('guild', () => {
 		if (!detail.value) return false;
 		try {
 			await api.deleteGuild(detail.value.guild.id);
+			// Nothing of the erased settings may come back if the user returns to this server.
+			detail.value = null;
+			draft.value = null;
+			loadState.value = 'idle';
 			return true;
 		} catch (error) {
 			fail(error);

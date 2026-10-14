@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { ArrowLeft } from 'lucide-vue-next';
 import { onMounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import {
+	onBeforeRouteLeave,
+	onBeforeRouteUpdate,
+	useRouter,
+	type RouteLocationNormalized,
+} from 'vue-router';
 import DangerZone from '@/components/DangerZone.vue';
 import MembersPanel from '@/components/MembersPanel.vue';
 import PanelPost from '@/components/PanelPost.vue';
@@ -30,9 +35,14 @@ const expired = () => {
 store.setUnauthenticatedHandler(expired);
 members.setUnauthenticatedHandler(expired);
 
-onMounted(() => {
-	if (store.detail?.guild.id !== props.id) void store.load(props.id);
-});
+// Always fetched again: roles, channels or the settings may have changed since the last visit.
+onMounted(() => void store.load(props.id));
+
+/** Asks before unsaved edits are dropped by going to another page or another server. */
+const confirmLeave = (to: RouteLocationNormalized) =>
+	to.params.id === props.id || !store.dirty || window.confirm(prefs.t['settings.leaveConfirm']);
+onBeforeRouteLeave(confirmLeave);
+onBeforeRouteUpdate(confirmLeave);
 watch(
 	() => props.id,
 	(id) => void store.load(id),

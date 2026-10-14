@@ -99,7 +99,15 @@ translation changes.
 0 4 * * * cd /path/to/discord_42auth && ./scripts/backup.sh
 ```
 
-Dumps are encrypted with `BACKUP_PASSPHRASE` and deleted after 7 days — the
+Without Docker, as root, against the local PostgreSQL, with the passphrase kept
+out of the bot's `.env`:
+
+```cron
+0 4 * * * BACKUP_DB=discord_42auth BACKUP_DIR=/var/backups/discord_42auth BACKUP_PASSPHRASE_FILE=/root/.auth42-backup-passphrase /srv/discord_42auth/app/scripts/backup.sh
+```
+
+A dump that fails or comes out truncated is deleted and the older backups are
+kept. Dumps are encrypted with `BACKUP_PASSPHRASE` and deleted after 7 days — the
 retention promised on the privacy page. Copy them off the machine if you want
 them to survive a disk failure; keep the passphrase somewhere else.
 

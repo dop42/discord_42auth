@@ -8,10 +8,10 @@ import { serveStatic } from './static';
  * @author dop42
  * @method route
  * @description Dispatches every request the instance receives.
- * @remarks The two Discord- and 42-facing paths keep the URLs the Vercel deployment had, so
- * the endpoint registered in the Discord portal and the 42 redirect URI only change host.
- * `/health` answers without touching the database, for the container healthcheck. Every
- * other path goes through the per-address rate limit first.
+ * @remarks `/api/interactions` and `/api/callback` are the URLs registered in the Discord
+ * portal and the 42 application. `/health` answers without touching the database, for the
+ * deploy script and the Docker healthcheck. Every other path goes through the per-address
+ * rate limit first.
  * @param request {Request}
  * @returns {Promise<Response>}
  */
