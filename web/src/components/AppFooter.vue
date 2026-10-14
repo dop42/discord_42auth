@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppLogo from '@/components/ui/AppLogo.vue';
 import { useMetaStore } from '@/stores/meta';
 import { usePrefsStore } from '@/stores/prefs';
 
@@ -13,6 +14,7 @@ const year = new Date().getFullYear();
 		<div class="rule">
 			<div class="cells footer__grid">
 				<div class="footer__brand">
+					<AppLogo class="footer__logo" />
 					<p>{{ prefs.t['footer.tagline'] }}</p>
 				</div>
 				<nav class="footer__col" :aria-label="prefs.t['footer.legal']">
@@ -56,6 +58,10 @@ const year = new Date().getFullYear();
 	display: grid;
 	align-content: start;
 	gap: 1rem;
+}
+
+.footer__logo {
+	font-size: 1.375rem;
 }
 
 .footer__brand p {

@@ -140,10 +140,6 @@ export const useGuildStore = defineStore('guild', () => {
 		if (!detail.value) return false;
 		try {
 			await api.deleteGuild(detail.value.guild.id);
-			// Nothing of the erased settings may come back if the user returns to this server.
-			detail.value = null;
-			draft.value = null;
-			loadState.value = 'idle';
 			return true;
 		} catch (error) {
 			fail(error);

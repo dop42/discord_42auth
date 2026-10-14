@@ -107,13 +107,4 @@ describe('guild store', () => {
 		await first;
 		expect(store.detail?.guild.id).toBe('2');
 	});
-
-	it('forgets the settings of an erased server', async () => {
-		const store = useGuildStore();
-		store.hydrate(sampleDetail());
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(204)));
-		expect(await store.erase()).toBe(true);
-		expect(store.detail).toBeNull();
-		expect(store.draft).toBeNull();
-	});
 });

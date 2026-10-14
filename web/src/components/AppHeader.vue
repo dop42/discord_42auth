@@ -18,7 +18,7 @@ const user = computed(() => session.me?.user ?? null);
 <template>
 	<header class="header">
 		<div class="frame header__inner">
-			<RouterLink to="/" class="header__logo" :aria-label="`${prefs.t.appName}, accueil`">
+			<RouterLink to="/" class="header__logo" :aria-label="prefs.t.appName">
 				<AppLogo />
 			</RouterLink>
 

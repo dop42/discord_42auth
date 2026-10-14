@@ -1,3 +1,5 @@
+import { LOGO_PATH, LOGO_VIEWBOX } from '../shared/logo';
+
 const ESCAPES: Record<string, string> = {
 	'&': '&amp;',
 	'<': '&lt;',
@@ -29,8 +31,9 @@ function layout(locale: string, accent: string, body: string, status: number): R
 	main { max-width:30rem; padding:2rem; text-align:center; }
 	h1 { margin:0 0 .75rem; font-size:1.4rem; color:${accent}; }
 	p { margin:0 0 1rem; color:#b5bac1; }
+	svg { height:3.5rem; margin-bottom:1.25rem; fill:#dbdee1; }
 </style>
-<main>${body}</main>`;
+<main><svg viewBox="${LOGO_VIEWBOX}" aria-hidden="true"><path d="${LOGO_PATH}"/></svg>${body}</main>`;
 	return new Response(html, {
 		status,
 		headers: {
