@@ -1,0 +1,400 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+	scrollbar-color: var(--border-strong) transparent;
+	scrollbar-width: thin;
+	scroll-padding-top: 5rem;
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--fg);
+	font-family: var(--font-display);
+	font-weight: 300;
+	font-size: 1.0625rem;
+	line-height: 1.6;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	overflow-x: clip;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+	margin: 0;
+}
+
+h1,
+h2,
+h3 {
+	text-wrap: balance;
+	letter-spacing: -0.02em;
+}
+
+p {
+	text-wrap: pretty;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+	text-underline-offset: 0.2em;
+}
+
+input,
+textarea,
+select {
+	font: inherit;
+	color: inherit;
+	caret-color: var(--accent-strong);
+}
+
+button {
+	font: inherit;
+	color: inherit;
+}
+
+code {
+	font-family: ui-monospace, 'Geist Mono', SFMono-Regular, Menlo, monospace;
+	font-size: 0.875em;
+}
+
+img,
+svg {
+	display: block;
+	max-width: 100%;
+}
+
+ul,
+ol {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+::selection {
+	background: var(--accent-soft);
+	color: var(--fg);
+}
+
+:focus-visible {
+	outline: 2px solid var(--accent-strong);
+	outline-offset: 3px;
+	border-radius: 6px;
+}
+
+.container {
+	width: 100%;
+	max-width: var(--max-w);
+	margin-inline: auto;
+	padding-inline: var(--gutter);
+}
+
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+/* En-tête de section partagé : titre gras + chapeau léger, comme sur unbbound. */
+.section-head {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+	max-width: 48rem;
+}
+
+.section-head--center {
+	align-items: center;
+	text-align: center;
+	margin-inline: auto;
+}
+
+.section-title {
+	font-size: clamp(1.875rem, 1.1rem + 3vw, 3.5rem);
+	font-weight: 700;
+	line-height: 1.1;
+	letter-spacing: -0.035em;
+}
+
+/* Mot mis en avant dans un titre : juste plus gras, le texte reste noir. */
+.hl {
+	font-weight: 700;
+}
+
+/* Reflet liquide : deux couches de nappes colorées, plus grandes que l'élément, qui tournent
+   en sens opposés et gonflent légèrement. Seuls transform et opacity bougent : fluide, même sur mobile. */
+.liquid {
+	position: relative;
+	isolation: isolate;
+	overflow: hidden;
+	background-color: var(--sheen-2);
+}
+
+.liquid::before,
+.liquid::after {
+	content: '';
+	position: absolute;
+	/* Carré centré, bien plus large que la diagonale de l'élément : aucun coin découvert pendant la rotation. */
+	top: 50%;
+	left: 50%;
+	width: max(150%, 6rem);
+	aspect-ratio: 1;
+	translate: -50% -50%;
+	z-index: -1;
+	pointer-events: none;
+	animation: liquid-swirl var(--liquid-speed, 5s) linear infinite;
+}
+
+.liquid::before {
+	/* Bandes de gris d'intensités alternées : le reflet d'un métal poli. */
+	background: linear-gradient(
+		115deg,
+		var(--sheen-1),
+		var(--sheen-2),
+		var(--sheen-3),
+		var(--sheen-4),
+		var(--sheen-5),
+		var(--sheen-1),
+		var(--sheen-2),
+		var(--sheen-3),
+		var(--sheen-4),
+		var(--sheen-5),
+		var(--sheen-1)
+	);
+}
+
+/* Reflets blancs qui tournent en sens inverse : l'effet liquide. */
+.liquid::after {
+	background:
+		radial-gradient(circle at 32% 36%, rgb(255 255 255 / 35%) 0, transparent 20%),
+		radial-gradient(circle at 70% 62%, rgb(255 255 255 / 25%) 0, transparent 24%),
+		radial-gradient(circle at 55% 20%, rgb(255 255 255 / 20%) 0, transparent 16%);
+	animation-duration: calc(var(--liquid-speed, 5s) * 1.4);
+	animation-direction: reverse;
+}
+
+/* Version légère pour les grandes zones et les traits : un dégradé qui glisse, sans calque géant. */
+.sheen-line,
+.sheen-wash {
+	/* Trait : du noir qui s'éclaircit et revient, en boucle. */
+	background-image: linear-gradient(90deg, #0a0a0a, #a3a3a3, #e5e5e5, #525252, #0a0a0a);
+	background-size: 200% 100%;
+	animation: sheen-slide 4s linear infinite;
+}
+
+.sheen-wash {
+	background-image: linear-gradient(
+		115deg,
+		var(--sheen-1),
+		var(--sheen-2),
+		var(--sheen-3),
+		var(--sheen-4),
+		var(--sheen-5),
+		var(--sheen-1)
+	);
+	background-size: 200% 200%;
+	animation-duration: 6s;
+}
+
+@keyframes sheen-slide {
+	to {
+		background-position: 200% 0;
+	}
+}
+
+@keyframes liquid-swirl {
+	0% {
+		transform: rotate(0deg) scale(1);
+	}
+
+	50% {
+		transform: rotate(180deg) scale(1.18);
+	}
+
+	100% {
+		transform: rotate(360deg) scale(1);
+	}
+}
+
+.section-lead {
+	max-width: 60ch;
+	color: var(--fg-muted);
+	font-size: clamp(1.0625rem, 0.98rem + 0.35vw, 1.25rem);
+	font-weight: 300;
+	line-height: 1.65;
+	letter-spacing: -0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.liquid::before,
+	.liquid::after,
+	.sheen-line,
+	.sheen-wash {
+		animation: none !important;
+	}
+
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* ───────── Double grille ─────────
+   Deux rails verticaux de chaque côté du cadre (voir SiteRails.vue). Le contenu vit entre les rails
+   intérieurs ; les traits horizontaux traversent les quatre rails. */
+:root {
+	--frame-w: 90rem;
+	--rail: 1rem;
+	--pad: clamp(1.25rem, 3.5vw, 3rem);
+}
+
+@media (min-width: 720px) {
+	:root {
+		--rail: 1.5rem;
+	}
+}
+
+.frame {
+	max-width: var(--frame-w);
+	margin-inline: auto;
+	padding-inline: var(--rail);
+}
+
+/* Trait horizontal d'un rail extérieur à l'autre. */
+.rule {
+	position: relative;
+}
+
+.rule::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: calc(-1 * var(--rail));
+	right: calc(-1 * var(--rail));
+	border-top: 1px solid var(--border);
+}
+
+.pad {
+	padding: clamp(3rem, 7vw, 5.5rem) var(--pad);
+}
+
+.cells {
+	display: grid;
+	gap: 1px;
+	background: var(--border);
+}
+
+.cells > * {
+	background: var(--bg);
+}
+
+@media (min-width: 720px) {
+	.cells--2,
+	.cells--3,
+	.cells--4 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (min-width: 1100px) {
+	.cells--3 {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	.cells--4 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+/* ───────── Champs de formulaire ───────── */
+.field {
+	display: block;
+	width: 100%;
+	height: 3rem;
+	padding-inline: 1rem;
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius-m);
+	background: var(--bg);
+	box-shadow: var(--shadow-well);
+	font-size: 0.9375rem;
+	font-weight: 400;
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease;
+}
+
+.field:hover {
+	border-color: var(--fg-faint);
+}
+
+.field:focus-visible {
+	outline: none;
+	border-color: var(--accent-strong);
+	box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+select.field {
+	appearance: none;
+	padding-right: 2.75rem;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23525252' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 1rem center;
+	background-size: 1rem;
+	cursor: pointer;
+}
+
+.field--invalid,
+.field--invalid:hover {
+	border-color: var(--danger);
+	box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+.hint {
+	color: var(--fg-faint);
+	font-size: 0.875rem;
+	line-height: 1.55;
+}
+
+.error-text {
+	color: var(--danger);
+	font-size: 0.875rem;
+}
+
+/* Petit libellé technique au-dessus d'un titre. */
+.eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.625rem;
+	color: var(--fg-faint);
+	font-size: 0.8125rem;
+	font-weight: 400;
+	letter-spacing: 0.02em;
+}
+
+/* Lien de texte souligné qui fonce au survol. */
+.link {
+	text-decoration: underline;
+	text-decoration-color: var(--border-strong);
+	text-decoration-thickness: 1px;
+	transition: text-decoration-color 0.2s ease;
+}
+
+.link:hover {
+	text-decoration-color: var(--fg);
+}

@@ -1,0 +1,13 @@
+{
+	"ignores": [
+		"tailwindcss",
+		"@vitest/coverage-v8",
+		"jsdom",
+		"prettier-plugin-tailwindcss",
+		"vue-tsc",
+		"@types/node",
+		"typescript",
+		"vue-eslint-parser",
+		"@shared/api"
+	]
+}

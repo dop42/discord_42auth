@@ -1,0 +1,59 @@
+/* Thème unique : noir, blanc et gris. Les accents jouent sur l'intensité et les dégradés, jamais sur la teinte. */
+:root {
+	--font-display: 'Unbounded Variable', 'Unbounded', system-ui, sans-serif;
+
+	/* Focus clavier, curseur et sélection : noir franc et gris clair. */
+	--accent-strong: #0a0a0a;
+	--accent-soft: #e5e5e5;
+
+	/* Reflet argenté : des gris d'intensités alternées, comme un métal poli. Le texte noir reste lisible dessus. */
+	--sheen-1: #fafafa;
+	--sheen-2: #d4d4d4;
+	--sheen-3: #f5f5f5;
+	--sheen-4: #a3a3a3;
+	--sheen-5: #e5e5e5;
+	--sheen: linear-gradient(
+		135deg,
+		var(--sheen-1),
+		var(--sheen-2),
+		var(--sheen-3),
+		var(--sheen-4),
+		var(--sheen-5)
+	);
+	--sheen-glow: rgb(10 10 10 / 22%);
+
+	--bg: #ffffff;
+	--hover: #f6f6f7;
+	--bg-elevated: #fafafa;
+	--card: #ffffff;
+	--fg: #0a0a0a;
+	--fg-muted: #525252;
+	--fg-faint: #6b6b6b;
+	--border: #ebebeb;
+	--border-strong: #d4d4d4;
+
+	--ok: #0a0a0a;
+	--warn: #262626;
+	--warn-soft: #f5f5f5;
+	--danger: #e11d48;
+	--danger-soft: #fff1f2;
+
+	/* Ombres douces et décalées vers le bas, jamais un halo centré. */
+	--shadow-card: 0 1px 2px rgb(16 24 40 / 4%), 0 8px 24px -12px rgb(16 24 40 / 12%);
+	--shadow-pop: 0 8px 24px -6px rgb(16 24 40 / 35%);
+	--shadow-well: inset 0 1px 2px rgb(16 24 40 / 4%);
+	--highlight: inset 0 1px 0 rgb(255 255 255 / 25%);
+	--border-soft: color-mix(in oklch, var(--border) 70%, transparent);
+	--shadow-button: inset 0 1px 1px rgb(255 255 255 / 20%), 0 1px 2px rgb(10 10 10 / 12%);
+
+	--radius-s: 0.5rem;
+	--radius-m: 0.875rem;
+	--radius-inner: 1.25rem;
+	--radius-l: 1.75rem;
+	--max-w: 80rem;
+	--gutter: clamp(1rem, 4vw, 1.5rem);
+
+	--ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+	color-scheme: light;
+}
