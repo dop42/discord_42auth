@@ -4,14 +4,30 @@ import { computed, ref } from 'vue';
 import { api, HttpError } from '@/api/client';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'forbidden' | 'notFound' | 'error';
-type SaveState = 'idle' | 'saving' | 'saved' | 'invalid' | 'error';
+type SaveState = 'idle' | 'saving' | 'saved' | 'invalid' | 'rateLimited' | 'error';
 
 const same = (a: GuildSettings, b: GuildSettings) =>
 	a.roleId === b.roleId &&
 	a.campus === b.campus &&
 	a.studentsOnly === b.studentsOnly &&
 	a.nickname === b.nickname &&
-	a.logChannelId === b.logChannelId;
+	a.logChannelId === b.logChannelId &&
+	a.roleRules.length === b.roleRules.length &&
+	a.roleRules.every((rule, i) => {
+		const other = b.roleRules[i];
+		return (
+			other !== undefined &&
+			rule.kind === other.kind &&
+			rule.value === other.value &&
+			rule.roleId === other.roleId
+		);
+	});
+
+/** A copy the form can edit without touching what is saved. */
+const copy = (settings: GuildSettings): GuildSettings => ({
+	...settings,
+	roleRules: settings.roleRules.map((rule) => ({ ...rule })),
+});
 
 /** The server being edited: what is saved, what the form holds, and how the last save went. */
 export const useGuildStore = defineStore('guild', () => {
@@ -20,6 +36,8 @@ export const useGuildStore = defineStore('guild', () => {
 	const loadState = ref<LoadState>('idle');
 	const saveState = ref<SaveState>('idle');
 	const invalidField = ref<keyof GuildSettings | null>(null);
+	/** For an invalid `roleRules`: which rule, from 0. */
+	const invalidIndex = ref<number | null>(null);
 
 	const dirty = computed(
 		() =>
@@ -44,9 +62,10 @@ export const useGuildStore = defineStore('guild', () => {
 
 	function hydrate(value: GuildDetail): void {
 		detail.value = value;
-		draft.value = { ...value.settings };
+		draft.value = copy(value.settings);
 		saveState.value = 'idle';
 		invalidField.value = null;
+		invalidIndex.value = null;
 	}
 
 	async function load(id: string): Promise<void> {
@@ -66,15 +85,16 @@ export const useGuildStore = defineStore('guild', () => {
 	async function save(): Promise<void> {
 		if (!detail.value || !draft.value) return;
 		const settings: GuildSettings = {
-			...draft.value,
+			...copy(draft.value),
 			campus: draft.value.campus?.trim() ? draft.value.campus.trim() : null,
 		};
 		saveState.value = 'saving';
 		invalidField.value = null;
+		invalidIndex.value = null;
 		try {
 			const saved = await api.saveGuild(detail.value.guild.id, settings);
 			detail.value = { ...detail.value, settings: saved };
-			draft.value = { ...saved };
+			draft.value = copy(saved);
 			saveState.value = 'saved';
 		} catch (error) {
 			if (fail(error)) return;
@@ -83,8 +103,12 @@ export const useGuildStore = defineStore('guild', () => {
 				error.status === 400 &&
 				error.body?.error === 'invalid'
 			) {
-				invalidField.value = error.body.field ?? null;
+				const field = error.body.field;
+				invalidField.value = field && field !== 'channelId' ? field : null;
+				invalidIndex.value = error.body.index ?? null;
 				saveState.value = 'invalid';
+			} else if (error instanceof HttpError && error.rateLimited) {
+				saveState.value = 'rateLimited';
 			} else {
 				saveState.value = 'error';
 			}
@@ -94,8 +118,9 @@ export const useGuildStore = defineStore('guild', () => {
 	/** Drops the unsaved edits. */
 	function reset(): void {
 		if (!detail.value) return;
-		draft.value = { ...detail.value.settings };
+		draft.value = copy(detail.value.settings);
 		invalidField.value = null;
+		invalidIndex.value = null;
 		saveState.value = 'idle';
 	}
 
@@ -117,6 +142,7 @@ export const useGuildStore = defineStore('guild', () => {
 		loadState,
 		saveState,
 		invalidField,
+		invalidIndex,
 		dirty,
 		hydrate,
 		load,

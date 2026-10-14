@@ -52,6 +52,7 @@ test('edit and save settings', async ({ page }) => {
 			studentsOnly: false,
 			nickname: 'full',
 			logChannelId: '300000000000000001',
+			roleRules: [],
 		},
 	]);
 });
@@ -81,4 +82,65 @@ test('legal pages show the operator', async ({ page }) => {
 	await page.getByRole('link', { name: 'Conditions d’utilisation' }).click();
 	await expect(page.getByRole('heading', { name: 'Conditions d’utilisation' })).toBeVisible();
 	await expect(page.getByRole('link', { name: 'rgpd@example.org' })).toBeVisible();
+});
+
+test('posts the verification panel in a chosen channel', async ({ page }) => {
+	const recorded = await mockApi(page, { loggedIn: true });
+	await page.goto('/guilds/100000000000000001');
+	const post = page.getByRole('button', { name: 'Publier le panneau' });
+	await expect(post).toBeDisabled();
+	await page.getByLabel('Salon', { exact: true }).selectOption({ label: '#logs' });
+	await post.click();
+	await expect(page.getByText('Panneau publié dans #logs.')).toBeVisible();
+	expect(recorded.panels).toEqual([{ channelId: '300000000000000001' }]);
+});
+
+test('adds a role rule and saves it', async ({ page }) => {
+	const recorded = await mockApi(page, { loggedIn: true });
+	await page.goto('/guilds/100000000000000001');
+	await page.getByRole('button', { name: 'Ajouter une règle' }).click();
+	const rule = page.getByRole('listitem', { name: 'Règle 1' });
+	await rule.getByLabel('Condition').selectOption({ label: 'Cursus en cours' });
+	await rule.getByLabel('Valeur').fill('c-piscine');
+	await rule.getByLabel('Rôle donné').selectOption({ label: 'Verified' });
+	await page.getByRole('button', { name: 'Enregistrer' }).click();
+	await expect(page.getByText('Réglages enregistrés.')).toBeVisible();
+	expect(recorded.saved[0]?.roleRules).toEqual([
+		{ kind: 'cursus', value: 'c-piscine', roleId: '200000000000000001' },
+	]);
+});
+
+test('members tab: search, then unlink with a confirmation', async ({ page }) => {
+	const recorded = await mockApi(page, { loggedIn: true });
+	await page.goto('/guilds/100000000000000001');
+	await page.getByRole('link', { name: 'Membres' }).click();
+	await expect(page).toHaveURL(/\/guilds\/100000000000000001\/members$/);
+
+	const table = page.getByRole('table', { name: 'Membres vérifiés' });
+	await expect(table.getByRole('row')).toHaveCount(3);
+	await page.getByLabel('Rechercher').fill('jd');
+	await expect(table.getByRole('row')).toHaveCount(2);
+
+	await page.getByRole('button', { name: 'Délier jdoe' }).click();
+	await page.getByRole('button', { name: 'Confirmer : délier jdoe' }).click();
+	await expect(page.getByText('jdoe a été délié.')).toBeVisible();
+	await expect(page.getByText('Aucun membre ne correspond à cette recherche.')).toBeVisible();
+	expect(recorded.unlinked).toEqual(['500000000000000001']);
+});
+
+test('switches to English and to the dark theme, and remembers both', async ({ page }) => {
+	await mockApi(page, { loggedIn: false });
+	await page.goto('/');
+	await page.getByRole('button', { name: 'EN' }).click();
+	await expect(page.getByRole('link', { name: 'Log in with Discord' })).toBeVisible();
+	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+
+	await page.getByRole('button', { name: 'Switch to dark theme' }).click();
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+	await page.reload();
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+	await expect(page.getByRole('link', { name: 'Log in with Discord' })).toBeVisible();
+	await page.getByRole('link', { name: 'Privacy' }).click();
+	await expect(page.getByRole('heading', { name: 'Privacy policy' })).toBeVisible();
 });

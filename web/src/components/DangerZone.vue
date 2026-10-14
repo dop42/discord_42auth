@@ -2,8 +2,10 @@
 import { Trash2 } from 'lucide-vue-next';
 import { computed, ref, useTemplateRef } from 'vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import { fr } from '@/i18n/fr';
 import { useGuildStore } from '@/stores/guild';
+import { usePrefsStore } from '@/stores/prefs';
+
+const prefs = usePrefsStore();
 
 const props = defineProps<{ guildName: string }>();
 const emit = defineEmits<{ erased: [] }>();
@@ -43,22 +45,24 @@ async function confirm(): Promise<void> {
 <template>
 	<section class="danger" aria-labelledby="danger-title">
 		<div class="danger__text">
-			<h2 id="danger-title" class="danger__title">{{ fr['danger.title'] }}</h2>
-			<p class="hint">{{ fr['danger.body'] }}</p>
+			<h2 id="danger-title" class="danger__title">{{ prefs.t['danger.title'] }}</h2>
+			<p class="hint">{{ prefs.t['danger.body'] }}</p>
 		</div>
 		<div>
 			<BaseButton variant="danger" @click="open">
 				<Trash2 :size="16" :stroke-width="1.6" aria-hidden="true" />
-				{{ fr['danger.button'] }}
+				{{ prefs.t['danger.button'] }}
 			</BaseButton>
 		</div>
 
 		<dialog ref="dialog" aria-labelledby="danger-dialog-title" class="dialog">
 			<form method="dialog" class="dialog__body" @submit.prevent="confirm">
-				<h2 id="danger-dialog-title" class="dialog__title">{{ fr['danger.button'] }}</h2>
-				<p class="hint">{{ fr['danger.body'] }}</p>
+				<h2 id="danger-dialog-title" class="dialog__title">
+					{{ prefs.t['danger.button'] }}
+				</h2>
+				<p class="hint">{{ prefs.t['danger.body'] }}</p>
 				<label for="confirm-name" class="dialog__label">{{
-					fr['danger.confirm'](guildName)
+					prefs.t['danger.confirm'](guildName)
 				}}</label>
 				<input
 					id="confirm-name"
@@ -67,17 +71,17 @@ async function confirm(): Promise<void> {
 					autocomplete="off"
 					class="field"
 				/>
-				<p v-if="failed" role="alert" class="error-text">{{ fr['danger.error'] }}</p>
+				<p v-if="failed" role="alert" class="error-text">{{ prefs.t['danger.error'] }}</p>
 				<div class="dialog__actions">
 					<BaseButton variant="ghost" size="sm" @click="close">{{
-						fr['danger.cancel']
+						prefs.t['danger.cancel']
 					}}</BaseButton>
 					<BaseButton
 						type="submit"
 						variant="solid"
 						size="sm"
 						:disabled="!matches || busy"
-						>{{ fr['danger.submit'] }}</BaseButton
+						>{{ prefs.t['danger.submit'] }}</BaseButton
 					>
 				</div>
 			</form>

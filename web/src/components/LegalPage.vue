@@ -1,11 +1,17 @@
 <script setup lang="ts">
-defineProps<{ title: string; updated: string }>();
+import { usePrefsStore } from '@/stores/prefs';
+
+defineProps<{ title: string; /** ISO date. */ updated: string }>();
+const prefs = usePrefsStore();
 </script>
 
 <template>
 	<article class="rule pad legal">
 		<header class="legal__head">
-			<p class="eyebrow">Dernière mise à jour : {{ updated }}</p>
+			<p class="eyebrow">
+				{{ prefs.t['legal.updated'] }}
+				<time :datetime="updated">{{ prefs.t.date(updated) }}</time>
+			</p>
 			<h1 class="section-title">{{ title }}</h1>
 		</header>
 		<div class="prose">

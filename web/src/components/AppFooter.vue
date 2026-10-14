@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { fr } from '@/i18n/fr';
 import { useMetaStore } from '@/stores/meta';
+import { usePrefsStore } from '@/stores/prefs';
+
+const prefs = usePrefsStore();
 
 const meta = useMetaStore();
 const year = new Date().getFullYear();
@@ -11,21 +13,21 @@ const year = new Date().getFullYear();
 		<div class="rule">
 			<div class="cells footer__grid">
 				<div class="footer__brand">
-					<p>{{ fr['footer.tagline'] }}</p>
+					<p>{{ prefs.t['footer.tagline'] }}</p>
 				</div>
-				<nav class="footer__col" :aria-label="fr['footer.legal']">
-					<h2>{{ fr['footer.legal'] }}</h2>
+				<nav class="footer__col" :aria-label="prefs.t['footer.legal']">
+					<h2>{{ prefs.t['footer.legal'] }}</h2>
 					<ul>
 						<li>
-							<RouterLink to="/privacy">{{ fr['footer.privacy'] }}</RouterLink>
+							<RouterLink to="/privacy">{{ prefs.t['footer.privacy'] }}</RouterLink>
 						</li>
 						<li>
-							<RouterLink to="/terms">{{ fr['footer.terms'] }}</RouterLink>
+							<RouterLink to="/terms">{{ prefs.t['footer.terms'] }}</RouterLink>
 						</li>
 					</ul>
 				</nav>
 				<div class="footer__col">
-					<h2>{{ fr['footer.operator'] }}</h2>
+					<h2>{{ prefs.t['footer.operator'] }}</h2>
 					<ul v-if="meta.meta">
 						<li>{{ meta.meta.operator.name }}</li>
 						<li>{{ meta.meta.hosting }}</li>
@@ -33,8 +35,8 @@ const year = new Date().getFullYear();
 				</div>
 			</div>
 			<div class="footer__bottom">
-				<span>© {{ year }} {{ meta.meta?.operator.name ?? fr.appName }}</span>
-				<span>{{ fr['footer.unaffiliated'] }}</span>
+				<span>© {{ year }} {{ meta.meta?.operator.name ?? prefs.t.appName }}</span>
+				<span>{{ prefs.t['footer.unaffiliated'] }}</span>
 			</div>
 		</div>
 	</footer>

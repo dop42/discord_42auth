@@ -1,18 +1,29 @@
 <script setup lang="ts">
-import { NICKNAME_MODES, type GuildSettings, type NicknameMode } from '@shared/api';
-import { Check, TriangleAlert } from 'lucide-vue-next';
+import {
+	MAX_ROLE_RULES,
+	NICKNAME_MODES,
+	RULE_KINDS,
+	type GuildSettings,
+	type NicknameMode,
+} from '@shared/api';
+import { Check, Plus, TriangleAlert, X } from 'lucide-vue-next';
 import { computed } from 'vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import { fr } from '@/i18n/fr';
 import { useGuildStore } from '@/stores/guild';
+import { usePrefsStore } from '@/stores/prefs';
+
+const prefs = usePrefsStore();
 
 const store = useGuildStore();
 
-const nicknameLabels: Record<NicknameMode, { label: string; example: string }> = {
-	off: { label: fr['settings.nickname.off'], example: 'pseudo actuel' },
-	login: { label: fr['settings.nickname.login'], example: 'jdoe' },
-	full: { label: fr['settings.nickname.full'], example: 'John Doe (jdoe)' },
-};
+const nicknameLabels = computed<Record<NicknameMode, { label: string; example: string }>>(() => ({
+	off: {
+		label: prefs.t['settings.nickname.off'],
+		example: prefs.t['settings.nickname.offExample'],
+	},
+	login: { label: prefs.t['settings.nickname.login'], example: 'jdoe' },
+	full: { label: prefs.t['settings.nickname.full'], example: 'John Doe (jdoe)' },
+}));
 
 const roles = computed(() => store.detail?.roles ?? []);
 const channels = computed(() => store.detail?.channels ?? []);
@@ -29,6 +40,20 @@ const selectedRoleColor = computed(() => {
 	const role = roles.value.find((entry) => entry.id === store.draft?.roleId);
 	return role ? roleColor(role.color) : 'transparent';
 });
+
+const assignableRoles = computed(() => roles.value.filter((role) => role.assignable));
+const invalidRule = (index: number) =>
+	store.invalidField === 'roleRules' &&
+	(store.invalidIndex === null || store.invalidIndex === index);
+
+function addRule(): void {
+	if (!store.draft || store.draft.roleRules.length >= MAX_ROLE_RULES) return;
+	store.draft.roleRules.push({ kind: 'campus', value: '', roleId: '' });
+}
+
+function removeRule(index: number): void {
+	store.draft?.roleRules.splice(index, 1);
+}
 
 function onCampus(event: Event): void {
 	if (!store.draft) return;
@@ -54,8 +79,8 @@ function onChannel(event: Event): void {
 		<!-- Role -->
 		<div class="row">
 			<div class="row__label">
-				<label for="role" class="row__title">{{ fr['settings.role'] }}</label>
-				<p id="role-help" class="hint">{{ fr['settings.role.help'] }}</p>
+				<label for="role" class="row__title">{{ prefs.t['settings.role'] }}</label>
+				<p id="role-help" class="hint">{{ prefs.t['settings.role.help'] }}</p>
 			</div>
 			<div class="row__control">
 				<div class="select-dot">
@@ -72,7 +97,7 @@ function onChannel(event: Event): void {
 						aria-describedby="role-help"
 						@change="onRole"
 					>
-						<option value="">{{ fr['settings.role.none'] }}</option>
+						<option value="">{{ prefs.t['settings.role.none'] }}</option>
 						<option
 							v-for="role in roles"
 							:key="role.id"
@@ -80,23 +105,115 @@ function onChannel(event: Event): void {
 							:disabled="!role.assignable"
 						>
 							{{ role.name
-							}}{{ role.assignable ? '' : ` — ${fr['settings.role.above']}` }}
+							}}{{ role.assignable ? '' : ` — ${prefs.t['settings.role.above']}` }}
 						</option>
 					</select>
 				</div>
-				<p v-if="invalid('roleId')" class="error-text">{{ fr['settings.invalid'] }}</p>
+				<p v-if="invalid('roleId')" class="error-text">{{ prefs.t['settings.invalid'] }}</p>
 				<p v-if="someUnassignable" class="notice notice--warn">
 					<TriangleAlert :size="16" :stroke-width="1.8" aria-hidden="true" />
-					<span>{{ fr['settings.role.warn'] }}</span>
+					<span>{{ prefs.t['settings.role.warn'] }}</span>
 				</p>
 			</div>
 		</div>
 
+		<!-- Extra roles -->
+		<fieldset class="row">
+			<div class="row__label">
+				<legend class="row__title">{{ prefs.t['settings.rules'] }}</legend>
+				<p class="hint">{{ prefs.t['settings.rules.help'] }}</p>
+			</div>
+			<div class="row__control">
+				<p v-if="!store.draft.roleRules.length" class="notice">
+					{{ prefs.t['settings.rules.empty'] }}
+				</p>
+				<ol v-else class="rules">
+					<li
+						v-for="(rule, i) in store.draft.roleRules"
+						:key="i"
+						:class="['rule-item', { 'rule-item--invalid': invalidRule(i) }]"
+						:aria-label="prefs.t['settings.rules.rule'](i + 1)"
+					>
+						<label class="rule-item__field">
+							<span class="rule-item__label">{{
+								prefs.t['settings.rules.kind']
+							}}</span>
+							<select v-model="rule.kind" class="field">
+								<option v-for="kind in RULE_KINDS" :key="kind" :value="kind">
+									{{ prefs.t['settings.rules.kinds'][kind] }}
+								</option>
+							</select>
+						</label>
+						<label class="rule-item__field">
+							<span class="rule-item__label">{{
+								prefs.t['settings.rules.value']
+							}}</span>
+							<input
+								v-model="rule.value"
+								type="text"
+								maxlength="64"
+								autocomplete="off"
+								class="field"
+								:placeholder="prefs.t['settings.rules.placeholders'][rule.kind]"
+							/>
+						</label>
+						<label class="rule-item__field">
+							<span class="rule-item__label">{{
+								prefs.t['settings.rules.role']
+							}}</span>
+							<select v-model="rule.roleId" class="field rule-item__role">
+								<option value="" disabled>
+									{{ prefs.t['settings.rules.pickRole'] }}
+								</option>
+								<option
+									v-for="role in assignableRoles"
+									:key="role.id"
+									:value="role.id"
+								>
+									{{ role.name }}
+								</option>
+							</select>
+						</label>
+						<button
+							type="button"
+							class="rule-item__remove"
+							:aria-label="prefs.t['settings.rules.remove'](i + 1)"
+							:title="prefs.t['settings.rules.remove'](i + 1)"
+							@click="removeRule(i)"
+						>
+							<X :size="16" :stroke-width="1.8" aria-hidden="true" />
+						</button>
+					</li>
+				</ol>
+				<p v-if="invalid('roleRules')" class="error-text">
+					{{
+						store.invalidIndex === null
+							? prefs.t['settings.invalid']
+							: prefs.t['settings.rules.invalid'](store.invalidIndex + 1)
+					}}
+				</p>
+				<div>
+					<BaseButton
+						variant="ghost"
+						size="sm"
+						:disabled="store.draft.roleRules.length >= MAX_ROLE_RULES"
+						@click="addRule"
+					>
+						<Plus :size="14" :stroke-width="1.8" aria-hidden="true" />
+						{{ prefs.t['settings.rules.add'] }}
+					</BaseButton>
+				</div>
+				<p v-if="store.draft.roleRules.length >= MAX_ROLE_RULES" class="hint">
+					{{ prefs.t['settings.rules.max'] }}
+				</p>
+			</div>
+		</fieldset>
+
 		<!-- Campus -->
 		<div class="row">
 			<div class="row__label">
-				<label for="campus" class="row__title">{{ fr['settings.campus'] }}</label>
-				<p id="campus-help" class="hint">{{ fr['settings.campus.help'] }}</p>
+				<label for="campus" class="row__title">{{ prefs.t['settings.campus'] }}</label>
+				<p id="campus-help" class="hint">{{ prefs.t['settings.campus.help'] }}</p>
 			</div>
 			<div class="row__control">
 				<input
@@ -104,22 +221,24 @@ function onChannel(event: Event): void {
 					type="text"
 					maxlength="64"
 					autocomplete="off"
-					placeholder="Tous les campus"
+					:placeholder="prefs.t['settings.campus.any']"
 					:class="fieldClass('campus')"
 					:value="store.draft.campus ?? ''"
 					:aria-invalid="invalid('campus')"
 					aria-describedby="campus-help"
 					@input="onCampus"
 				/>
-				<p v-if="invalid('campus')" class="error-text">{{ fr['settings.invalid'] }}</p>
+				<p v-if="invalid('campus')" class="error-text">{{ prefs.t['settings.invalid'] }}</p>
 			</div>
 		</div>
 
 		<!-- Students only -->
 		<div class="row">
 			<div class="row__label">
-				<span id="students-label" class="row__title">{{ fr['settings.students'] }}</span>
-				<p id="students-help" class="hint">{{ fr['settings.students.help'] }}</p>
+				<span id="students-label" class="row__title">{{
+					prefs.t['settings.students']
+				}}</span>
+				<p id="students-help" class="hint">{{ prefs.t['settings.students.help'] }}</p>
 			</div>
 			<div class="row__control">
 				<button
@@ -147,8 +266,8 @@ function onChannel(event: Event): void {
 		<!-- Nickname -->
 		<fieldset class="row" :aria-invalid="invalid('nickname')">
 			<div class="row__label">
-				<legend class="row__title">{{ fr['settings.nickname'] }}</legend>
-				<p class="hint">{{ fr['settings.nickname.help'] }}</p>
+				<legend class="row__title">{{ prefs.t['settings.nickname'] }}</legend>
+				<p class="hint">{{ prefs.t['settings.nickname.help'] }}</p>
 			</div>
 			<div class="row__control">
 				<div :class="['choices', { 'choices--invalid': invalid('nickname') }]">
@@ -173,15 +292,17 @@ function onChannel(event: Event): void {
 						</span>
 					</label>
 				</div>
-				<p v-if="invalid('nickname')" class="error-text">{{ fr['settings.invalid'] }}</p>
+				<p v-if="invalid('nickname')" class="error-text">
+					{{ prefs.t['settings.invalid'] }}
+				</p>
 			</div>
 		</fieldset>
 
 		<!-- Log channel -->
 		<div class="row">
 			<div class="row__label">
-				<label for="logs" class="row__title">{{ fr['settings.logs'] }}</label>
-				<p id="logs-help" class="hint">{{ fr['settings.logs.help'] }}</p>
+				<label for="logs" class="row__title">{{ prefs.t['settings.logs'] }}</label>
+				<p id="logs-help" class="hint">{{ prefs.t['settings.logs.help'] }}</p>
 			</div>
 			<div class="row__control">
 				<select
@@ -192,15 +313,15 @@ function onChannel(event: Event): void {
 					aria-describedby="logs-help logs-retention"
 					@change="onChannel"
 				>
-					<option value="">{{ fr['settings.logs.none'] }}</option>
+					<option value="">{{ prefs.t['settings.logs.none'] }}</option>
 					<option v-for="channel in channels" :key="channel.id" :value="channel.id">
 						#{{ channel.name }}
 					</option>
 				</select>
 				<p v-if="invalid('logChannelId')" class="error-text">
-					{{ fr['settings.invalid'] }}
+					{{ prefs.t['settings.invalid'] }}
 				</p>
-				<p id="logs-retention" class="notice">{{ fr['settings.logs.retention'] }}</p>
+				<p id="logs-retention" class="notice">{{ prefs.t['settings.logs.retention'] }}</p>
 			</div>
 		</div>
 
@@ -209,25 +330,34 @@ function onChannel(event: Event): void {
 			<span class="bar__line sheen-line" aria-hidden="true" />
 			<p class="bar__status" aria-live="polite">
 				<span v-if="store.saveState === 'error'" class="error-text">{{
-					fr['settings.error']
+					prefs.t['settings.error']
+				}}</span>
+				<span v-else-if="store.saveState === 'rateLimited'" class="error-text">{{
+					prefs.t['error.rateLimited']
 				}}</span>
 				<span v-else-if="store.saveState === 'saved' && !store.dirty" class="bar__ok">
 					<Check :size="16" :stroke-width="2" aria-hidden="true" />{{
-						fr['settings.saved']
+						prefs.t['settings.saved']
 					}}
 				</span>
-				<span v-else>{{ store.dirty ? fr['settings.dirty'] : fr['settings.clean'] }}</span>
+				<span v-else>{{
+					store.dirty ? prefs.t['settings.dirty'] : prefs.t['settings.clean']
+				}}</span>
 			</p>
 			<div class="bar__actions">
 				<BaseButton v-if="store.dirty" variant="ghost" size="sm" @click="store.reset()">{{
-					fr['settings.reset']
+					prefs.t['settings.reset']
 				}}</BaseButton>
 				<BaseButton
 					type="submit"
 					size="md"
 					:disabled="!store.dirty || store.saveState === 'saving'"
 				>
-					{{ store.saveState === 'saving' ? fr['settings.saving'] : fr['settings.save'] }}
+					{{
+						store.saveState === 'saving'
+							? prefs.t['settings.saving']
+							: prefs.t['settings.save']
+					}}
 				</BaseButton>
 			</div>
 		</div>
@@ -324,6 +454,74 @@ fieldset.row > .row__label > legend {
 	margin-top: 0.15rem;
 }
 
+/* Règles de rôles : une carte par règle, trois champs côte à côte dès qu'il y a la place. */
+.rules {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.rule-item {
+	position: relative;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0.75rem;
+	padding: 1rem 3.25rem 1rem 1rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-m);
+	background: linear-gradient(135deg, var(--bg-elevated), var(--bg));
+}
+
+.rule-item--invalid {
+	border-color: var(--danger);
+	box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+.rule-item__field {
+	display: grid;
+	gap: 0.375rem;
+	min-width: 0;
+}
+
+.rule-item__label {
+	color: var(--fg-faint);
+	font-size: 0.75rem;
+}
+
+.rule-item__remove {
+	position: absolute;
+	top: 0.75rem;
+	right: 0.75rem;
+	display: grid;
+	place-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: 1px solid var(--border-strong);
+	border-radius: 999px;
+	background: var(--bg);
+	color: var(--fg-muted);
+	cursor: pointer;
+	transition:
+		color 0.2s ease,
+		border-color 0.2s ease;
+}
+
+.rule-item__remove:hover {
+	color: var(--danger);
+	border-color: var(--danger);
+}
+
+@media (min-width: 560px) {
+	.rule-item {
+		grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr) minmax(0, 1.25fr);
+		align-items: end;
+	}
+
+	.rule-item__remove {
+		top: auto;
+		bottom: 1.125rem;
+	}
+}
+
 /* Interrupteur : piste noire quand il est actif. */
 .switch {
 	position: relative;
@@ -342,7 +540,7 @@ fieldset.row > .row__label > legend {
 	position: absolute;
 	inset: 0;
 	border-radius: inherit;
-	background: linear-gradient(135deg, #0a0a0a, #404040);
+	background: var(--switch-on);
 	opacity: 0;
 	transition: opacity 0.25s ease;
 }

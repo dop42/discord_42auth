@@ -1,24 +1,27 @@
 <script setup lang="ts">
 import { ArrowRight } from 'lucide-vue-next';
+import { computed } from 'vue';
 import GuildCard from '@/components/GuildCard.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import { fr } from '@/i18n/fr';
 import { useMetaStore } from '@/stores/meta';
 import { useSessionStore } from '@/stores/session';
+import { usePrefsStore } from '@/stores/prefs';
+
+const prefs = usePrefsStore();
 
 const session = useSessionStore();
 const meta = useMetaStore();
-const title = fr['landing.title'];
+const title = computed(() => prefs.t['landing.title']);
 </script>
 
 <template>
 	<p v-if="session.status === 'idle' || session.status === 'loading'" class="pad state">
-		{{ fr.loading }}
+		{{ prefs.t.loading }}
 	</p>
 
 	<template v-else-if="session.status === 'anonymous'">
 		<section class="rule pad hero">
-			<p class="eyebrow">{{ fr['landing.eyebrow'] }}</p>
+			<p class="eyebrow">{{ prefs.t['landing.eyebrow'] }}</p>
 			<h1 class="hero__title">
 				<span class="visually-hidden">{{ title.map((w) => w.text).join(' ') }}.</span>
 				<span aria-hidden="true">
@@ -32,10 +35,10 @@ const title = fr['landing.title'];
 				</span>
 			</h1>
 			<div class="hero__foot">
-				<p class="hero__lead">{{ fr['landing.lead'] }}</p>
+				<p class="hero__lead">{{ prefs.t['landing.lead'] }}</p>
 				<div class="hero__ctas">
 					<BaseButton href="/auth/login" size="lg">
-						{{ fr['landing.login'] }}
+						{{ prefs.t['landing.login'] }}
 						<ArrowRight :size="16" :stroke-width="1.6" aria-hidden="true" />
 					</BaseButton>
 					<BaseButton
@@ -43,16 +46,16 @@ const title = fr['landing.title'];
 						:href="meta.meta.inviteUrl"
 						variant="ghost"
 						size="lg"
-						>{{ fr['landing.invite'] }}</BaseButton
+						>{{ prefs.t['landing.invite'] }}</BaseButton
 					>
 				</div>
 			</div>
 		</section>
 
 		<section class="rule" aria-labelledby="steps-title">
-			<h2 id="steps-title" class="visually-hidden">{{ fr['landing.steps.title'] }}</h2>
+			<h2 id="steps-title" class="visually-hidden">{{ prefs.t['landing.steps.title'] }}</h2>
 			<ol class="cells cells--3 steps">
-				<li v-for="step in fr['landing.steps']" :key="step.n" class="step">
+				<li v-for="step in prefs.t['landing.steps']" :key="step.n" class="step">
 					<span class="wash sheen-wash" aria-hidden="true" />
 					<span class="step__n">{{ step.n }}</span>
 					<h3 class="step__title">{{ step.title }}</h3>
@@ -64,19 +67,29 @@ const title = fr['landing.title'];
 
 	<section v-else-if="session.status === 'ready' && session.me" class="rule">
 		<div class="pad section-head">
-			<p class="eyebrow">{{ fr['guilds.eyebrow'] }}</p>
-			<h1 class="section-title">Vos <span class="hl">serveurs</span>.</h1>
-			<p class="section-lead">{{ fr['guilds.hint'] }}</p>
+			<p class="eyebrow">{{ prefs.t['guilds.eyebrow'] }}</p>
+			<h1 class="section-title">
+				{{ prefs.t['guilds.title'] }}
+				<span class="hl">{{ prefs.t['guilds.titleAccent'] }}</span
+				>.
+			</h1>
+			<p class="section-lead">{{ prefs.t['guilds.hint'] }}</p>
 		</div>
-		<ul v-if="session.me.guilds.length" class="cells cells--3 guilds" aria-label="Serveurs">
+		<ul
+			v-if="session.me.guilds.length"
+			class="cells cells--3 guilds"
+			:aria-label="prefs.t['guilds.list']"
+		>
 			<GuildCard v-for="guild in session.me.guilds" :key="guild.id" :guild="guild" />
 		</ul>
-		<p v-else class="pad empty">{{ fr['guilds.empty'] }}</p>
+		<p v-else class="pad empty">{{ prefs.t['guilds.empty'] }}</p>
 	</section>
 
 	<div v-else role="alert" class="pad state">
-		<p>{{ fr['error.generic'] }}</p>
-		<BaseButton variant="ghost" size="sm" @click="session.load()">{{ fr.retry }}</BaseButton>
+		<p>{{ prefs.t['error.generic'] }}</p>
+		<BaseButton variant="ghost" size="sm" @click="session.load()">{{
+			prefs.t.retry
+		}}</BaseButton>
 	</div>
 </template>
 

@@ -8,6 +8,7 @@ export const sampleDetail = (): GuildDetail => ({
 		studentsOnly: true,
 		nickname: 'login',
 		logChannelId: null,
+		roleRules: [],
 	},
 	roles: [
 		{ id: '200000000000000002', name: 'Staff', color: 0xff0000, assignable: false },

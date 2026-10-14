@@ -10,6 +10,12 @@ export default tseslint.config(
 	...tseslint.configs.strictTypeChecked,
 	...vue.configs['flat/recommended'],
 	{
+		// Plain browser scripts served as-is, outside the bundle and the TypeScript project.
+		files: ['public/**/*.js'],
+		extends: [tseslint.configs.disableTypeChecked],
+		languageOptions: { globals: { ...globals.browser }, sourceType: 'script' },
+	},
+	{
 		files: ['**/*.{ts,vue}'],
 		languageOptions: {
 			globals: { ...globals.browser },

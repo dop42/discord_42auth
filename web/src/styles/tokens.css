@@ -1,4 +1,5 @@
-/* Thème unique : noir, blanc et gris. Les accents jouent sur l'intensité et les dégradés, jamais sur la teinte. */
+/* Noir, blanc et gris. Les accents jouent sur l'intensité et les dégradés, jamais sur la teinte.
+   Thème clair par défaut ; le sombre suit le système, sauf choix explicite (data-theme sur <html>). */
 :root {
 	--font-display: 'Unbounded Variable', 'Unbounded', system-ui, sans-serif;
 
@@ -38,6 +39,12 @@
 	--danger: #e11d48;
 	--danger-soft: #fff1f2;
 
+	/* Les dégradés qui changent de sens avec le thème. */
+	--switch-on: linear-gradient(135deg, #0a0a0a, #404040);
+	--line: linear-gradient(90deg, #0a0a0a, #a3a3a3, #e5e5e5, #525252, #0a0a0a);
+	--ping: radial-gradient(circle at 35% 35%, #737373, #0a0a0a);
+	--solid-hover: #262626;
+
 	/* Ombres douces et décalées vers le bas, jamais un halo centré. */
 	--shadow-card: 0 1px 2px rgb(16 24 40 / 4%), 0 8px 24px -12px rgb(16 24 40 / 12%);
 	--shadow-pop: 0 8px 24px -6px rgb(16 24 40 / 35%);
@@ -56,4 +63,73 @@
 	--ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
 	color-scheme: light;
+}
+
+/* Sombre : choisi explicitement, ou demandé par le système quand rien n'est choisi. */
+:root[data-theme='dark'] {
+	--accent-strong: #fafafa;
+	--accent-soft: #333333;
+	--sheen-glow: rgb(250 250 250 / 14%);
+
+	--bg: #0a0a0a;
+	--hover: #151515;
+	--bg-elevated: #111111;
+	--card: #0d0d0d;
+	--fg: #fafafa;
+	--fg-muted: #a3a3a3;
+	--fg-faint: #8f8f8f;
+	--border: #1f1f1f;
+	--border-strong: #363636;
+
+	--ok: #fafafa;
+	--warn: #e5e5e5;
+	--warn-soft: #151515;
+	--danger: #fb7185;
+	--danger-soft: rgb(251 113 133 / 10%);
+
+	--switch-on: linear-gradient(135deg, #fafafa, #a3a3a3);
+	--line: linear-gradient(90deg, #fafafa, #525252, #262626, #a3a3a3, #fafafa);
+	--ping: radial-gradient(circle at 35% 35%, #fafafa, #737373);
+	--solid-hover: #d4d4d4;
+
+	--shadow-card: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px -12px rgb(0 0 0 / 70%);
+	--shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 80%);
+	--shadow-well: inset 0 1px 2px rgb(0 0 0 / 40%);
+
+	color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--accent-strong: #fafafa;
+		--accent-soft: #333333;
+		--sheen-glow: rgb(250 250 250 / 14%);
+
+		--bg: #0a0a0a;
+		--hover: #151515;
+		--bg-elevated: #111111;
+		--card: #0d0d0d;
+		--fg: #fafafa;
+		--fg-muted: #a3a3a3;
+		--fg-faint: #8f8f8f;
+		--border: #1f1f1f;
+		--border-strong: #363636;
+
+		--ok: #fafafa;
+		--warn: #e5e5e5;
+		--warn-soft: #151515;
+		--danger: #fb7185;
+		--danger-soft: rgb(251 113 133 / 10%);
+
+		--switch-on: linear-gradient(135deg, #fafafa, #a3a3a3);
+		--line: linear-gradient(90deg, #fafafa, #525252, #262626, #a3a3a3, #fafafa);
+		--ping: radial-gradient(circle at 35% 35%, #fafafa, #737373);
+		--solid-hover: #d4d4d4;
+
+		--shadow-card: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px -12px rgb(0 0 0 / 70%);
+		--shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 80%);
+		--shadow-well: inset 0 1px 2px rgb(0 0 0 / 40%);
+
+		color-scheme: dark;
+	}
 }

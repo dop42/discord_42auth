@@ -4,10 +4,12 @@ import AppFooter from '@/components/AppFooter.vue';
 import AppHeader from '@/components/AppHeader.vue';
 import SiteRails from '@/components/ui/SiteRails.vue';
 import { useMetaStore } from '@/stores/meta';
+import { usePrefsStore } from '@/stores/prefs';
 import { useSessionStore } from '@/stores/session';
 
 const session = useSessionStore();
 const meta = useMetaStore();
+const prefs = usePrefsStore();
 
 onMounted(() => {
 	void meta.load();
@@ -16,7 +18,7 @@ onMounted(() => {
 </script>
 
 <template>
-	<a class="skip-link" href="#contenu">Aller au contenu</a>
+	<a class="skip-link" href="#contenu">{{ prefs.t.skip }}</a>
 	<div class="shell">
 		<AppHeader />
 		<main id="contenu" class="frame">
@@ -39,6 +41,11 @@ onMounted(() => {
 /* margin-inline: auto ferait rétrécir un élément de grille à son contenu. */
 .shell > .frame {
 	width: 100%;
+}
+
+/* Le pied de page commence sous la ligne de flottaison : quand la page charge, il ne saute pas. */
+.shell > main {
+	min-height: 100svh;
 }
 
 .skip-link {

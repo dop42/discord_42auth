@@ -4,7 +4,9 @@ import { ArrowUpRight, Settings2 } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import GuildAvatar from '@/components/ui/GuildAvatar.vue';
 import LivePing from '@/components/ui/LivePing.vue';
-import { fr } from '@/i18n/fr';
+import { usePrefsStore } from '@/stores/prefs';
+
+const prefs = usePrefsStore();
 
 defineProps<{ guild: GuildSummary }>();
 </script>
@@ -17,7 +19,7 @@ defineProps<{ guild: GuildSummary }>();
 			<span :class="['status', { 'status--off': !guild.botPresent }]">
 				<LivePing v-if="guild.botPresent" />
 				<i v-else class="status__dot" aria-hidden="true" />
-				{{ guild.botPresent ? fr['guilds.present'] : fr['guilds.absent'] }}
+				{{ guild.botPresent ? prefs.t['guilds.present'] : prefs.t['guilds.absent'] }}
 			</span>
 		</div>
 		<p class="card__name" :title="guild.name">{{ guild.name }}</p>
@@ -27,19 +29,19 @@ defineProps<{ guild: GuildSummary }>();
 				:to="{ name: 'guild', params: { id: guild.id } }"
 				variant="solid"
 				size="sm"
-				:aria-label="`${fr['guilds.configure']} ${guild.name}`"
+				:aria-label="`${prefs.t['guilds.configure']} ${guild.name}`"
 			>
 				<Settings2 :size="14" :stroke-width="1.8" aria-hidden="true" />
-				{{ fr['guilds.configure'] }}
+				{{ prefs.t['guilds.configure'] }}
 			</BaseButton>
 			<BaseButton
 				v-else
 				:href="guild.inviteUrl"
 				variant="ghost"
 				size="sm"
-				:aria-label="`${fr['guilds.add']} — ${guild.name}`"
+				:aria-label="`${prefs.t['guilds.add']} — ${guild.name}`"
 			>
-				{{ fr['guilds.add'] }}
+				{{ prefs.t['guilds.add'] }}
 				<ArrowUpRight :size="14" :stroke-width="1.8" aria-hidden="true" />
 			</BaseButton>
 		</div>

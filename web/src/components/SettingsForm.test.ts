@@ -45,4 +45,34 @@ describe('SettingsForm', () => {
 		expect(submit.attributes('disabled')).toBeUndefined();
 		expect(wrapper.find('#students').attributes('aria-checked')).toBe('false');
 	});
+
+	it('edits role rules and points at the one the server refused', async () => {
+		const store = useGuildStore();
+		store.hydrate(sampleDetail());
+		const wrapper = mount(SettingsForm);
+		expect(wrapper.text()).toContain('Aucune règle');
+
+		await wrapper.find('button.btn--ghost').trigger('click');
+		expect(store.dirty).toBe(true);
+		const items = () => wrapper.findAll('.rule-item');
+		const first = () => wrapper.get('.rule-item');
+		expect(items()).toHaveLength(1);
+
+		await first().find('input').setValue('Paris');
+		await first().get('.rule-item__role').setValue('200000000000000001');
+		expect(store.draft?.roleRules).toEqual([
+			{ kind: 'campus', value: 'Paris', roleId: '200000000000000001' },
+		]);
+		// Only assignable roles are offered.
+		expect(first().find('option[value="200000000000000002"]').exists()).toBe(false);
+
+		store.invalidField = 'roleRules';
+		store.invalidIndex = 0;
+		await nextTick();
+		expect(first().classes()).toContain('rule-item--invalid');
+		expect(wrapper.text()).toContain('La règle 1 a été refusée');
+
+		await wrapper.find('.rule-item__remove').trigger('click');
+		expect(store.dirty).toBe(false);
+	});
 });

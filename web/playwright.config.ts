@@ -9,7 +9,8 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	retries: 0,
 	workers: cpus().length,
-	use: { baseURL: `http://localhost:${PORT}`, trace: 'retain-on-failure' },
+	// French browser: the assertions read the French strings.
+	use: { baseURL: `http://localhost:${PORT}`, locale: 'fr-FR', trace: 'retain-on-failure' },
 	projects: [
 		{ name: 'chromium', use: { ...devices['Desktop Chrome'] } },
 		{ name: 'firefox', use: { ...devices['Desktop Firefox'] } },

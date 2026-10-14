@@ -95,7 +95,8 @@ withDefaults(
 }
 
 .btn--accent {
-	color: var(--fg);
+	/* Le reflet reste argenté dans les deux thèmes : l'encre reste noire. */
+	color: #0a0a0a;
 	font-weight: 500;
 	box-shadow:
 		var(--shadow-button),
@@ -126,7 +127,7 @@ withDefaults(
 	}
 
 	.btn--solid:hover:not(:disabled) {
-		background: #262626;
+		background: var(--solid-hover);
 	}
 
 	.btn--ghost:hover:not(:disabled) {

@@ -14,7 +14,7 @@
 .ping i {
 	grid-area: 1 / 1;
 	border-radius: 50%;
-	background: radial-gradient(circle at 35% 35%, #737373, #0a0a0a);
+	background: var(--ping);
 	box-shadow: inset 0 0 0 1px rgb(16 24 40 / 15%);
 }
 

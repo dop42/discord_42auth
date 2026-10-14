@@ -13,8 +13,8 @@ export const useSessionStore = defineStore('session', () => {
 	async function load(): Promise<void> {
 		status.value = 'loading';
 		try {
-			me.value = await api.me();
-			status.value = 'ready';
+			me.value = (await api.me()) ?? null;
+			status.value = me.value ? 'ready' : 'anonymous';
 		} catch (error) {
 			me.value = null;
 			status.value =

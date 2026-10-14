@@ -10,6 +10,12 @@ export const router = createRouter({
 			component: () => import('./views/GuildView.vue'),
 			props: true,
 		},
+		{
+			path: '/guilds/:id/members',
+			name: 'members',
+			component: () => import('./views/GuildView.vue'),
+			props: (route) => ({ id: route.params.id, tab: 'members' }),
+		},
 		{ path: '/privacy', name: 'privacy', component: () => import('./views/PrivacyView.vue') },
 		{ path: '/terms', name: 'terms', component: () => import('./views/TermsView.vue') },
 		{ path: '/:pathMatch(.*)*', redirect: '/' },

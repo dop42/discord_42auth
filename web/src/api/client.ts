@@ -1,4 +1,12 @@
-import type { ApiError, GuildDetail, GuildSettings, Me, Meta } from '@shared/api';
+import type {
+	ApiError,
+	GuildDetail,
+	GuildSettings,
+	Me,
+	MemberPage,
+	Meta,
+	PanelRequest,
+} from '@shared/api';
 
 /** A non-2xx answer, carrying the status and the server's `{ error, field }` body when it sent one. */
 export class HttpError extends Error {
@@ -12,6 +20,10 @@ export class HttpError extends Error {
 
 	get unauthenticated(): boolean {
 		return this.status === 401;
+	}
+
+	get rateLimited(): boolean {
+		return this.status === 429;
 	}
 }
 
@@ -55,13 +67,26 @@ export async function request<T>(method: string, path: string, body?: unknown): 
 
 export const api = {
 	meta: () => request<Meta>('GET', '/api/meta'),
-	me: () => request<Me>('GET', '/api/me'),
+	/** `undefined` when nobody is logged in. */
+	me: () => request<Me | undefined>('GET', '/api/me'),
 	logout: () => request<undefined>('POST', '/auth/logout'),
 	guild: (id: string) => request<GuildDetail>('GET', `/api/guilds/${encodeURIComponent(id)}`),
 	saveGuild: (id: string, settings: GuildSettings) =>
 		request<GuildSettings>('PUT', `/api/guilds/${encodeURIComponent(id)}`, settings),
 	deleteGuild: (id: string) =>
 		request<undefined>('DELETE', `/api/guilds/${encodeURIComponent(id)}`),
+	members: (id: string, query: string, page: number) =>
+		request<MemberPage>(
+			'GET',
+			`/api/guilds/${encodeURIComponent(id)}/members?${new URLSearchParams({ q: query, page: String(page) }).toString()}`,
+		),
+	unlink: (id: string, userId: string) =>
+		request<undefined>(
+			'DELETE',
+			`/api/guilds/${encodeURIComponent(id)}/members/${encodeURIComponent(userId)}`,
+		),
+	postPanel: (id: string, body: PanelRequest) =>
+		request<undefined>('POST', `/api/guilds/${encodeURIComponent(id)}/panel`, body),
 };
 
 export const avatarUrl = (id: string, hash: string) =>

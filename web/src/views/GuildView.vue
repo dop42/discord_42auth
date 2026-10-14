@@ -3,28 +3,45 @@ import { ArrowLeft } from 'lucide-vue-next';
 import { onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import DangerZone from '@/components/DangerZone.vue';
+import MembersPanel from '@/components/MembersPanel.vue';
+import PanelPost from '@/components/PanelPost.vue';
 import SettingsForm from '@/components/SettingsForm.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import GuildAvatar from '@/components/ui/GuildAvatar.vue';
-import { fr } from '@/i18n/fr';
 import { useGuildStore } from '@/stores/guild';
+import { useMembersStore } from '@/stores/members';
 import { useSessionStore } from '@/stores/session';
+import { usePrefsStore } from '@/stores/prefs';
 
-const props = defineProps<{ id: string }>();
+const prefs = usePrefsStore();
+
+const props = withDefaults(defineProps<{ id: string; tab?: 'settings' | 'members' }>(), {
+	tab: 'settings',
+});
 const store = useGuildStore();
+const members = useMembersStore();
 const session = useSessionStore();
 const router = useRouter();
 
-store.setUnauthenticatedHandler(() => {
+const expired = () => {
 	session.expire();
 	void router.replace('/');
-});
+};
+store.setUnauthenticatedHandler(expired);
+members.setUnauthenticatedHandler(expired);
 
-onMounted(() => void store.load(props.id));
+onMounted(() => {
+	if (store.detail?.guild.id !== props.id) void store.load(props.id);
+});
 watch(
 	() => props.id,
 	(id) => void store.load(id),
 );
+
+/** Keeps the big count right after an unlink, without reloading the whole form. */
+function onMembersChanged(): void {
+	if (store.detail && members.data) store.detail.verifiedCount = members.data.total;
+}
 
 async function onErased(): Promise<void> {
 	await session.load();
@@ -33,25 +50,27 @@ async function onErased(): Promise<void> {
 </script>
 
 <template>
-	<nav class="crumb" aria-label="Fil d’Ariane">
+	<nav class="crumb" :aria-label="prefs.t.crumb">
 		<RouterLink to="/" class="crumb__back">
 			<ArrowLeft :size="16" :stroke-width="1.6" aria-hidden="true" />
-			{{ fr.back }}
+			{{ prefs.t.back }}
 		</RouterLink>
 	</nav>
 
 	<p v-if="store.loadState === 'loading' || store.loadState === 'idle'" class="rule pad state">
-		{{ fr.loading }}
+		{{ prefs.t.loading }}
 	</p>
 	<p v-else-if="store.loadState === 'forbidden'" role="alert" class="rule pad state">
-		{{ fr['error.forbidden'] }}
+		{{ prefs.t['error.forbidden'] }}
 	</p>
 	<p v-else-if="store.loadState === 'notFound'" role="alert" class="rule pad state">
-		{{ fr['error.notFound'] }}
+		{{ prefs.t['error.notFound'] }}
 	</p>
 	<div v-else-if="store.loadState === 'error'" role="alert" class="rule pad state">
-		<p>{{ fr['error.generic'] }}</p>
-		<BaseButton variant="ghost" size="sm" @click="store.load(id)">{{ fr.retry }}</BaseButton>
+		<p>{{ prefs.t['error.generic'] }}</p>
+		<BaseButton variant="ghost" size="sm" @click="store.load(id)">{{
+			prefs.t.retry
+		}}</BaseButton>
 	</div>
 
 	<template v-else-if="store.detail && store.draft">
@@ -63,19 +82,38 @@ async function onErased(): Promise<void> {
 				:size="72"
 			/>
 			<div class="head__text">
-				<p class="eyebrow">{{ fr['settings.eyebrow'] }}</p>
+				<p class="eyebrow">{{ prefs.t['settings.eyebrow'] }}</p>
 				<h1 class="head__title">{{ store.detail.guild.name }}</h1>
 			</div>
 			<p class="count">
 				<span class="count__n">{{ store.detail.verifiedCount }}</span>
 				<span class="count__label">{{
-					fr['settings.verified'](store.detail.verifiedCount)
+					prefs.t['settings.verified'](store.detail.verifiedCount)
 				}}</span>
 			</p>
 		</header>
 
-		<SettingsForm />
-		<DangerZone :guild-name="store.detail.guild.name" @erased="onErased" />
+		<nav class="tabs" :aria-label="prefs.t['tabs.label']">
+			<RouterLink
+				:to="{ name: 'guild', params: { id } }"
+				:class="['tab', { 'tab--on': tab === 'settings' }]"
+				:aria-current="tab === 'settings' ? 'page' : undefined"
+				>{{ prefs.t['tabs.settings'] }}</RouterLink
+			>
+			<RouterLink
+				:to="{ name: 'members', params: { id } }"
+				:class="['tab', { 'tab--on': tab === 'members' }]"
+				:aria-current="tab === 'members' ? 'page' : undefined"
+				>{{ prefs.t['tabs.members'] }}</RouterLink
+			>
+		</nav>
+
+		<template v-if="tab === 'settings'">
+			<SettingsForm />
+			<PanelPost />
+			<DangerZone :guild-name="store.detail.guild.name" @erased="onErased" />
+		</template>
+		<MembersPanel v-else :guild-id="id" @changed="onMembersChanged" />
 	</template>
 </template>
 
@@ -95,6 +133,51 @@ async function onErased(): Promise<void> {
 
 .crumb__back:hover {
 	color: var(--fg);
+}
+
+.tabs {
+	display: flex;
+	gap: 0.25rem;
+	padding: 0 var(--pad);
+	border-top: 1px solid var(--border);
+}
+
+.tab {
+	position: relative;
+	padding: 1rem 1rem 0.875rem;
+	color: var(--fg-muted);
+	font-size: 0.9375rem;
+	transition: color 0.2s ease;
+}
+
+.tab:first-child {
+	padding-left: 0;
+}
+
+.tab:hover {
+	color: var(--fg);
+}
+
+.tab--on {
+	color: var(--fg);
+	font-weight: 500;
+}
+
+/* Le trait de l'onglet actif reprend le dégradé de l'en-tête. */
+.tab--on::after {
+	content: '';
+	position: absolute;
+	right: 1rem;
+	bottom: -1px;
+	left: 1rem;
+	height: 2px;
+	background: var(--line);
+	background-size: 200% 100%;
+	animation: sheen-slide 4s linear infinite;
+}
+
+.tab--on:first-child::after {
+	left: 0;
 }
 
 .state {

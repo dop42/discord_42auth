@@ -1,5 +1,12 @@
 import type { Page, Route } from '@playwright/test';
-import type { GuildDetail, GuildSettings, Me, Meta } from '../../shared/api';
+import type {
+	GuildDetail,
+	GuildSettings,
+	LinkedMember,
+	Me,
+	Meta,
+	PanelRequest,
+} from '../../shared/api';
 
 export const meta: Meta = {
 	operator: { name: 'Opérateur Test', contact: 'rgpd@example.org' },
@@ -35,6 +42,7 @@ export const detail: GuildDetail = {
 		studentsOnly: true,
 		nickname: 'login',
 		logChannelId: null,
+		roleRules: [],
 	},
 	roles: [
 		{ id: '200000000000000002', name: 'Staff', color: 0xff0000, assignable: false },
@@ -54,15 +62,21 @@ const json = (route: Route, status: number, body?: unknown) =>
 export interface Recorded {
 	saved: GuildSettings[];
 	deleted: string[];
+	unlinked: string[];
+	panels: PanelRequest[];
 }
 
-/** Mocks the whole backend. `loggedIn: false` makes `/api/me` answer 401. */
+const freshMembers = (): LinkedMember[] => [
+	{ userId: '500000000000000001', ftLogin: 'jdoe', verifiedAt: '2026-10-01T10:00:00.000Z' },
+	{ userId: '500000000000000002', ftLogin: 'asmith', verifiedAt: '2026-09-20T10:00:00.000Z' },
+];
+
+/** Mocks the whole backend. `loggedIn: false` makes `/api/me` answer 204, as with no session. */
 export async function mockApi(page: Page, { loggedIn }: { loggedIn: boolean }): Promise<Recorded> {
-	const recorded: Recorded = { saved: [], deleted: [] };
+	const recorded: Recorded = { saved: [], deleted: [], unlinked: [], panels: [] };
+	let members = freshMembers();
 	await page.route('**/api/meta', (route) => json(route, 200, meta));
-	await page.route('**/api/me', (route) =>
-		loggedIn ? json(route, 200, me) : json(route, 401, { error: 'unauthenticated' }),
-	);
+	await page.route('**/api/me', (route) => (loggedIn ? json(route, 200, me) : json(route, 204)));
 	await page.route('**/api/guilds/*', async (route) => {
 		const request = route.request();
 		if (request.method() === 'GET') return json(route, 200, detail);
@@ -76,6 +90,24 @@ export async function mockApi(page: Page, { loggedIn }: { loggedIn: boolean }): 
 			return json(route, 204);
 		}
 		return json(route, 405, { error: 'method' });
+	});
+	await page.route('**/api/guilds/*/members**', async (route) => {
+		const request = route.request();
+		const url = new URL(request.url());
+		if (request.method() === 'DELETE') {
+			const userId = url.pathname.split('/').at(-1) ?? '';
+			recorded.unlinked.push(userId);
+			members = members.filter((m) => m.userId !== userId);
+			return json(route, 204);
+		}
+		const q = (url.searchParams.get('q') ?? '').toLowerCase();
+		const found = members.filter((m) => m.ftLogin.includes(q) || m.userId === q);
+		return json(route, 200, { members: found, total: found.length, page: 0, pageSize: 50 });
+	});
+	await page.route('**/api/guilds/*/panel', async (route) => {
+		const body = route.request().postDataJSON() as PanelRequest;
+		recorded.panels.push(body);
+		return json(route, 204);
 	});
 	return recorded;
 }
