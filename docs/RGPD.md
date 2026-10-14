@@ -14,10 +14,11 @@ conseillée.
 | --- | --- | --- |
 | Responsable du traitement | Les admins de chaque serveur Discord | Ils décident de filtrer l'accès à leur serveur et choisissent les règles |
 | Sous-traitant (art. 28) | L'opérateur de l'instance (`OPERATOR_NAME`) | Il exécute le traitement selon la configuration choisie par l'admin |
+| Sous-traitant ultérieur | OVHcloud (serveur dédié, Roubaix) | Fournit la machine ; n'accède pas aux données. Lié par son accord de traitement (DPA) |
 | Responsables indépendants | Discord, 42 | Sources des données, avec leurs propres politiques |
 
 Les clauses de l'article 28 (traiter uniquement sur instruction, confidentialité,
-sécurité, pas de sous-traitant ultérieur, assistance pour les droits,
+sécurité, un seul sous-traitant ultérieur (OVHcloud), assistance pour les droits,
 notification des violations, suppression en fin de service) sont reprises dans
 `/terms`, que l'admin accepte en ajoutant le bot.
 
@@ -49,6 +50,7 @@ notification des violations, suppression en fin de service) sont reprises dans
 | Catégories de traitement | 1. Vérification d'appartenance à 42 et attribution d'un rôle. 2. Connexion des admins au dashboard |
 | Personnes concernées | Membres des serveurs qui se vérifient, admins des serveurs |
 | Données | 1. ID Discord, ID et login 42, ID du serveur, dates de vérification et des contrôles. Lus sans être gardés : profil 42 public (campus, cursus, statut) et coalitions si le serveur s'en sert. 2. ID Discord, nom d'utilisateur, avatar, liste des serveurs gérés |
+| Sous-traitant ultérieur | OVHcloud — serveur dédié à Roubaix (France) |
 | Transferts hors UE | Aucun de la part de l'opérateur (hébergement : `HOSTING_LOCATION`) |
 | Durées | 1. Tant que le membre est sur le serveur, que le bot y est et que le compte 42 remplit les règles (7 jours max après un départ, contrôle du compte 42 chaque semaine). 2. 24 h |
 | Sécurité | Voir « Sécurité » ci-dessus |
@@ -58,7 +60,8 @@ notification des violations, suppression en fin de service) sont reprises dans
 ## Ce qu'il te reste à faire, hors code
 
 - [ ] **Remplir `OPERATOR_NAME`, `OPERATOR_CONTACT`, `HOSTING_LOCATION`** avec des valeurs réelles. `/privacy` les affiche.
-- [ ] **Mentions légales (LCEN, art. 6-III).** Un site édité par un particulier doit nommer son hébergeur. En auto-hébergement, c'est toi : nom, et une adresse de contact.
+- [x] **Mentions légales (LCEN, art. 6-III).** L'hébergeur (OVH SAS, Roubaix) est nommé sur `/terms`, avec l'éditeur et son contact.
+- [ ] **Accord de traitement OVHcloud.** Vérifier dans l'espace client OVHcloud que le DPA (Data Processing Agreement) est accepté pour ce serveur.
 - [ ] **Chiffrer le disque** de la machine (LUKS), ou au moins le volume Docker de la base.
 - [ ] **Durcir la machine** : mises à jour automatiques, SSH par clé uniquement, pare-feu n'ouvrant que 22, 80 et 443.
 - [ ] **Copier les sauvegardes hors de la machine**, chiffrées comme elles le sont déjà. La phrase de passe doit être conservée ailleurs.

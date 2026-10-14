@@ -129,8 +129,10 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 
 	<h2>Recipients</h2>
 	<p>
-		The admins of the server concerned and the operator of this instance. Discord and 42 are
-		independent controllers for the data they hold: see
+		The admins of the server concerned and the operator of this instance. The data is stored on
+		a dedicated server rented from <strong>OVHcloud</strong> in Roubaix (France), which acts as
+		a processor and does not access it. No data leaves the European Union because of the
+		operator. Discord and 42 are independent controllers for the data they hold: see
 		<a href="https://discord.com/privacy" rel="noopener noreferrer">Discord's policy</a>
 		and
 		<a href="https://www.42.fr/" rel="noopener noreferrer">42 Network's policy</a>.

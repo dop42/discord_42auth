@@ -50,13 +50,20 @@ const contact = computed(() => meta.meta?.operator.contact ?? null);
 			apply the security measures described in the
 			<RouterLink to="/privacy">privacy policy</RouterLink>;
 		</li>
-		<li>use no sub-processor: hosting is provided by the operator themselves;</li>
+		<li>
+			use a single sub-processor, the host <strong>OVHcloud</strong>, which provides the
+			dedicated server in Roubaix (France) and is bound by a data processing agreement under
+			article 28; tell you before any change;
+		</li>
 		<li>help you answer your members' requests to exercise their rights;</li>
 		<li>notify you of any data breach without undue delay;</li>
 		<li>
 			delete your server's data at the end of the service, that is when the bot is removed.
 		</li>
 	</ul>
+
+	<h2>Host</h2>
+	<p>OVH SAS, 2 rue Kellermann, 59100 Roubaix, France — +33 9 72 10 10 07.</p>
 
 	<h2>Suspension</h2>
 	<p>In case of abuse, the operator may remove the bot from a server without notice.</p>

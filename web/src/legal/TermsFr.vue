@@ -54,8 +54,10 @@ const contact = computed(() => meta.meta?.operator.contact ?? null);
 			<RouterLink to="/privacy">politique de confidentialité</RouterLink> ;
 		</li>
 		<li>
-			ne recourir à aucun sous-traitant ultérieur : l’hébergement est assuré par l’opérateur
-			lui-même ;
+			ne recourir qu’à un seul sous-traitant ultérieur, l’hébergeur
+			<strong>OVHcloud</strong>, qui fournit le serveur dédié à Roubaix (France) et est lié
+			par un accord de traitement conforme à l’article 28 ; vous prévenir avant tout
+			changement ;
 		</li>
 		<li>vous aider à répondre aux demandes d’exercice des droits de vos membres ;</li>
 		<li>vous notifier toute violation de données sans délai injustifié ;</li>
@@ -64,6 +66,9 @@ const contact = computed(() => meta.meta?.operator.contact ?? null);
 			en est retiré.
 		</li>
 	</ul>
+
+	<h2>Hébergeur</h2>
+	<p>OVH SAS, 2 rue Kellermann, 59100 Roubaix, France — +33 9 72 10 10 07.</p>
 
 	<h2>Suspension</h2>
 	<p>En cas d’abus, l’opérateur peut retirer le bot d’un serveur sans préavis.</p>

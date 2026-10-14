@@ -144,8 +144,11 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 
 	<h2>Destinataires</h2>
 	<p>
-		Les administrateurs du serveur concerné et l’opérateur de cette instance. Discord et 42 sont
-		des responsables de traitement indépendants pour les données qu’ils détiennent : voir la
+		Les administrateurs du serveur concerné et l’opérateur de cette instance. Les données sont
+		stockées sur un serveur dédié loué à <strong>OVHcloud</strong>, à Roubaix (France), qui agit
+		comme sous-traitant et n’y accède pas. Aucune donnée ne quitte l’Union européenne du fait de
+		l’opérateur. Discord et 42 sont des responsables de traitement indépendants pour les données
+		qu’ils détiennent : voir la
 		<a href="https://discord.com/privacy" rel="noopener noreferrer">politique de Discord</a>
 		et la
 		<a href="https://www.42.fr/" rel="noopener noreferrer">politique de 42 Network</a>.
