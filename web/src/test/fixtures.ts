@@ -14,6 +14,11 @@ export const sampleDetail = (): GuildDetail => ({
 		syncEvents: false,
 		syncExams: false,
 		counterChannelId: null,
+		automodSpam: false,
+		automodMentions: null,
+		automodLanguage: false,
+		automodKeywords: [],
+		automodAlertChannelId: null,
 	},
 	roles: [
 		{ id: '200000000000000002', name: 'Staff', color: 0xff0000, assignable: false },

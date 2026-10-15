@@ -4,7 +4,15 @@ import { computed, ref } from 'vue';
 import { api, HttpError } from '@/api/client';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'forbidden' | 'notFound' | 'error';
-type SaveState = 'idle' | 'saving' | 'saved' | 'invalid' | 'rateLimited' | 'error';
+type SaveState =
+	| 'idle'
+	| 'saving'
+	| 'saved'
+	| 'invalid'
+	| 'rateLimited'
+	| 'automodForbidden'
+	| 'automodFailed'
+	| 'error';
 
 const sameRules = (a: GuildSettings['roleRules'], b: GuildSettings['roleRules']) =>
 	a.length === b.length &&
@@ -31,13 +39,22 @@ const FIELDS: Array<keyof GuildSettings> = [
 	'syncExams',
 	'counterChannelId',
 	'logChannelId',
+	'automodSpam',
+	'automodMentions',
+	'automodLanguage',
+	'automodKeywords',
+	'automodAlertChannelId',
 ];
 
 /** The settings that differ between two versions; empty when they are the same. */
 const differences = (a: GuildSettings, b: GuildSettings) =>
 	new Set(
 		FIELDS.filter((field) =>
-			field === 'roleRules' ? !sameRules(a.roleRules, b.roleRules) : a[field] !== b[field],
+			field === 'roleRules'
+				? !sameRules(a.roleRules, b.roleRules)
+				: field === 'automodKeywords'
+					? a.automodKeywords.join('\n') !== b.automodKeywords.join('\n')
+					: a[field] !== b[field],
 		),
 	);
 
@@ -47,6 +64,7 @@ const same = (a: GuildSettings, b: GuildSettings) => differences(a, b).size === 
 const copy = (settings: GuildSettings): GuildSettings => ({
 	...settings,
 	roleRules: settings.roleRules.map((rule) => ({ ...rule })),
+	automodKeywords: [...settings.automodKeywords],
 });
 
 /** The server being edited: what is saved, what the form holds, and how the last save went. */
@@ -139,6 +157,10 @@ export const useGuildStore = defineStore('guild', () => {
 				invalidField.value = field && field !== 'channelId' ? field : null;
 				invalidIndex.value = error.body.index ?? null;
 				saveState.value = 'invalid';
+			} else if (error instanceof HttpError && error.body?.error === 'automod_forbidden') {
+				saveState.value = 'automodForbidden';
+			} else if (error instanceof HttpError && error.body?.error === 'automod_failed') {
+				saveState.value = 'automodFailed';
 			} else if (error instanceof HttpError && error.rateLimited) {
 				saveState.value = 'rateLimited';
 			} else {

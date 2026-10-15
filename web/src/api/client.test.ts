@@ -47,6 +47,11 @@ describe('request', () => {
 				syncEvents: false,
 				syncExams: false,
 				counterChannelId: null,
+				automodSpam: false,
+				automodMentions: null,
+				automodLanguage: false,
+				automodKeywords: [],
+				automodAlertChannelId: null,
 			})
 			.catch((e: unknown) => e)) as HttpError;
 		expect(error.status).toBe(400);
@@ -75,6 +80,11 @@ describe('request', () => {
 			syncEvents: false,
 			syncExams: false,
 			counterChannelId: null,
+			automodSpam: false,
+			automodMentions: null,
+			automodLanguage: false,
+			automodKeywords: [],
+			automodAlertChannelId: null,
 		});
 		const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 		expect(url).toBe('/api/guilds/a%2Fb');

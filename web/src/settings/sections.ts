@@ -2,7 +2,7 @@ import type { GuildSettings } from '@shared/api';
 
 /** A category of the settings form, and the settings it holds. */
 export interface SettingsSection {
-	id: 'access' | 'members' | 'features';
+	id: 'access' | 'members' | 'features' | 'moderation';
 	fields: Array<keyof GuildSettings>;
 }
 
@@ -23,6 +23,16 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
 			'syncExams',
 			'counterChannelId',
 			'logChannelId',
+		],
+	},
+	{
+		id: 'moderation',
+		fields: [
+			'automodSpam',
+			'automodMentions',
+			'automodLanguage',
+			'automodKeywords',
+			'automodAlertChannelId',
 		],
 	},
 ];

@@ -214,6 +214,7 @@ stop Caddy and close 80 and 443.
 | Hall of fame | A channel where the bot announces every project a member validates, with the mark, without pinging anyone. Checked every 15 minutes; members hidden with `/visibility` are never announced. A channel just chosen starts from now |
 | Campus events | Copies the campus events, the exams, or both, of the next two weeks into the server's Discord events, every hour: created, updated, and removed when the intra cancels them. Needs a campus and the **Manage Events** permission |
 | Campus counter | A voice channel renamed every 10 minutes: how many people are on campus, and how many of them are members here. Needs a campus and the **Manage Channels** permission |
+| AutoMod | Discord AutoMod rules kept by the bot, each blocking the message: Discord's suspected-spam filter, mention spam (a limit of 1 to 50 per message, plus raid protection), Discord's profanity, sexual content and slurs lists, and up to 1000 custom words (`*` as a wildcard). An optional channel receives Discord's alerts. Applied on save; when Discord refuses, nothing is saved. A spam, word-list or mention rule an admin already made is taken over, and only disabled when the filter is turned off. Needs the **Manage Server** permission |
 
 Every account is looked up on the intra again once a week, with the 42
 application's own token. One that was closed, went alumni (with *Active

@@ -1,4 +1,7 @@
 import {
+	AUTOMOD_KEYWORD_MAX,
+	MAX_AUTOMOD_KEYWORDS,
+	MAX_MENTION_LIMIT,
 	MAX_ROLE_RULES,
 	NICKNAME_MODES,
 	RULE_KINDS,
@@ -25,6 +28,11 @@ export const DEFAULTS: GuildSettings = {
 	syncEvents: false,
 	syncExams: false,
 	counterChannelId: null,
+	automodSpam: false,
+	automodMentions: null,
+	automodLanguage: false,
+	automodKeywords: [],
+	automodAlertChannelId: null,
 };
 
 const CAMPUS_MAX = 64;
@@ -41,13 +49,19 @@ interface Row {
 	sync_events: boolean;
 	sync_exams: boolean;
 	counter_channel_id: string | null;
+	automod_spam: boolean;
+	automod_mentions: number | null;
+	automod_language: boolean;
+	automod_keywords: string[];
+	automod_alert_channel_id: string | null;
 }
 
 /** Reads what one server does, or the defaults when it was never configured. */
 export async function getSettings(guildId: string): Promise<GuildSettings> {
 	const { rows } = await db().query<Row>(
 		`SELECT role_id, campus, students_only, nickname_mode, log_channel_id, role_rules, helpers,
-			fame_channel_id, sync_events, sync_exams, counter_channel_id
+			fame_channel_id, sync_events, sync_exams, counter_channel_id, automod_spam, automod_mentions,
+			automod_language, automod_keywords, automod_alert_channel_id
 		 FROM guilds WHERE guild_id = $1`,
 		[guildId],
 	);
@@ -65,6 +79,11 @@ export async function getSettings(guildId: string): Promise<GuildSettings> {
 		syncEvents: row.sync_events,
 		syncExams: row.sync_exams,
 		counterChannelId: row.counter_channel_id,
+		automodSpam: row.automod_spam,
+		automodMentions: row.automod_mentions,
+		automodLanguage: row.automod_language,
+		automodKeywords: row.automod_keywords,
+		automodAlertChannelId: row.automod_alert_channel_id,
 	};
 }
 
@@ -73,15 +92,17 @@ export async function saveSettings(guildId: string, settings: GuildSettings): Pr
 	await db().query(
 		`INSERT INTO guilds
 			(guild_id, role_id, campus, students_only, nickname_mode, log_channel_id, role_rules, helpers,
-			 fame_channel_id, sync_events, sync_exams, counter_channel_id)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			 fame_channel_id, sync_events, sync_exams, counter_channel_id, automod_spam, automod_mentions,
+			 automod_language, automod_keywords, automod_alert_channel_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		 ON CONFLICT (guild_id) DO UPDATE SET
 			role_id = $2, campus = $3, students_only = $4, nickname_mode = $5,
 			log_channel_id = $6, role_rules = $7, helpers = $8,
 			-- A channel newly chosen starts from now, not from whatever was missed before.
 			fame_checked_at = CASE WHEN guilds.fame_channel_id IS DISTINCT FROM $9 THEN NULL ELSE guilds.fame_checked_at END,
 			fame_channel_id = $9, sync_events = $10, sync_exams = $11, counter_channel_id = $12,
-			updated_at = now()`,
+			automod_spam = $13, automod_mentions = $14, automod_language = $15, automod_keywords = $16,
+			automod_alert_channel_id = $17, updated_at = now()`,
 		[
 			guildId,
 			settings.roleId,
@@ -95,6 +116,11 @@ export async function saveSettings(guildId: string, settings: GuildSettings): Pr
 			settings.syncEvents,
 			settings.syncExams,
 			settings.counterChannelId,
+			settings.automodSpam,
+			settings.automodMentions,
+			settings.automodLanguage,
+			settings.automodKeywords,
+			settings.automodAlertChannelId,
 		],
 	);
 }
@@ -134,6 +160,21 @@ export function parseSettings(body: unknown): Parsed {
 	if (typeof input.syncEvents !== 'boolean') return { ok: false, field: 'syncEvents' };
 	if (typeof input.syncExams !== 'boolean') return { ok: false, field: 'syncExams' };
 	if (!id(input.counterChannelId)) return { ok: false, field: 'counterChannelId' };
+	if (typeof input.automodSpam !== 'boolean') return { ok: false, field: 'automodSpam' };
+	if (
+		input.automodMentions !== null &&
+		!(
+			Number.isInteger(input.automodMentions) &&
+			(input.automodMentions as number) >= 1 &&
+			(input.automodMentions as number) <= MAX_MENTION_LIMIT
+		)
+	) {
+		return { ok: false, field: 'automodMentions' };
+	}
+	if (typeof input.automodLanguage !== 'boolean') return { ok: false, field: 'automodLanguage' };
+	if (!id(input.automodAlertChannelId)) return { ok: false, field: 'automodAlertChannelId' };
+	const keywords = parseKeywords(input.automodKeywords);
+	if (!keywords) return { ok: false, field: 'automodKeywords' };
 	if (!NICKNAME_MODES.includes(input.nickname as NicknameMode)) {
 		return { ok: false, field: 'nickname' };
 	}
@@ -170,8 +211,31 @@ export function parseSettings(body: unknown): Parsed {
 			syncEvents: input.syncEvents,
 			syncExams: input.syncExams,
 			counterChannelId: input.counterChannelId as string | null,
+			automodSpam: input.automodSpam,
+			automodMentions: input.automodMentions as number | null,
+			automodLanguage: input.automodLanguage,
+			automodKeywords: keywords,
+			automodAlertChannelId: input.automodAlertChannelId as string | null,
 		},
 	};
+}
+
+/**
+ * Validates the words of the custom AutoMod filter, or returns null.
+ * @remarks Blank lines are dropped and a word given twice, whatever its case, is kept once:
+ * the dashboard sends the text area line by line.
+ */
+function parseKeywords(value: unknown): string[] | null {
+	if (!Array.isArray(value) || value.length > MAX_AUTOMOD_KEYWORDS) return null;
+	const words = new Map<string, string>();
+	for (const word of value as unknown[]) {
+		if (typeof word !== 'string') return null;
+		const trimmed = word.trim();
+		if (!trimmed) continue;
+		if ([...trimmed].length > AUTOMOD_KEYWORD_MAX) return null;
+		if (!words.has(trimmed.toLowerCase())) words.set(trimmed.toLowerCase(), trimmed);
+	}
+	return [...words.values()];
 }
 
 /** A level as the intra counts them: 0 to 99, with at most two decimals. */

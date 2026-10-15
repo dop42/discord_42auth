@@ -250,6 +250,69 @@ export async function deleteScheduledEvent(guildId: string, eventId: string): Pr
 	await request('DELETE', `/guilds/${guildId}/scheduled-events/${eventId}`).catch(() => null);
 }
 
+/** A Discord AutoMod rule, as far as the bot reads it. */
+export interface AutomodRule {
+	id: string;
+	/** 1 keyword, 3 suspected spam, 4 Discord's word lists, 5 mention spam. */
+	trigger_type: number;
+}
+
+/** What the bot sends to create or update an AutoMod rule; the trigger is only set on creation. */
+export interface AutomodRuleBody {
+	name: string;
+	trigger_metadata: Record<string, unknown>;
+	actions: Array<{ type: number; metadata?: Record<string, unknown> }>;
+	enabled: boolean;
+}
+
+/**
+ * Lists a server's AutoMod rules.
+ * @throws {DiscordError} 403 when the bot lacks Manage Server
+ */
+export const listAutomodRules = (guildId: string) =>
+	read<AutomodRule[]>(`/guilds/${guildId}/auto-moderation/rules`);
+
+/**
+ * Creates an AutoMod rule acting on messages sent.
+ * @returns its id
+ * @throws {DiscordError}
+ */
+export async function createAutomodRule(
+	guildId: string,
+	triggerType: number,
+	body: AutomodRuleBody,
+): Promise<string> {
+	const path = `/guilds/${guildId}/auto-moderation/rules`;
+	// Event type 1: a member sends or edits a message.
+	const response = await request('POST', path, { ...body, event_type: 1, trigger_type: triggerType });
+	if (!response.ok) throw new DiscordError(response.status, path);
+	return ((await response.json()) as { id: string }).id;
+}
+
+/**
+ * Updates an AutoMod rule, with only the fields given.
+ * @throws {DiscordError}
+ */
+export async function updateAutomodRule(
+	guildId: string,
+	ruleId: string,
+	body: Partial<AutomodRuleBody>,
+): Promise<void> {
+	const path = `/guilds/${guildId}/auto-moderation/rules/${ruleId}`;
+	const response = await request('PATCH', path, body);
+	if (!response.ok) throw new DiscordError(response.status, path);
+}
+
+/**
+ * Deletes an AutoMod rule; one already gone is fine.
+ * @throws {DiscordError}
+ */
+export async function deleteAutomodRule(guildId: string, ruleId: string): Promise<void> {
+	const path = `/guilds/${guildId}/auto-moderation/rules/${ruleId}`;
+	const response = await request('DELETE', path);
+	if (!response.ok && response.status !== 404) throw new DiscordError(response.status, path);
+}
+
 /**
  * Renames a channel.
  * @remarks Discord allows two renames per channel every ten minutes; the counter never asks

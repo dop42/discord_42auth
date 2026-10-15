@@ -72,6 +72,9 @@ export const fr = {
 	'sections.features': 'Fonctionnalités',
 	'sections.features.lead':
 		'Ce que le bot fait pour la vie du serveur : entraide, hall of fame, événements, compteur, et le journal des vérifications.',
+	'sections.moderation': 'Modération',
+	'sections.moderation.lead':
+		'Les filtres AutoMod de Discord que le bot met en place sur le serveur. Un message bloqué n’est jamais publié ; les admins et les membres qui ont Gérer le serveur ne sont pas filtrés. Le bot doit avoir la permission Gérer le serveur.',
 	'switch.on': 'Activé',
 	'switch.off': 'Désactivé',
 	'settings.refused': 'Un réglage a été refusé : corrigez le champ signalé, puis enregistrez.',
@@ -161,6 +164,32 @@ export const fr = {
 	'settings.saved': 'Réglages enregistrés.',
 	'settings.invalid': 'Ce champ a été refusé par le serveur.',
 	'settings.error': 'L’enregistrement a échoué. Réessayez.',
+	'settings.automodForbidden':
+		'Discord a refusé les règles AutoMod : le bot doit avoir la permission Gérer le serveur. Rien n’a été enregistré.',
+	'settings.automodFailed':
+		'Discord a refusé les règles AutoMod. Rien n’a été enregistré. Réessayez.',
+	'settings.automod.spam': 'Spam suspect',
+	'settings.automod.spam.help':
+		'La détection de spam de Discord : bloque les messages qu’il reconnaît comme du spam, comme les liens envoyés en masse et les arnaques.',
+	'settings.automod.mentions': 'Mentions en masse',
+	'settings.automod.mentions.help':
+		'Bloque un message qui mentionne trop de membres ou de rôles d’un coup, et arrête les raids de mentions.',
+	'settings.automod.mentions.limit': 'Mentions autorisées par message',
+	'settings.automod.language': 'Insultes, contenu sexuel et propos haineux',
+	'settings.automod.language.help':
+		'Bloque les mots des trois listes que Discord tient à jour, dans toutes les langues qu’il prend en charge.',
+	'settings.automod.custom': 'Mots personnalisés',
+	'settings.automod.custom.help':
+		'Un mot ou une expression par ligne, 60 caractères au plus. Un * remplace la suite d’un mot : *spoil* bloque aussi « spoiler ». Laissez vide pour le désactiver.',
+	'settings.automod.custom.count': (n: number, max: number) =>
+		`${n <= 1 ? `${String(n)} mot` : `${String(n)} mots`} sur ${String(max)}`,
+	'settings.automod.custom.invalid': (max: number) =>
+		`Un mot a été refusé : ${String(max)} caractères au plus chacun.`,
+	'settings.automod.mentions.invalid': (max: number) =>
+		`Choisissez un nombre entre 1 et ${String(max)}.`,
+	'settings.automod.alert': 'Salon d’alerte',
+	'settings.automod.alert.help':
+		'Discord y publie un rapport pour chaque message bloqué par AutoMod : qui, où, et le message.',
 
 	'panel.title': 'Panneau de vérification',
 	'panel.help':

@@ -74,6 +74,12 @@ function formatSettings(settings: Settings, locale: string): string {
 	const channel = (id: string | null) => (id ? `<#${id}>` : t(locale, 'show.logs.none'));
 	const role = settings.roleId ? `<@&${settings.roleId}>` : t(locale, 'show.role.unset');
 	const logs = settings.logChannelId ? `<#${settings.logChannelId}>` : t(locale, 'show.logs.none');
+	const automod = [
+		settings.automodSpam && t(locale, 'automod.spam'),
+		settings.automodMentions && `${t(locale, 'automod.mentions')} (${settings.automodMentions})`,
+		settings.automodLanguage && t(locale, 'automod.language'),
+		settings.automodKeywords.length && `${t(locale, 'automod.custom')} (${settings.automodKeywords.length})`,
+	].filter(Boolean);
 	const rules = settings.roleRules.length
 		? settings.roleRules.map((rule) => `- <@&${rule.roleId}> ← ${kinds[rule.kind]} ${condition(rule)}`)
 		: [t(locale, 'show.rules.none')];
@@ -89,6 +95,7 @@ function formatSettings(settings: Settings, locale: string): string {
 		`**${t(locale, 'show.events')}** — ${yesNo(settings.syncEvents)}`,
 		`**${t(locale, 'show.exams')}** — ${yesNo(settings.syncExams)}`,
 		`**${t(locale, 'show.counter')}** — ${channel(settings.counterChannelId)}`,
+		`**${t(locale, 'show.automod')}** — ${automod.length ? automod.join(', ') : t(locale, 'show.no')}`,
 		'',
 		`**${t(locale, 'show.rules')}**`,
 		...rules,

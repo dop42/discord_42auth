@@ -34,6 +34,12 @@ export interface RoleRule {
 /** Most rules a server may have. */
 export const MAX_ROLE_RULES = 25;
 
+/** Most words the custom AutoMod filter takes, and the longest word: Discord's own limits. */
+export const MAX_AUTOMOD_KEYWORDS = 1000;
+export const AUTOMOD_KEYWORD_MAX = 60;
+/** Most mentions Discord lets a mention-spam rule allow per message. */
+export const MAX_MENTION_LIMIT = 50;
+
 /** What one Discord server does. Ids are snowflakes as strings; `null` means unset. */
 export interface GuildSettings {
 	/** Role granted once the 42 account is verified. Without it verification is disabled. */
@@ -60,6 +66,19 @@ export interface GuildSettings {
 	syncExams: boolean;
 	/** Voice channel renamed with how many people are on campus. Needs `campus`. */
 	counterChannelId: string | null;
+	// Discord AutoMod rules the bot keeps in place, applied as soon as they are saved. Each one
+	// blocks the message; Discord itself exempts admins and members with Manage Server. The bot
+	// needs the Manage Server permission.
+	/** Discord's suspected-spam filter. */
+	automodSpam: boolean;
+	/** Blocks a message mentioning more than this many members or roles; `null` keeps it off. */
+	automodMentions: number | null;
+	/** Discord's word lists: profanity, sexual content and slurs. */
+	automodLanguage: boolean;
+	/** Words of the custom filter, `*` as a wildcard (`*spoiler*`); empty keeps it off. */
+	automodKeywords: string[];
+	/** Channel where Discord posts an alert for every message AutoMod blocks; `null` for none. */
+	automodAlertChannelId: string | null;
 }
 
 /** `GET /api/meta` — public, no session needed. */
@@ -143,6 +162,9 @@ export interface PanelRequest {
  * `DELETE /api/guilds/:id` erases the settings and every link of that server, answers 204.
  * `DELETE /api/guilds/:id/members/:userId` unlinks one member and takes their roles back,
  * answers 204. A panel the bot cannot post answers 502 `{ error: 'cannot_post' }`.
+ * A save changing the AutoMod rules is applied on Discord first: when Discord refuses, nothing
+ * is saved and it answers 502 `{ error: 'automod_forbidden' }` (the bot lacks Manage Server)
+ * or `{ error: 'automod_failed' }`.
  * `POST /auth/logout` ends the session, answers 204.
  * `GET /auth/login` starts the Discord login; `GET /auth/callback` ends it on `/`.
  */

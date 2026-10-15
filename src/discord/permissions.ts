@@ -4,7 +4,7 @@ import { Permissions } from './types';
 
 /**
  * What the bot needs: grant the role, rename, write in the log and hall of fame channels,
- * mirror the campus events, and rename the counter channel.
+ * mirror the campus events, rename the counter channel, and keep the AutoMod rules.
  */
 const BOT_PERMISSIONS =
 	Permissions.MANAGE_ROLES |
@@ -12,7 +12,8 @@ const BOT_PERMISSIONS =
 	Permissions.VIEW_CHANNEL |
 	Permissions.SEND_MESSAGES |
 	Permissions.MANAGE_EVENTS |
-	Permissions.MANAGE_CHANNELS;
+	Permissions.MANAGE_CHANNELS |
+	Permissions.MANAGE_GUILD;
 
 /**
  * Tells whether a set of permission bits allows configuring the bot.

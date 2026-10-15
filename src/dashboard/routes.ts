@@ -28,12 +28,13 @@ import { MessageFlags, SNOWFLAKE, TEXT_CHANNEL_TYPES, VOICE_CHANNEL_TYPE } from 
 import { env } from '../env';
 import { apiJson, cookie, readCookie } from '../http';
 import { resolveLocale } from '../i18n';
+import { applyAutomod, automodChanged } from '../automod';
 import { syncGuildEvents } from '../events';
 import { forEachGuild } from '../jobs';
 import { countLinks, listLinks, PAGE_SIZE } from '../links';
 import { unlink } from '../membership';
 import { panelComponents } from '../panel';
-import { deleteGuild, getSettings, parseSettings, saveSettings } from '../settings';
+import { DEFAULTS, deleteGuild, getSettings, parseSettings, saveSettings } from '../settings';
 import { createSession, endSession, readSession, type Session } from './session';
 
 const OAUTH_COOKIE = '__Host-oauth';
@@ -259,6 +260,9 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 			if (settings.counterChannelId && !voiceChannels.some((c) => c.id === settings.counterChannelId)) {
 				return error(400, 'invalid', 'counterChannelId');
 			}
+			if (settings.automodAlertChannelId && !channels.some((c) => c.id === settings.automodAlertChannelId)) {
+				return error(400, 'invalid', 'automodAlertChannelId');
+			}
 			// The events and the counter read one campus: without it there is nothing to show.
 			if (!settings.campus) {
 				if (settings.syncEvents) return error(400, 'invalid', 'syncEvents');
@@ -268,6 +272,17 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 
 			const before = await getSettings(guildId);
 			await saveSettings(guildId, settings);
+			// The AutoMod rules are Discord's: when it refuses them, the save is taken back.
+			if (automodChanged(before, settings)) {
+				try {
+					await applyAutomod(guildId, settings, resolveLocale(guild.preferred_locale));
+				} catch (failure) {
+					await saveSettings(guildId, before);
+					console.error(`automod: ${(failure as Error).message}`);
+					const forbidden = failure instanceof DiscordError && failure.status === 403;
+					return error(502, forbidden ? 'automod_forbidden' : 'automod_failed');
+				}
+			}
 			// Switching the events on, off or to another campus shows at once, not at the next hour.
 			if (
 				before.syncEvents !== settings.syncEvents ||
@@ -279,6 +294,9 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 			return apiJson(settings);
 		}
 		case 'DELETE':
+			// Best-effort: the rules the bot made go with the server's data, the ones it took over
+			// are only disabled. Erasing must not depend on Discord accepting it.
+			await applyAutomod(guildId, DEFAULTS, 'en-US').catch(() => undefined);
 			await deleteGuild(guildId);
 			return noContent();
 		default:

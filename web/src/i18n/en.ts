@@ -69,6 +69,9 @@ export const en: Messages = {
 	'sections.features': 'Features',
 	'sections.features.lead':
 		'What the bot does for the server’s life: peer help, hall of fame, events, counter, and the verification log.',
+	'sections.moderation': 'Moderation',
+	'sections.moderation.lead':
+		'Discord AutoMod filters the bot keeps in place on the server. A blocked message is never posted; admins and members with Manage Server are not filtered. The bot needs the Manage Server permission.',
 	'switch.on': 'On',
 	'switch.off': 'Off',
 	'settings.refused': 'A setting was refused: fix the highlighted field, then save.',
@@ -158,6 +161,31 @@ export const en: Messages = {
 	'settings.saved': 'Settings saved.',
 	'settings.invalid': 'The server refused this field.',
 	'settings.error': 'Saving failed. Try again.',
+	'settings.automodForbidden':
+		'Discord refused the AutoMod rules: the bot needs the Manage Server permission. Nothing was saved.',
+	'settings.automodFailed': 'Discord refused the AutoMod rules. Nothing was saved. Try again.',
+	'settings.automod.spam': 'Suspected spam',
+	'settings.automod.spam.help':
+		'Discord’s own spam detection: blocks messages it recognises as spam, such as mass-sent links and scams.',
+	'settings.automod.mentions': 'Mention spam',
+	'settings.automod.mentions.help':
+		'Blocks a message mentioning too many members or roles at once, and stops mention raids.',
+	'settings.automod.mentions.limit': 'Mentions allowed per message',
+	'settings.automod.language': 'Profanity, sexual content and slurs',
+	'settings.automod.language.help':
+		'Blocks the words of the three lists Discord maintains, in every language it supports.',
+	'settings.automod.custom': 'Custom words',
+	'settings.automod.custom.help':
+		'One word or phrase per line, 60 characters at most. A * matches the rest of a word: *spoiler* also blocks “spoilers”. Leave empty to turn it off.',
+	'settings.automod.custom.count': (n: number, max: number) =>
+		`${n === 1 ? '1 word' : `${String(n)} words`} of ${String(max)}`,
+	'settings.automod.custom.invalid': (max: number) =>
+		`A word was refused: ${String(max)} characters at most each.`,
+	'settings.automod.mentions.invalid': (max: number) =>
+		`Choose a number between 1 and ${String(max)}.`,
+	'settings.automod.alert': 'Alert channel',
+	'settings.automod.alert.help':
+		'Discord posts a report here for every message AutoMod blocks: who, where, and the message.',
 
 	'panel.title': 'Verification panel',
 	'panel.help':

@@ -59,6 +59,11 @@ test('edit and save settings', async ({ page }) => {
 			syncEvents: false,
 			syncExams: false,
 			counterChannelId: null,
+			automodSpam: false,
+			automodMentions: null,
+			automodLanguage: false,
+			automodKeywords: [],
+			automodAlertChannelId: null,
 		},
 	]);
 });

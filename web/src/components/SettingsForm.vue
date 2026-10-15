@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import {
+	AUTOMOD_KEYWORD_MAX,
+	MAX_AUTOMOD_KEYWORDS,
+	MAX_MENTION_LIMIT,
 	MAX_ROLE_RULES,
 	NICKNAME_MODES,
 	RULE_KINDS,
@@ -81,6 +84,12 @@ const controlOf: Record<keyof GuildSettings, () => string> = {
 	syncEvents: () => 'sync-events',
 	syncExams: () => 'sync-exams',
 	counterChannelId: () => 'counter',
+	automodSpam: () => 'automod-spam',
+	automodMentions: () =>
+		store.draft?.automodMentions == null ? 'automod-mentions' : 'automod-limit',
+	automodLanguage: () => 'automod-language',
+	automodKeywords: () => 'automod-keywords',
+	automodAlertChannelId: () => 'automod-alert',
 	roleRules: () =>
 		store.invalidIndex === null ? 'add-rule' : `rule-${String(store.invalidIndex)}-value`,
 };
@@ -111,12 +120,41 @@ function onRole(event: Event): void {
 
 /** Stores the channel picked in one of the channel selects, or none. */
 function onChannelOf(
-	field: 'logChannelId' | 'fameChannelId' | 'counterChannelId',
+	field: 'logChannelId' | 'fameChannelId' | 'counterChannelId' | 'automodAlertChannelId',
 	event: Event,
 ): void {
 	if (!store.draft) return;
 	const value = (event.target as HTMLSelectElement).value;
 	store.draft[field] = value === '' ? null : value;
+}
+
+/** Mentions allowed per message when the mention filter is first turned on. */
+const DEFAULT_MENTIONS = 10;
+
+/** The mention filter's switch: on as long as a limit is set. */
+const mentionsOn = computed({
+	get: () => store.draft?.automodMentions != null,
+	set: (on: boolean) => {
+		if (store.draft) store.draft.automodMentions = on ? DEFAULT_MENTIONS : null;
+	},
+});
+
+/** Keeps what was typed, even out of range: the server refuses it and the field says so. */
+function onMentions(event: Event): void {
+	if (!store.draft) return;
+	const value = Number.parseInt((event.target as HTMLInputElement).value, 10);
+	store.draft.automodMentions = Number.isNaN(value) ? 0 : value;
+}
+
+/** The custom words are edited one per line; blank lines are dropped by the server. */
+const keywordsText = computed(() => store.draft?.automodKeywords.join('\n') ?? '');
+const keywordCount = computed(
+	() => store.draft?.automodKeywords.filter((word) => word.trim()).length ?? 0,
+);
+
+function onKeywords(event: Event): void {
+	if (!store.draft) return;
+	store.draft.automodKeywords = (event.target as HTMLTextAreaElement).value.split('\n');
 }
 
 /** The campus notice, for the controls that need one, while no campus is set. */
@@ -593,6 +631,197 @@ const refusal = () =>
 			</div>
 		</section>
 
+		<section
+			:id="sectionId('moderation')"
+			class="group"
+			:aria-labelledby="headingId('moderation')"
+		>
+			<header class="group__head">
+				<h2 :id="headingId('moderation')" class="group__title" tabindex="-1">
+					{{ prefs.t['sections.moderation'] }}
+				</h2>
+				<p class="group__lead">{{ prefs.t['sections.moderation.lead'] }}</p>
+			</header>
+
+			<div class="row">
+				<div class="row__label">
+					<span id="automod-spam-label" class="row__title">{{
+						prefs.t['settings.automod.spam']
+					}}</span>
+					<p id="automod-spam-help" class="hint">
+						{{ prefs.t['settings.automod.spam.help'] }}
+					</p>
+				</div>
+				<div class="row__control">
+					<BaseSwitch
+						id="automod-spam"
+						v-model="store.draft.automodSpam"
+						labelledby="automod-spam-label"
+						:describedby="describedBy('automodSpam', 'automod-spam-help')"
+						:invalid="invalid('automodSpam')"
+					/>
+					<p
+						v-if="invalid('automodSpam')"
+						:id="errorId('automodSpam')"
+						class="error-text"
+					>
+						{{ prefs.t['settings.invalid'] }}
+					</p>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="row__label">
+					<span id="automod-mentions-label" class="row__title">{{
+						prefs.t['settings.automod.mentions']
+					}}</span>
+					<p id="automod-mentions-help" class="hint">
+						{{ prefs.t['settings.automod.mentions.help'] }}
+					</p>
+				</div>
+				<div class="row__control">
+					<BaseSwitch
+						id="automod-mentions"
+						v-model="mentionsOn"
+						labelledby="automod-mentions-label"
+						:describedby="describedBy('automodMentions', 'automod-mentions-help')"
+						:invalid="invalid('automodMentions')"
+					/>
+					<label v-if="mentionsOn" class="limit" for="automod-limit">
+						<span class="limit__label">{{
+							prefs.t['settings.automod.mentions.limit']
+						}}</span>
+						<input
+							id="automod-limit"
+							type="number"
+							inputmode="numeric"
+							min="1"
+							:max="MAX_MENTION_LIMIT"
+							:class="fieldClass('automodMentions')"
+							:value="store.draft.automodMentions"
+							:aria-invalid="invalid('automodMentions')"
+							:aria-describedby="describedBy('automodMentions')"
+							@input="onMentions"
+						/>
+					</label>
+					<p
+						v-if="invalid('automodMentions')"
+						:id="errorId('automodMentions')"
+						class="error-text"
+					>
+						{{ prefs.t['settings.automod.mentions.invalid'](MAX_MENTION_LIMIT) }}
+					</p>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="row__label">
+					<span id="automod-language-label" class="row__title">{{
+						prefs.t['settings.automod.language']
+					}}</span>
+					<p id="automod-language-help" class="hint">
+						{{ prefs.t['settings.automod.language.help'] }}
+					</p>
+				</div>
+				<div class="row__control">
+					<BaseSwitch
+						id="automod-language"
+						v-model="store.draft.automodLanguage"
+						labelledby="automod-language-label"
+						:describedby="describedBy('automodLanguage', 'automod-language-help')"
+						:invalid="invalid('automodLanguage')"
+					/>
+					<p
+						v-if="invalid('automodLanguage')"
+						:id="errorId('automodLanguage')"
+						class="error-text"
+					>
+						{{ prefs.t['settings.invalid'] }}
+					</p>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="row__label">
+					<label for="automod-keywords" class="row__title">{{
+						prefs.t['settings.automod.custom']
+					}}</label>
+					<p id="automod-keywords-help" class="hint">
+						{{ prefs.t['settings.automod.custom.help'] }}
+					</p>
+				</div>
+				<div class="row__control">
+					<textarea
+						id="automod-keywords"
+						rows="6"
+						spellcheck="false"
+						autocomplete="off"
+						:class="[...fieldClass('automodKeywords'), 'keywords']"
+						:value="keywordsText"
+						:aria-invalid="invalid('automodKeywords')"
+						:aria-describedby="
+							describedBy(
+								'automodKeywords',
+								'automod-keywords-help',
+								'automod-keywords-count',
+							)
+						"
+						@input="onKeywords"
+					/>
+					<p id="automod-keywords-count" class="hint">
+						{{
+							prefs.t['settings.automod.custom.count'](
+								keywordCount,
+								MAX_AUTOMOD_KEYWORDS,
+							)
+						}}
+					</p>
+					<p
+						v-if="invalid('automodKeywords')"
+						:id="errorId('automodKeywords')"
+						class="error-text"
+					>
+						{{ prefs.t['settings.automod.custom.invalid'](AUTOMOD_KEYWORD_MAX) }}
+					</p>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="row__label">
+					<label for="automod-alert" class="row__title">{{
+						prefs.t['settings.automod.alert']
+					}}</label>
+					<p id="automod-alert-help" class="hint">
+						{{ prefs.t['settings.automod.alert.help'] }}
+					</p>
+				</div>
+				<div class="row__control">
+					<select
+						id="automod-alert"
+						:class="fieldClass('automodAlertChannelId')"
+						:value="store.draft.automodAlertChannelId ?? ''"
+						:aria-invalid="invalid('automodAlertChannelId')"
+						:aria-describedby="
+							describedBy('automodAlertChannelId', 'automod-alert-help')
+						"
+						@change="onChannelOf('automodAlertChannelId', $event)"
+					>
+						<option value="">{{ prefs.t['settings.off'] }}</option>
+						<option v-for="channel in channels" :key="channel.id" :value="channel.id">
+							#{{ channel.name }}
+						</option>
+					</select>
+					<p
+						v-if="invalid('automodAlertChannelId')"
+						:id="errorId('automodAlertChannelId')"
+						class="error-text"
+					>
+						{{ prefs.t['settings.invalid'] }}
+					</p>
+				</div>
+			</div>
+		</section>
+
 		<!-- Save bar -->
 		<div :class="['bar', { 'bar--dirty': store.dirty }]">
 			<span class="bar__line sheen-line" aria-hidden="true" />
@@ -605,6 +834,12 @@ const refusal = () =>
 				}}</span>
 				<span v-else-if="store.saveState === 'rateLimited'" class="error-text">{{
 					prefs.t['error.rateLimited']
+				}}</span>
+				<span v-else-if="store.saveState === 'automodForbidden'" class="error-text">{{
+					prefs.t['settings.automodForbidden']
+				}}</span>
+				<span v-else-if="store.saveState === 'automodFailed'" class="error-text">{{
+					prefs.t['settings.automodFailed']
 				}}</span>
 				<span v-else-if="store.saveState === 'saved' && !store.dirty" class="bar__ok">
 					<Check :size="16" :stroke-width="2" aria-hidden="true" />{{
@@ -770,6 +1005,28 @@ fieldset.row > .row__label > legend {
 	display: grid;
 	gap: 0.5rem;
 	font-size: 0.9375rem;
+}
+
+/* Nombre de mentions autorisées, sous l'interrupteur qui l'active. */
+.limit {
+	display: grid;
+	gap: 0.375rem;
+	max-width: 14rem;
+}
+
+.limit__label {
+	color: var(--fg-faint);
+	font-size: 0.75rem;
+}
+
+/* Les mots personnalisés : une ligne par mot, en chasse fixe. */
+.keywords {
+	height: auto;
+	min-height: 9rem;
+	padding-block: 0.75rem;
+	font-family: ui-monospace, 'Geist Mono', SFMono-Regular, Menlo, monospace;
+	line-height: 1.6;
+	resize: vertical;
 }
 
 .rules {

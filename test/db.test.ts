@@ -62,6 +62,9 @@ let botGuilds = [GUILD];
 /** What the fake intra answers for marks, campus events: set by the tests that need them. */
 let fakeMarks: unknown[] = [];
 let fakeEvents: Array<Record<string, unknown>> = [];
+/** The server's AutoMod rules on the fake Discord, and what listing them answers. */
+let automodRules: Array<{ id: string; trigger_type: number }> = [];
+let automodStatus = 200;
 /** Bodies of the Discord writes, in the same order as `writes`. */
 const bodies: string[] = [];
 
@@ -103,11 +106,23 @@ const fakeFetch = async (input: string | URL | Request, init?: RequestInit): Pro
 		writes.push(`${init.method} ${path}`);
 		bodies.push(String(init.body ?? ''));
 		if (init.method === 'POST' && path === `/guilds/${GUILD}/scheduled-events`) return ok({ id: `2000000000000009${String(writes.length).padStart(2, '0')}` });
+		if (path.startsWith(`/guilds/${GUILD}/auto-moderation/rules`)) {
+			if (init.method === 'POST') {
+				const id = `2000000000000008${String(writes.length).padStart(2, '0')}`;
+				automodRules.push({ id, trigger_type: (JSON.parse(String(init.body)) as { trigger_type: number }).trigger_type });
+				return ok({ id });
+			}
+			if (init.method === 'DELETE') automodRules = automodRules.filter((rule) => !path.endsWith(rule.id));
+			return new Response(null, { status: 204 });
+		}
 		if (init.method === 'POST' && path === '/users/@me/channels') return ok({ id: '200000000000000088' });
 		if (init.method === 'POST' && path === '/oauth2/token') {
 			return ok({ access_token: 'user-access', refresh_token: `refresh-${writes.length}` });
 		}
 		return new Response(null, { status: 204 });
+	}
+	if (path === `/guilds/${GUILD}/auto-moderation/rules`) {
+		return automodStatus === 200 ? ok(automodRules) : new Response('{}', { status: automodStatus });
 	}
 	if (path.startsWith('/users/@me/guilds')) return ok(botGuilds.map((id) => ({ id })));
 	if (path === '/users/@me') return ok({ id: MEMBER, username: 'member', global_name: null, avatar: null });
@@ -173,6 +188,8 @@ beforeEach(async () => {
 	bodies.length = 0;
 	fakeMarks = [];
 	fakeEvents = [];
+	automodRules = [];
+	automodStatus = 200;
 	ftUser = freshUser();
 });
 
@@ -195,6 +212,11 @@ const settings = {
 	syncEvents: false,
 	syncExams: false,
 	counterChannelId: null as string | null,
+	automodSpam: false,
+	automodMentions: null as number | null,
+	automodLanguage: false,
+	automodKeywords: [] as string[],
+	automodAlertChannelId: null as string | null,
 };
 const rules = [
 	{ kind: 'cursus', value: '42cursus', roleId: CURSUS_ROLE },
@@ -464,6 +486,45 @@ test('the events and the counter need a campus, and the counter a voice channel'
 	assert.deepEqual(await (await save({ counterChannelId: CHANNEL })).json(), { error: 'invalid', field: 'counterChannelId' });
 	assert.deepEqual(await (await save({ fameChannelId: '200000000000000099' })).json(), { error: 'invalid', field: 'fameChannelId' });
 	assert.equal((await save({ syncEvents: true, counterChannelId: '200000000000000099', fameChannelId: CHANNEL })).status, 200);
+});
+
+test('the AutoMod filters become Discord rules, an existing one is taken over, a refusal saves nothing', { skip }, async () => {
+	const save = (body: object) => call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify({ ...settings, ...body }) });
+	const path = `/guilds/${GUILD}/auto-moderation/rules`;
+	const count = (method: string) => writes.filter((write) => write.startsWith(`${method} ${path}`)).length;
+	const ADMIN_RULE = '200000000000000777';
+	automodRules = [{ id: ADMIN_RULE, trigger_type: 3 }];
+
+	const on = { automodSpam: true, automodMentions: 5, automodKeywords: [' *spoil* ', '', '*SPOIL*', 'triche'], automodAlertChannelId: CHANNEL };
+	const saved = (await (await save(on)).json()) as { automodKeywords: string[] };
+	assert.deepEqual(saved.automodKeywords, ['*spoil*', 'triche'], 'trimmed, blank and repeated words dropped');
+	assert.equal(count('POST'), 2, 'mentions and custom words are created');
+	assert.ok(writes.includes(`PATCH ${path}/${ADMIN_RULE}`), 'the spam rule an admin made is taken over');
+	assert.ok(bodies.some((body) => /"name":"Mentions en masse".*"mention_total_limit":5/.test(body)));
+	assert.ok(bodies.some((body) => body.includes(`"channel_id":"${CHANNEL}"`)), 'alerts go to the chosen channel');
+
+	writes.length = 0;
+	bodies.length = 0;
+	await save({ ...on, helpers: true });
+	assert.equal(writes.filter((write) => write.includes('auto-moderation')).length, 0, 'unchanged filters send nothing');
+
+	await save({});
+	assert.equal(count('DELETE'), 2, 'the rules the bot made are deleted');
+	assert.equal(bodies[writes.lastIndexOf(`PATCH ${path}/${ADMIN_RULE}`)], '{"enabled":false}', 'the admin rule is only disabled');
+	assert.deepEqual(automodRules.map((rule) => rule.id), [ADMIN_RULE]);
+	assert.equal((await db.db().query('SELECT 1 FROM guild_automod')).rowCount, 0);
+
+	automodStatus = 403;
+	const refused = await save({ automodLanguage: true });
+	assert.equal(refused.status, 502);
+	assert.deepEqual(await refused.json(), { error: 'automod_forbidden' });
+	const kept = (await (await call(`/api/guilds/${GUILD}`)).json()) as { settings: { automodLanguage: boolean } };
+	assert.equal(kept.settings.automodLanguage, false, 'nothing is saved when Discord refuses');
+
+	automodStatus = 200;
+	assert.deepEqual(await (await save({ automodMentions: 51 })).json(), { error: 'invalid', field: 'automodMentions' });
+	assert.deepEqual(await (await save({ automodKeywords: ['x'.repeat(61)] })).json(), { error: 'invalid', field: 'automodKeywords' });
+	assert.deepEqual(await (await save({ automodAlertChannelId: '200000000000000099' })).json(), { error: 'invalid', field: 'automodAlertChannelId' });
 });
 
 test('the hall of fame starts from now, then announces new validations once, hidden members never', { skip }, async () => {
