@@ -7,7 +7,7 @@ import type { FtUser } from '../src/ft/api';
 import { clientAddress, PEER_HEADER, RateLimiter } from '../src/ratelimit';
 import { TtlCache } from '../src/cache';
 import { seal, unseal } from '../src/crypto';
-import { eventBody } from '../src/events';
+import { examMessage } from '../src/exams';
 import { fameMessages } from '../src/fame';
 import { connectionOf } from '../src/linkedRoles';
 import { formatDuration, localMidnight, periodsFor, timeIn } from '../src/logtime';
@@ -204,23 +204,16 @@ test('the hall of fame lists validations oldest first, members only, within Disc
 	assert.ok(many.length > 1 && many.every((message) => message.length <= 2000));
 });
 
-test('a Discord event fits Discord limits and names an exam by its projects', () => {
-	const base = { id: 7, name: 'x'.repeat(150), description: 'd'.repeat(1500), location: '', begin_at: '2026-10-20T10:00:00Z', end_at: '2026-10-20T12:00:00Z', updated_at: '2026-10-01T00:00:00Z' };
-	const event = eventBody(base, 'event', 'Paris', 'en-US');
-	assert.equal([...event.name].length, 100);
-	assert.ok(event.description.length <= 1000 && event.description.endsWith('[See it on the intra](https://profile.intra.42.fr/events/7)'));
-	const links = eventBody(
-		{ ...base, description: 'Sign up: https://forms.gle/abc\nor [the form](https://x.io/f), or <https://y.io>.', location: 'https://zoom.us/j/1' },
-		'event',
-		'Paris',
-		'fr',
+test('an exam is announced by its projects, with Discord timestamps and a link to the intra', () => {
+	const exam = { id: 7, name: 'Exam Stud', location: '', begin_at: '2026-10-20T10:00:00Z', end_at: '2026-10-20T13:00:00Z', projects: [{ name: 'Exam Rank 02' }, { name: 'Exam Rank 03' }] };
+	const [container] = examMessage(exam, 'Paris', 'fr') as Array<{ components: Array<{ content?: string; components?: Array<{ label: string; url: string; style: number }> }> }>;
+	assert.equal(
+		container?.components[0]?.content,
+		'### Examen · Exam Rank 02 · Exam Rank 03\n<t:1792490400:F> – <t:1792501200:t> (<t:1792490400:R>)\nParis',
 	);
-	assert.equal(links.description, "Sign up:\nor the form, or .\n\n[Voir sur l'intra](https://profile.intra.42.fr/events/7)");
-	assert.equal(links.entity_metadata.location, 'Paris', 'an online event shows the campus, not its link');
-	assert.equal(event.entity_metadata.location, 'Paris');
-	const exam = eventBody({ ...base, name: 'Exam Stud - https://meta', projects: [{ name: 'Exam Rank 02' }, { name: 'Exam Rank 03' }] }, 'exam', 'Paris', 'en-US');
-	assert.equal(exam.name, 'Exam · Exam Rank 02 · Exam Rank 03');
-	assert.doesNotMatch(exam.description, /profile\.intra/);
+	assert.deepEqual(container?.components[1]?.components?.[0], { type: 2, style: 5, label: "S'inscrire sur l'intra", url: 'https://profile.intra.42.fr/' });
+	const named = examMessage({ ...exam, projects: [], location: 'c1, c2' }, 'Paris', 'en-US') as typeof container[];
+	assert.match(named[0]?.components[0]?.content ?? '', /^### Exam · Exam Stud\n.*\nc1, c2$/);
 });
 
 test('logtime splits sessions at local midnights and counts an open one up to now', () => {

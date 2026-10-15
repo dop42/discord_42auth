@@ -40,8 +40,6 @@ export const BOT_PERMISSIONS = [
 	'manageNicknames',
 	'viewChannel',
 	'sendMessages',
-	'manageEvents',
-	'createEvents',
 	'manageChannels',
 	'manageGuild',
 ] as const;
@@ -73,10 +71,11 @@ export interface GuildSettings {
 	helpers: boolean;
 	/** Channel where the bot announces each project its members validate. `null` disables it. */
 	fameChannelId: string | null;
-	/** Copy the campus events into the server's Discord events. Needs `campus`. */
-	syncEvents: boolean;
-	/** Copy the campus exams too. Needs `campus`. */
-	syncExams: boolean;
+	/**
+	 * Channel where the bot announces each campus exam of the next two weeks, with a button to
+	 * register on the intra. Needs `campus`; `null` disables it.
+	 */
+	examChannelId: string | null;
 	/** Voice channel renamed with how many people are on campus. Needs `campus`. */
 	counterChannelId: string | null;
 	// Discord AutoMod rules the bot keeps in place, applied as soon as they are saved. Each one

@@ -16,14 +16,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
 	{ id: 'members', fields: ['roleRules', 'nickname'] },
 	{
 		id: 'features',
-		fields: [
-			'helpers',
-			'fameChannelId',
-			'syncEvents',
-			'syncExams',
-			'counterChannelId',
-			'logChannelId',
-		],
+		fields: ['helpers', 'fameChannelId', 'examChannelId', 'counterChannelId', 'logChannelId'],
 	},
 	{
 		id: 'moderation',

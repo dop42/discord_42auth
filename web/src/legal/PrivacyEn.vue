@@ -90,7 +90,7 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 	<p>
 		Depending on what the admins turn on: the <strong>hall of fame</strong> posts in a channel
 		of the server the projects its members validate, with the mark (never for a member hidden
-		with <code>/visibility</code>); the <strong>campus events</strong> and the
+		with <code>/visibility</code>); the <strong>exam announcements</strong> and the
 		<strong>counter</strong>
 		only hold public campus information and a number of people, never a name. The
 		<code>/logtime</code> command shows a member, and them alone, their own time on campus, read

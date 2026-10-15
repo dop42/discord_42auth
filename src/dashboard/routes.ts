@@ -31,7 +31,7 @@ import { apiJson, cookie, readCookie } from '../http';
 import { resolveLocale } from '../i18n';
 import { applyAutomod, automodChanged } from '../automod';
 import { updateCounter } from '../counter';
-import { syncGuildEvents } from '../events';
+import { announceGuildExams } from '../exams';
 import { forEachGuild } from '../jobs';
 import { countLinks, listLinks, PAGE_SIZE } from '../links';
 import { unlink } from '../membership';
@@ -270,13 +270,15 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 			if (settings.counterChannelId && !voiceChannels.some((c) => c.id === settings.counterChannelId)) {
 				return error(400, 'invalid', 'counterChannelId');
 			}
+			if (settings.examChannelId && !channels.some((c) => c.id === settings.examChannelId)) {
+				return error(400, 'invalid', 'examChannelId');
+			}
 			if (settings.automodAlertChannelId && !channels.some((c) => c.id === settings.automodAlertChannelId)) {
 				return error(400, 'invalid', 'automodAlertChannelId');
 			}
-			// The events and the counter read one campus: without it there is nothing to show.
+			// The exams and the counter read one campus: without it there is nothing to show.
 			if (!settings.campus) {
-				if (settings.syncEvents) return error(400, 'invalid', 'syncEvents');
-				if (settings.syncExams) return error(400, 'invalid', 'syncExams');
+				if (settings.examChannelId) return error(400, 'invalid', 'examChannelId');
 				if (settings.counterChannelId) return error(400, 'invalid', 'counterChannelId');
 			}
 
@@ -293,13 +295,12 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 					return error(502, forbidden ? 'automod_forbidden' : 'automod_failed');
 				}
 			}
-			// Switching the events on, off or to another campus shows at once, not at the next hour.
+			// An exam channel or campus just chosen gets the coming exams at once, not at the next hour.
 			if (
-				before.syncEvents !== settings.syncEvents ||
-				before.syncExams !== settings.syncExams ||
-				(before.campus !== settings.campus && (settings.syncEvents || settings.syncExams))
+				settings.examChannelId &&
+				(before.examChannelId !== settings.examChannelId || before.campus !== settings.campus)
 			) {
-				void forEachGuild('events', async () => void (await syncGuildEvents(guildId)));
+				void forEachGuild('exams', async () => void (await announceGuildExams(guildId, new Date(), new Map(), true)));
 			}
 			// Same for the counter: a channel or campus just chosen is renamed now.
 			if (

@@ -81,8 +81,7 @@ const controlOf: Record<keyof GuildSettings, () => string> = {
 	helpers: () => 'helpers',
 	logChannelId: () => 'logs',
 	fameChannelId: () => 'fame',
-	syncEvents: () => 'sync-events',
-	syncExams: () => 'sync-exams',
+	examChannelId: () => 'exams',
 	counterChannelId: () => 'counter',
 	automodSpam: () => 'automod-spam',
 	automodMentions: () =>
@@ -120,7 +119,12 @@ function onRole(event: Event): void {
 
 /** Stores the channel picked in one of the channel selects, or none. */
 function onChannelOf(
-	field: 'logChannelId' | 'fameChannelId' | 'counterChannelId' | 'automodAlertChannelId',
+	field:
+		| 'logChannelId'
+		| 'fameChannelId'
+		| 'examChannelId'
+		| 'counterChannelId'
+		| 'automodAlertChannelId',
 	event: Event,
 ): void {
 	if (!store.draft) return;
@@ -158,7 +162,7 @@ function onKeywords(event: Event): void {
 }
 
 /** The campus notice, for the controls that need one, while no campus is set. */
-const campusNote = computed(() => (store.draft?.campus ? [] : ['events-campus']));
+const examsNote = computed(() => (store.draft?.campus ? [] : ['exams-campus']));
 const counterNote = computed(() => (store.draft?.campus ? [] : ['counter-campus']));
 
 /**
@@ -512,49 +516,37 @@ const refusal = () =>
 				</div>
 			</div>
 
-			<fieldset class="row" aria-describedby="events-help">
+			<div class="row">
 				<div class="row__label">
-					<legend class="row__title">{{ prefs.t['settings.events'] }}</legend>
-					<p id="events-help" class="hint">{{ prefs.t['settings.events.help'] }}</p>
+					<label for="exams" class="row__title">{{ prefs.t['settings.exams'] }}</label>
+					<p id="exams-help" class="hint">{{ prefs.t['settings.exams.help'] }}</p>
 				</div>
 				<div class="row__control">
-					<div class="switches">
-						<div class="switches__item">
-							<span id="sync-events-label">{{
-								prefs.t['settings.events.events']
-							}}</span>
-							<BaseSwitch
-								id="sync-events"
-								v-model="store.draft.syncEvents"
-								labelledby="sync-events-label"
-								:describedby="describedBy('syncEvents', ...campusNote)"
-								:invalid="invalid('syncEvents')"
-							/>
-						</div>
-						<div class="switches__item">
-							<span id="sync-exams-label">{{
-								prefs.t['settings.events.exams']
-							}}</span>
-							<BaseSwitch
-								id="sync-exams"
-								v-model="store.draft.syncExams"
-								labelledby="sync-exams-label"
-								:describedby="describedBy('syncExams', ...campusNote)"
-								:invalid="invalid('syncExams')"
-							/>
-						</div>
-					</div>
-					<p v-if="invalid('syncEvents')" :id="errorId('syncEvents')" class="error-text">
+					<select
+						id="exams"
+						:class="fieldClass('examChannelId')"
+						:value="store.draft.examChannelId ?? ''"
+						:aria-invalid="invalid('examChannelId')"
+						:aria-describedby="describedBy('examChannelId', 'exams-help', ...examsNote)"
+						@change="onChannelOf('examChannelId', $event)"
+					>
+						<option value="">{{ prefs.t['settings.off'] }}</option>
+						<option v-for="channel in channels" :key="channel.id" :value="channel.id">
+							#{{ channel.name }}
+						</option>
+					</select>
+					<p
+						v-if="invalid('examChannelId')"
+						:id="errorId('examChannelId')"
+						class="error-text"
+					>
 						{{ refusal() }}
 					</p>
-					<p v-if="invalid('syncExams')" :id="errorId('syncExams')" class="error-text">
-						{{ refusal() }}
-					</p>
-					<p v-if="!store.draft.campus" id="events-campus" class="notice">
+					<p v-if="!store.draft.campus" id="exams-campus" class="notice">
 						{{ prefs.t['settings.needsCampus'] }}
 					</p>
 				</div>
-			</fieldset>
+			</div>
 
 			<div class="row">
 				<div class="row__label">
@@ -993,20 +985,6 @@ fieldset.row > .row__label > legend {
 	margin-top: 0.15rem;
 }
 
-/* Règles de rôles : une carte par règle, trois champs côte à côte dès qu'il y a la place. */
-/* Deux interrupteurs côte à côte, chacun avec son libellé au-dessus. */
-.switches {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 1.25rem 2.5rem;
-}
-
-.switches__item {
-	display: grid;
-	gap: 0.5rem;
-	font-size: 0.9375rem;
-}
-
 /* Nombre de mentions autorisées, sous l'interrupteur qui l'active. */
 .limit {
 	display: grid;
@@ -1029,6 +1007,7 @@ fieldset.row > .row__label > legend {
 	resize: vertical;
 }
 
+/* Règles de rôles : une carte par règle, trois champs côte à côte dès qu'il y a la place. */
 .rules {
 	display: grid;
 	gap: 0.75rem;

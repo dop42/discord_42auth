@@ -25,8 +25,7 @@ export const DEFAULTS: GuildSettings = {
 	roleRules: [],
 	helpers: false,
 	fameChannelId: null,
-	syncEvents: false,
-	syncExams: false,
+	examChannelId: null,
 	counterChannelId: null,
 	automodSpam: false,
 	automodMentions: null,
@@ -46,8 +45,7 @@ interface Row {
 	role_rules: RoleRule[];
 	helpers: boolean;
 	fame_channel_id: string | null;
-	sync_events: boolean;
-	sync_exams: boolean;
+	exam_channel_id: string | null;
 	counter_channel_id: string | null;
 	automod_spam: boolean;
 	automod_mentions: number | null;
@@ -60,7 +58,7 @@ interface Row {
 export async function getSettings(guildId: string): Promise<GuildSettings> {
 	const { rows } = await db().query<Row>(
 		`SELECT role_id, campus, students_only, nickname_mode, log_channel_id, role_rules, helpers,
-			fame_channel_id, sync_events, sync_exams, counter_channel_id, automod_spam, automod_mentions,
+			fame_channel_id, exam_channel_id, counter_channel_id, automod_spam, automod_mentions,
 			automod_language, automod_keywords, automod_alert_channel_id
 		 FROM guilds WHERE guild_id = $1`,
 		[guildId],
@@ -76,8 +74,7 @@ export async function getSettings(guildId: string): Promise<GuildSettings> {
 		roleRules: row.role_rules,
 		helpers: row.helpers,
 		fameChannelId: row.fame_channel_id,
-		syncEvents: row.sync_events,
-		syncExams: row.sync_exams,
+		examChannelId: row.exam_channel_id,
 		counterChannelId: row.counter_channel_id,
 		automodSpam: row.automod_spam,
 		automodMentions: row.automod_mentions,
@@ -92,17 +89,17 @@ export async function saveSettings(guildId: string, settings: GuildSettings): Pr
 	await db().query(
 		`INSERT INTO guilds
 			(guild_id, role_id, campus, students_only, nickname_mode, log_channel_id, role_rules, helpers,
-			 fame_channel_id, sync_events, sync_exams, counter_channel_id, automod_spam, automod_mentions,
+			 fame_channel_id, exam_channel_id, counter_channel_id, automod_spam, automod_mentions,
 			 automod_language, automod_keywords, automod_alert_channel_id)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 		 ON CONFLICT (guild_id) DO UPDATE SET
 			role_id = $2, campus = $3, students_only = $4, nickname_mode = $5,
 			log_channel_id = $6, role_rules = $7, helpers = $8,
 			-- A channel newly chosen starts from now, not from whatever was missed before.
 			fame_checked_at = CASE WHEN guilds.fame_channel_id IS DISTINCT FROM $9 THEN NULL ELSE guilds.fame_checked_at END,
-			fame_channel_id = $9, sync_events = $10, sync_exams = $11, counter_channel_id = $12,
-			automod_spam = $13, automod_mentions = $14, automod_language = $15, automod_keywords = $16,
-			automod_alert_channel_id = $17, updated_at = now()`,
+			fame_channel_id = $9, exam_channel_id = $10, counter_channel_id = $11,
+			automod_spam = $12, automod_mentions = $13, automod_language = $14, automod_keywords = $15,
+			automod_alert_channel_id = $16, updated_at = now()`,
 		[
 			guildId,
 			settings.roleId,
@@ -113,8 +110,7 @@ export async function saveSettings(guildId: string, settings: GuildSettings): Pr
 			JSON.stringify(settings.roleRules),
 			settings.helpers,
 			settings.fameChannelId,
-			settings.syncEvents,
-			settings.syncExams,
+			settings.examChannelId,
 			settings.counterChannelId,
 			settings.automodSpam,
 			settings.automodMentions,
@@ -157,8 +153,7 @@ export function parseSettings(body: unknown): Parsed {
 	if (typeof input.studentsOnly !== 'boolean') return { ok: false, field: 'studentsOnly' };
 	if (typeof input.helpers !== 'boolean') return { ok: false, field: 'helpers' };
 	if (!id(input.fameChannelId)) return { ok: false, field: 'fameChannelId' };
-	if (typeof input.syncEvents !== 'boolean') return { ok: false, field: 'syncEvents' };
-	if (typeof input.syncExams !== 'boolean') return { ok: false, field: 'syncExams' };
+	if (!id(input.examChannelId)) return { ok: false, field: 'examChannelId' };
 	if (!id(input.counterChannelId)) return { ok: false, field: 'counterChannelId' };
 	if (typeof input.automodSpam !== 'boolean') return { ok: false, field: 'automodSpam' };
 	if (
@@ -208,8 +203,7 @@ export function parseSettings(body: unknown): Parsed {
 			roleRules,
 			helpers: input.helpers,
 			fameChannelId: input.fameChannelId as string | null,
-			syncEvents: input.syncEvents,
-			syncExams: input.syncExams,
+			examChannelId: input.examChannelId as string | null,
 			counterChannelId: input.counterChannelId as string | null,
 			automodSpam: input.automodSpam,
 			automodMentions: input.automodMentions as number | null,

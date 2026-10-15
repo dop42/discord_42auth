@@ -37,7 +37,7 @@ async function request(method: string, path: string, body?: unknown, patience = 
 	return response;
 }
 
-/** How long the event copy waits on Discord's rate limit, which is tight for events. */
+/** How long removing the copied events waits on Discord's rate limit, which is tight for events. */
 const EVENTS_PATIENCE = 120;
 
 /** GETs a bot route and parses it, failing on anything but a 2xx. */
@@ -226,45 +226,6 @@ export async function botGuildIds(): Promise<Set<string>> {
 		if (page.length < 200 || !last) return ids;
 		after = last.id;
 	}
-}
-
-/** What the bot sends to create or update a Discord event mirroring an intra one. */
-export interface ScheduledEventBody {
-	name: string;
-	description: string;
-	scheduled_start_time: string;
-	scheduled_end_time: string;
-	entity_metadata: { location: string };
-}
-
-/**
- * Creates an external Discord event, one that happens somewhere else than a voice channel.
- * @returns its id
- * @throws {DiscordError}
- */
-export async function createScheduledEvent(guildId: string, body: ScheduledEventBody): Promise<string> {
-	const path = `/guilds/${guildId}/scheduled-events`;
-	// 2 is "guild only", the one privacy level Discord accepts; 3 is an external event.
-	const response = await request('POST', path, { ...body, privacy_level: 2, entity_type: 3 }, EVENTS_PATIENCE);
-	if (!response.ok) throw await DiscordError.from(response, path);
-	return ((await response.json()) as { id: string }).id;
-}
-
-/**
- * Updates a Discord event the bot created.
- * @returns false when it no longer exists: an admin deleted it by hand
- * @throws {DiscordError}
- */
-export async function updateScheduledEvent(
-	guildId: string,
-	eventId: string,
-	body: ScheduledEventBody,
-): Promise<boolean> {
-	const path = `/guilds/${guildId}/scheduled-events/${eventId}`;
-	const response = await request('PATCH', path, body, EVENTS_PATIENCE);
-	if (response.status === 404) return false;
-	if (!response.ok) throw await DiscordError.from(response, path);
-	return true;
 }
 
 /** Deletes a Discord event the bot created, best-effort: one already gone is fine. */

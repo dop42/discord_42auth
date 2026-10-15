@@ -43,10 +43,6 @@ export const Permissions = {
 	SEND_MESSAGES: 1n << 11n,
 	MANAGE_NICKNAMES: 1n << 27n,
 	MANAGE_ROLES: 1n << 28n,
-	/** Creates, updates and removes the Discord events mirroring the campus ones. */
-	MANAGE_EVENTS: 1n << 33n,
-	/** Creates events and edits the ones the bot created; Discord asks for it on creation. */
-	CREATE_EVENTS: 1n << 44n,
 } as const;
 
 /** Channel types the audit log can be posted in: text and announcement. */

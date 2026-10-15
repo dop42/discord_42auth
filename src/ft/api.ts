@@ -378,34 +378,24 @@ export async function fetchMarks(userIds: number[], from: Date, to: Date, access
 	return marks;
 }
 
-/** A campus event or exam, as the intra lists them. */
-export interface FtEvent {
+/** A campus exam, as the intra lists it. */
+export interface FtExam {
 	id: number;
 	name: string;
-	/** Events only: `event`, `association`, `conference`… */
-	kind?: string;
-	description?: string | null;
 	location: string | null;
 	begin_at: string;
 	end_at: string;
-	updated_at: string;
-	/** Exams only: the projects that can be taken. */
+	/** The projects that can be taken. */
 	projects?: Array<{ name: string }>;
 }
 
 /**
- * Lists a campus's events, or its exams, starting between two instants.
+ * Lists a campus's exams starting between two instants.
  * @throws {FtError}
  */
-export function fetchCampusEvents(
-	campusId: number,
-	source: 'events' | 'exams',
-	from: Date,
-	to: Date,
-	accessToken: string,
-): Promise<FtEvent[]> {
-	return fetchAll<FtEvent>(
-		`/v2/campus/${campusId}/${source}?range[begin_at]=${iso(from)},${iso(to)}`,
+export function fetchCampusExams(campusId: number, from: Date, to: Date, accessToken: string): Promise<FtExam[]> {
+	return fetchAll<FtExam>(
+		`/v2/campus/${campusId}/exams?range[begin_at]=${iso(from)},${iso(to)}`,
 		accessToken,
 		'background',
 	);

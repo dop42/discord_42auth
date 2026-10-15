@@ -71,7 +71,7 @@ export const fr = {
 		'Ce que le bot donne à chaque membre vérifié : rôles et pseudo, revérifiés chaque semaine.',
 	'sections.features': 'Fonctionnalités',
 	'sections.features.lead':
-		'Ce que le bot fait pour la vie du serveur : entraide, hall of fame, événements, compteur, et le journal des vérifications.',
+		'Ce que le bot fait pour la vie du serveur : entraide, hall of fame, examens, compteur, et le journal des vérifications.',
 	'sections.moderation': 'Modération',
 	'sections.moderation.lead':
 		'Les filtres AutoMod de Discord que le bot met en place sur le serveur. Un message bloqué n’est jamais publié ; les admins et les membres qui ont Gérer le serveur ne sont pas filtrés. Le bot doit avoir la permission Gérer le serveur.',
@@ -103,11 +103,9 @@ export const fr = {
 	'settings.fame': 'Hall of fame',
 	'settings.fame.help':
 		'Le bot annonce dans ce salon chaque projet validé par un membre, avec sa note, sans mentionner personne. Les membres masqués avec /visibility ne sont jamais annoncés.',
-	'settings.events': 'Événements du campus',
-	'settings.events.help':
-		'Copie les événements et les examens des deux prochaines semaines dans les événements Discord du serveur dès l’enregistrement, puis les met à jour chaque heure. Le bot doit avoir la permission Gérer les événements.',
-	'settings.events.events': 'Événements',
-	'settings.events.exams': 'Examens',
+	'settings.exams': 'Annonces d’examens',
+	'settings.exams.help':
+		'Annonce dans ce salon chaque examen du campus des deux prochaines semaines, avec l’heure, la salle et un bouton pour s’inscrire sur l’intra. Les examens à venir sont publiés dès l’enregistrement, puis les nouveaux chaque heure.',
 	'settings.counter': 'Compteur du campus',
 	'settings.counter.help':
 		'Renomme ce salon vocal dès l’enregistrement, puis toutes les 10 minutes, avec le nombre de personnes au campus et le nombre de membres du serveur parmi elles. Le bot doit avoir la permission Gérer les salons.',
@@ -253,8 +251,6 @@ export const fr = {
 		manageNicknames: 'Gérer les pseudos',
 		viewChannel: 'Voir les salons',
 		sendMessages: 'Envoyer des messages',
-		manageEvents: 'Gérer les événements',
-		createEvents: 'Créer des événements',
 		manageChannels: 'Gérer les salons',
 		manageGuild: 'Gérer le serveur',
 	},

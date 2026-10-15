@@ -96,7 +96,7 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 	<p>
 		Selon ce que les administrateurs activent : le <strong>hall of fame</strong> publie dans un
 		salon du serveur les projets validés par ses membres, avec la note (jamais pour un membre
-		masqué avec <code>/visibility</code>) ; les <strong>événements du campus</strong> et le
+		masqué avec <code>/visibility</code>) ; les <strong>annonces d’examens</strong> et le
 		<strong>compteur</strong> ne contiennent que des informations publiques du campus et un
 		nombre de personnes, jamais de nom. La commande <code>/logtime</code> montre à un membre, et
 		à lui seul, son propre temps au campus, lu en direct et non conservé.

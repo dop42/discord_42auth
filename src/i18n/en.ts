@@ -61,8 +61,7 @@ export const en = {
 	'show.logs.none': '_none_',
 	'show.helpers': 'Campus helpers (/helpers)',
 	'show.fame': 'Hall of fame',
-	'show.events': 'Campus events',
-	'show.exams': 'Exams',
+	'show.exams': 'Exam announcements',
 	'show.counter': 'Campus counter',
 	'show.automod': 'AutoMod',
 	'show.yes': 'yes',
@@ -106,11 +105,10 @@ export const en = {
 	'visibility.shown': '`/helpers` and the hall of fame may show you on this server again.',
 	'visibility.hidden': '`/helpers` and the hall of fame will no longer show you on this server.',
 
-	// Hall of fame, campus events and counter, /logtime, /reminder, Linked Roles.
+	// Hall of fame, exams and counter, /logtime, /reminder, Linked Roles.
 	'fame.line': '{member} validated **{project}** — **{mark}**',
-	'events.exam': 'Exam · {projects}',
-	'events.noDescription': 'Campus event, copied from the 42 intra.',
-	'events.link': 'See it on the intra',
+	'exams.title': 'Exam · {projects}',
+	'exams.register': 'Register on the intra',
 	'counter.name': '{count} on campus · {here} here',
 	'automod.spam': 'Suspected spam',
 	'automod.mentions': 'Mention spam',

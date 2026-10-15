@@ -68,7 +68,7 @@ export const en: Messages = {
 		'What the bot gives each verified member: roles and nickname, checked again every week.',
 	'sections.features': 'Features',
 	'sections.features.lead':
-		'What the bot does for the server’s life: peer help, hall of fame, events, counter, and the verification log.',
+		'What the bot does for the server’s life: peer help, hall of fame, exams, counter, and the verification log.',
 	'sections.moderation': 'Moderation',
 	'sections.moderation.lead':
 		'Discord AutoMod filters the bot keeps in place on the server. A blocked message is never posted; admins and members with Manage Server are not filtered. The bot needs the Manage Server permission.',
@@ -100,11 +100,9 @@ export const en: Messages = {
 	'settings.fame': 'Hall of fame',
 	'settings.fame.help':
 		'The bot announces in this channel every project a member validates, with the mark, without pinging anyone. Members hidden with /visibility are never announced.',
-	'settings.events': 'Campus events',
-	'settings.events.help':
-		'Copies the events and exams of the next two weeks into the server’s Discord events as soon as you save, then updated every hour. The bot needs the Manage Events permission.',
-	'settings.events.events': 'Events',
-	'settings.events.exams': 'Exams',
+	'settings.exams': 'Exam announcements',
+	'settings.exams.help':
+		'Announces in this channel each campus exam of the next two weeks, with its time, room and a button to register on the intra. The coming exams are posted as soon as you save, then the new ones every hour.',
 	'settings.counter': 'Campus counter',
 	'settings.counter.help':
 		'Renames this voice channel as soon as you save, then every 10 minutes, with how many people are on campus, and how many of them are members of the server. The bot needs the Manage Channels permission.',
@@ -248,8 +246,6 @@ export const en: Messages = {
 		manageNicknames: 'Manage Nicknames',
 		viewChannel: 'View Channels',
 		sendMessages: 'Send Messages',
-		manageEvents: 'Manage Events',
-		createEvents: 'Create Events',
 		manageChannels: 'Manage Channels',
 		manageGuild: 'Manage Server',
 	},

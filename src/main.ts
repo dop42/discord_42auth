@@ -4,7 +4,8 @@ import { env } from './env';
 import { toNodeHandler } from './http';
 import { route } from './server';
 import { updateCounters } from './counter';
-import { syncEvents } from './events';
+import { removeMirroredEvents } from './events';
+import { announceExams } from './exams';
 import { announceFame } from './fame';
 import { startJobs } from './jobs';
 import { refreshLinkedRoles } from './linkedRoles';
@@ -26,7 +27,8 @@ async function main(): Promise<void> {
 	const stopJobs = startJobs([
 		{ name: 'fame', everyMs: 15 * MINUTE, run: () => announceFame() },
 		{ name: 'counter', everyMs: 10 * MINUTE, run: updateCounters },
-		{ name: 'events', everyMs: 60 * MINUTE, run: () => syncEvents() },
+		{ name: 'exams', everyMs: 60 * MINUTE, run: () => announceExams() },
+		{ name: 'events', everyMs: 60 * MINUTE, run: () => removeMirroredEvents() },
 		{ name: 'reminders', everyMs: 60 * MINUTE, run: () => sendReminders() },
 		{ name: 'linked-roles', everyMs: 60 * MINUTE, run: refreshLinkedRoles },
 	]);

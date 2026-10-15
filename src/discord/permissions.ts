@@ -5,15 +5,13 @@ import { Permissions } from './types';
 
 /**
  * What the bot needs: grant the role, rename, write in the log and hall of fame channels,
- * mirror the campus events, rename the counter channel, and keep the AutoMod rules.
+ * announce the exams, rename the counter channel, and keep the AutoMod rules.
  */
 const NEEDED: Record<BotPermission, bigint> = {
 	manageRoles: Permissions.MANAGE_ROLES,
 	manageNicknames: Permissions.MANAGE_NICKNAMES,
 	viewChannel: Permissions.VIEW_CHANNEL,
 	sendMessages: Permissions.SEND_MESSAGES,
-	manageEvents: Permissions.MANAGE_EVENTS,
-	createEvents: Permissions.CREATE_EVENTS,
 	manageChannels: Permissions.MANAGE_CHANNELS,
 	manageGuild: Permissions.MANAGE_GUILD,
 };

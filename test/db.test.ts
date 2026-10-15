@@ -61,7 +61,7 @@ let botGuilds = [GUILD];
 
 /** What the fake intra answers for marks, campus events: set by the tests that need them. */
 let fakeMarks: unknown[] = [];
-let fakeEvents: Array<Record<string, unknown>> = [];
+let fakeExams: Array<Record<string, unknown>> = [];
 /** The server's AutoMod rules on the fake Discord, and what listing them answers. */
 let automodRules: Array<{ id: string; trigger_type: number }> = [];
 let automodStatus = 200;
@@ -99,13 +99,11 @@ const fakeFetch = async (input: string | URL | Request, init?: RequestInit): Pro
 	if (String(input).startsWith('https://api.intra.42.fr/v2/projects/')) return new Response('{}', { status: 404 });
 	if (String(input).startsWith('https://api.intra.42.fr/v2/projects_users?filter[user_id]=')) return ok(fakeMarks);
 	if (String(input) === 'https://api.intra.42.fr/v2/campus?filter[name]=Paris') return ok([{ id: 1, name: 'Paris', time_zone: 'Europe/Paris' }]);
-	if (String(input).startsWith('https://api.intra.42.fr/v2/campus/1/events?')) return ok(fakeEvents);
-	if (String(input).startsWith('https://api.intra.42.fr/v2/campus/1/exams?')) return ok([]);
+	if (String(input).startsWith('https://api.intra.42.fr/v2/campus/1/exams?')) return ok(fakeExams);
 	const path = String(input).replace('https://discord.com/api/v10', '');
 	if (init?.method && init.method !== 'GET') {
 		writes.push(`${init.method} ${path}`);
 		bodies.push(String(init.body ?? ''));
-		if (init.method === 'POST' && path === `/guilds/${GUILD}/scheduled-events`) return ok({ id: `2000000000000009${String(writes.length).padStart(2, '0')}` });
 		if (path.startsWith(`/guilds/${GUILD}/auto-moderation/rules`)) {
 			if (init.method === 'POST') {
 				const id = `2000000000000008${String(writes.length).padStart(2, '0')}`;
@@ -187,7 +185,7 @@ beforeEach(async () => {
 	writes.length = 0;
 	bodies.length = 0;
 	fakeMarks = [];
-	fakeEvents = [];
+	fakeExams = [];
 	automodRules = [];
 	automodStatus = 200;
 	ftUser = freshUser();
@@ -209,8 +207,7 @@ const settings = {
 	roleRules: [] as unknown[],
 	helpers: false,
 	fameChannelId: null as string | null,
-	syncEvents: false,
-	syncExams: false,
+	examChannelId: null as string | null,
 	counterChannelId: null as string | null,
 	automodSpam: false,
 	automodMentions: null as number | null,
@@ -480,12 +477,13 @@ test('/helpers lists who is on campus with the project validated, and /visibilit
 	assert.match(await content(await handleVisibility(command('visibility', LEFT, { name: 'shown', type: 5, value: true }))), /No 42 account is linked/);
 });
 
-test('the events and the counter need a campus, and the counter a voice channel', { skip }, async () => {
+test('the exams and the counter need a campus, and the counter a voice channel', { skip }, async () => {
 	const save = (body: object) => call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify({ ...settings, ...body }) });
-	assert.deepEqual(await (await save({ campus: null, syncEvents: true })).json(), { error: 'invalid', field: 'syncEvents' });
+	assert.deepEqual(await (await save({ campus: null, examChannelId: CHANNEL })).json(), { error: 'invalid', field: 'examChannelId' });
 	assert.deepEqual(await (await save({ counterChannelId: CHANNEL })).json(), { error: 'invalid', field: 'counterChannelId' });
 	assert.deepEqual(await (await save({ fameChannelId: '200000000000000099' })).json(), { error: 'invalid', field: 'fameChannelId' });
-	assert.equal((await save({ syncEvents: true, counterChannelId: '200000000000000099', fameChannelId: CHANNEL })).status, 200);
+	assert.deepEqual(await (await save({ examChannelId: '200000000000000099' })).json(), { error: 'invalid', field: 'examChannelId' });
+	assert.equal((await save({ examChannelId: CHANNEL, counterChannelId: '200000000000000099', fameChannelId: CHANNEL })).status, 200);
 });
 
 test('the AutoMod filters become Discord rules, an existing one is taken over, a refusal saves nothing', { skip }, async () => {
@@ -552,27 +550,41 @@ test('the hall of fame starts from now, then announces new validations once, hid
 	assert.equal(posts(), 1, 'a hidden member is not announced');
 });
 
-test('campus events are mirrored once, updated when the intra changes them, removed when cancelled', { skip }, async () => {
-	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify({ ...settings, syncEvents: true }) });
-	const { syncEvents } = await import('../src/events');
+test('each coming exam is announced once, again in a channel just chosen, and the copied events go', { skip }, async () => {
+	const { announceExams } = await import('../src/exams');
+	const { removeMirroredEvents } = await import('../src/events');
 	const soon = (hours: number) => new Date(Date.now() + hours * 3600_000).toISOString();
-	fakeEvents = [{ id: 1, name: 'Talk', kind: 'conference', description: 'about C', location: 'Amphi', begin_at: soon(48), end_at: soon(50), updated_at: '2026-10-01T00:00:00Z' }];
-	const count = (method: string) => writes.filter((write) => write.startsWith(`${method} /guilds/${GUILD}/scheduled-events`)).length;
+	fakeExams = [
+		{ id: 2, name: 'Exam', location: null, begin_at: soon(50), end_at: soon(53), projects: [{ name: 'Exam Rank 03' }] },
+		{ id: 1, name: 'Exam', location: 'c1', begin_at: soon(48), end_at: soon(51), projects: [{ name: 'Exam Rank 02' }] },
+	];
+	const posts = (channel: string) => writes.filter((write) => write === `POST /channels/${channel}/messages`).length;
+	const OTHER = '200000000000000098';
 
-	await syncEvents();
-	assert.equal(count('POST'), 1);
-	await syncEvents(new Date(Date.now() + 31 * 60_000));
-	assert.equal(count('POST') + count('PATCH'), 1, 'nothing changed, nothing sent');
+	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify({ ...settings, examChannelId: CHANNEL }) });
+	for (let i = 0; i < 50 && posts(CHANNEL) < 2; i++) await new Promise((resolve) => setTimeout(resolve, 10));
+	assert.equal(posts(CHANNEL), 2, 'announced as soon as the channel is saved');
+	assert.match(bodies.find((body) => body.includes('Rank 02')) ?? '', /Examen · Exam Rank 02/);
+	assert.ok(bodies.findIndex((body) => body.includes('Rank 02')) < bodies.findIndex((body) => body.includes('Rank 03')), 'soonest first');
 
-	fakeEvents = [{ ...fakeEvents[0]!, name: 'Talk (moved)', updated_at: '2026-10-02T00:00:00Z' }];
-	await syncEvents(new Date(Date.now() + 62 * 60_000));
-	assert.equal(count('PATCH'), 1);
+	await announceExams();
+	assert.equal(posts(CHANNEL), 2, 'never twice');
 
-	fakeEvents = [];
-	await syncEvents(new Date(Date.now() + 93 * 60_000));
-	assert.equal(count('DELETE'), 1);
-	const { rowCount } = await db.db().query('SELECT 1 FROM guild_events');
-	assert.equal(rowCount, 0);
+	await db.db().query('UPDATE guilds SET exam_channel_id = $1', [OTHER]);
+	const { announceGuildExams } = await import('../src/exams');
+	await announceGuildExams(GUILD, new Date(), new Map(), true);
+	assert.equal(posts(OTHER), 2, 'a channel just chosen gets them all');
+
+	await db.db().query(
+		`INSERT INTO guild_events (guild_id, source, ft_id, discord_event_id, ft_updated_at, begin_at)
+		 VALUES ($1, 'event', 1, '200000000000000901', now(), now() + interval '1 day'),
+		        ($1, 'exam', 2, '200000000000000902', now(), now() - interval '1 hour')`,
+		[GUILD],
+	);
+	assert.equal(await removeMirroredEvents(), '1 removed');
+	assert.ok(writes.includes(`DELETE /guilds/${GUILD}/scheduled-events/200000000000000901`));
+	assert.ok(!writes.includes(`DELETE /guilds/${GUILD}/scheduled-events/200000000000000902`), 'one already started is only forgotten');
+	assert.equal((await db.db().query('SELECT 1 FROM guild_events')).rowCount, 0);
 });
 
 test('the counter renames its channel only when the count changes', { skip }, async () => {
