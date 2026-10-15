@@ -27,6 +27,7 @@ Object.assign(process.env, {
 	PUBLIC_URL: ORIGIN,
 	DISCORD_APP_ID: APP,
 	DISCORD_BOT_TOKEN: 'bot',
+	DISCORD_CLIENT_SECRET: 'secret',
 	OPERATOR_NAME: 'op',
 	OPERATOR_CONTACT: 'op@example.org',
 	HOSTING_LOCATION: 'France',
@@ -58,6 +59,12 @@ const members = new Map<string, string[]>([
 ]);
 let botGuilds = [GUILD];
 
+/** What the fake intra answers for marks, campus events: set by the tests that need them. */
+let fakeMarks: unknown[] = [];
+let fakeEvents: Array<Record<string, unknown>> = [];
+/** Bodies of the Discord writes, in the same order as `writes`. */
+const bodies: string[] = [];
+
 /** The last validations lookup `/helpers` made, to see which accounts it asked about. */
 let lastValidationQuery = '';
 
@@ -87,12 +94,23 @@ const fakeFetch = async (input: string | URL | Request, init?: RequestInit): Pro
 		]);
 	}
 	if (String(input).startsWith('https://api.intra.42.fr/v2/projects/')) return new Response('{}', { status: 404 });
+	if (String(input).startsWith('https://api.intra.42.fr/v2/projects_users?filter[user_id]=')) return ok(fakeMarks);
+	if (String(input) === 'https://api.intra.42.fr/v2/campus?filter[name]=Paris') return ok([{ id: 1, name: 'Paris', time_zone: 'Europe/Paris' }]);
+	if (String(input).startsWith('https://api.intra.42.fr/v2/campus/1/events?')) return ok(fakeEvents);
+	if (String(input).startsWith('https://api.intra.42.fr/v2/campus/1/exams?')) return ok([]);
 	const path = String(input).replace('https://discord.com/api/v10', '');
 	if (init?.method && init.method !== 'GET') {
 		writes.push(`${init.method} ${path}`);
+		bodies.push(String(init.body ?? ''));
+		if (init.method === 'POST' && path === `/guilds/${GUILD}/scheduled-events`) return ok({ id: `2000000000000009${String(writes.length).padStart(2, '0')}` });
+		if (init.method === 'POST' && path === '/users/@me/channels') return ok({ id: '200000000000000088' });
+		if (init.method === 'POST' && path === '/oauth2/token') {
+			return ok({ access_token: 'user-access', refresh_token: `refresh-${writes.length}` });
+		}
 		return new Response(null, { status: 204 });
 	}
 	if (path.startsWith('/users/@me/guilds')) return ok(botGuilds.map((id) => ({ id })));
+	if (path === '/users/@me') return ok({ id: MEMBER, username: 'member', global_name: null, avatar: null });
 	if (path === `/guilds/${GUILD}`) {
 		return ok({
 			id: GUILD,
@@ -152,6 +170,9 @@ beforeEach(async () => {
 	members.delete(LEFT);
 	botGuilds = [GUILD];
 	writes.length = 0;
+	bodies.length = 0;
+	fakeMarks = [];
+	fakeEvents = [];
 	ftUser = freshUser();
 });
 
@@ -162,7 +183,19 @@ after(async () => {
 const call = (path: string, init: RequestInit = {}) =>
 	route(new Request(`${ORIGIN}${path}`, { ...init, headers: { cookie, origin: ORIGIN, ...init.headers } }));
 
-const settings = { roleId: ROLE, campus: 'Paris', studentsOnly: true, nickname: 'login', logChannelId: CHANNEL, roleRules: [] as unknown[], helpers: false };
+const settings = {
+	roleId: ROLE,
+	campus: 'Paris',
+	studentsOnly: true,
+	nickname: 'login',
+	logChannelId: CHANNEL,
+	roleRules: [] as unknown[],
+	helpers: false,
+	fameChannelId: null as string | null,
+	syncEvents: false,
+	syncExams: false,
+	counterChannelId: null as string | null,
+};
 const rules = [
 	{ kind: 'cursus', value: '42cursus', roleId: CURSUS_ROLE },
 	{ kind: 'coalition', value: 'the-order', roleId: ORDER_ROLE },
@@ -417,10 +450,133 @@ test('/helpers lists who is on campus with the project validated, and /visibilit
 	assert.ok(await edited(`t-helpers-${MEMBER}`));
 	assert.deepEqual(lastValidationQuery.match(/user_id\]=([\d,]+)/)?.[1]?.split(',').sort(), ['7', '8'], 'the caller is left out');
 
-	assert.match(await content(await handleVisibility(command('visibility', SHY, { name: 'shown', type: 5, value: false }))), /no longer list you/);
+	assert.match(await content(await handleVisibility(command('visibility', SHY, { name: 'shown', type: 5, value: false }))), /will no longer show you/);
 	writes.length = 0;
 	await helpers(MEMBER);
 	assert.ok(await edited(`t-helpers-${MEMBER}`));
 	assert.match(lastValidationQuery, /user_id\]=7&/, 'a hidden member is not even looked up');
 	assert.match(await content(await handleVisibility(command('visibility', LEFT, { name: 'shown', type: 5, value: true }))), /No 42 account is linked/);
+});
+
+test('the events and the counter need a campus, and the counter a voice channel', { skip }, async () => {
+	const save = (body: object) => call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify({ ...settings, ...body }) });
+	assert.deepEqual(await (await save({ campus: null, syncEvents: true })).json(), { error: 'invalid', field: 'syncEvents' });
+	assert.deepEqual(await (await save({ counterChannelId: CHANNEL })).json(), { error: 'invalid', field: 'counterChannelId' });
+	assert.deepEqual(await (await save({ fameChannelId: '200000000000000099' })).json(), { error: 'invalid', field: 'fameChannelId' });
+	assert.equal((await save({ syncEvents: true, counterChannelId: '200000000000000099', fameChannelId: CHANNEL })).status, 200);
+});
+
+test('the hall of fame starts from now, then announces new validations once, hidden members never', { skip }, async () => {
+	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify({ ...settings, fameChannelId: CHANNEL }) });
+	const { saveLink, setHidden } = await import('../src/links');
+	const { announceFame } = await import('../src/fame');
+	await saveLink({ guildId: GUILD, userId: MEMBER, ftId: 42, ftLogin: 'jdoe' });
+	fakeMarks = [{ final_mark: 105, 'validated?': true, marked_at: new Date().toISOString(), project: { name: 'cub3d', slug: 'cub3d' }, user: { id: 42, login: 'jdoe' } }];
+	const posts = () => writes.filter((write) => write === `POST /channels/${CHANNEL}/messages`).length;
+
+	await announceFame();
+	assert.equal(posts(), 0, 'a channel just chosen starts from now');
+	await db.db().query("UPDATE guilds SET fame_checked_at = now() - interval '15 minutes'");
+	await announceFame();
+	assert.equal(posts(), 1);
+	assert.match(bodies.at(-1) ?? '', /<@200000000000000007> a validé \*\*cub3d\*\* — \*\*105\*\*/);
+	assert.match(bodies.at(-1) ?? '', /"parse":\[\]/, 'nobody is pinged');
+
+	await setHidden(GUILD, MEMBER, true);
+	await db.db().query("UPDATE guilds SET fame_checked_at = now() - interval '15 minutes'");
+	await announceFame();
+	assert.equal(posts(), 1, 'a hidden member is not announced');
+});
+
+test('campus events are mirrored once, updated when the intra changes them, removed when cancelled', { skip }, async () => {
+	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify({ ...settings, syncEvents: true }) });
+	const { syncEvents } = await import('../src/events');
+	const soon = (hours: number) => new Date(Date.now() + hours * 3600_000).toISOString();
+	fakeEvents = [{ id: 1, name: 'Talk', kind: 'conference', description: 'about C', location: 'Amphi', begin_at: soon(48), end_at: soon(50), updated_at: '2026-10-01T00:00:00Z' }];
+	const count = (method: string) => writes.filter((write) => write.startsWith(`${method} /guilds/${GUILD}/scheduled-events`)).length;
+
+	await syncEvents();
+	assert.equal(count('POST'), 1);
+	await syncEvents(new Date(Date.now() + 31 * 60_000));
+	assert.equal(count('POST') + count('PATCH'), 1, 'nothing changed, nothing sent');
+
+	fakeEvents = [{ ...fakeEvents[0]!, name: 'Talk (moved)', updated_at: '2026-10-02T00:00:00Z' }];
+	await syncEvents(new Date(Date.now() + 62 * 60_000));
+	assert.equal(count('PATCH'), 1);
+
+	fakeEvents = [];
+	await syncEvents(new Date(Date.now() + 93 * 60_000));
+	assert.equal(count('DELETE'), 1);
+	const { rowCount } = await db.db().query('SELECT 1 FROM guild_events');
+	assert.equal(rowCount, 0);
+});
+
+test('the counter renames its channel only when the count changes', { skip }, async () => {
+	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify({ ...settings, counterChannelId: '200000000000000099' }) });
+	const { saveLink } = await import('../src/links');
+	const { updateCounters } = await import('../src/counter');
+	await saveLink({ guildId: GUILD, userId: MEMBER, ftId: 42, ftLogin: 'jdoe' });
+	await updateCounters();
+	assert.ok(writes.includes('PATCH /channels/200000000000000099'));
+	assert.match(bodies.at(-1) ?? '', /"3 au campus · 1 ici"/);
+	await updateCounters();
+	assert.equal(writes.filter((write) => write === 'PATCH /channels/200000000000000099').length, 1);
+});
+
+test('a reminder is sent once when the deadline comes close, and goes with the last link', { skip }, async () => {
+	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify(settings) });
+	const { saveLink, deleteLink } = await import('../src/links');
+	const { setReminder, sendReminders } = await import('../src/reminders');
+	await saveLink({ guildId: GUILD, userId: MEMBER, ftId: 42, ftLogin: 'jdoe' });
+	const deadline = new Date(Date.now() + 5 * 24 * 3600_000).toISOString();
+	Object.assign(ftUser, {
+		cursus_users: [{ end_at: null, blackholed_at: deadline, cursus: { name: '42cursus', slug: '42cursus', kind: 'main' } }],
+	});
+	await setReminder(MEMBER, 7, 'fr');
+
+	await sendReminders();
+	assert.ok(writes.includes('POST /channels/200000000000000088/messages'));
+	assert.match(bodies.at(-1) ?? '', /Ton échéance 42 arrive <t:\d+:R>/);
+	await db.db().query("UPDATE reminders SET checked_at = '-infinity'");
+	writes.length = 0;
+	await sendReminders();
+	assert.equal(writes.filter((write) => write.endsWith('/messages')).length, 0, 'the same deadline is reminded once');
+
+	await deleteLink(GUILD, MEMBER);
+	await db.db().query("UPDATE reminders SET checked_at = '-infinity'");
+	await sendReminders();
+	const { rowCount } = await db.db().query('SELECT 1 FROM reminders');
+	assert.equal(rowCount, 0, 'no link left, no reminder kept');
+});
+
+test('Linked Roles: the flow shows the 42 profile on Discord, keeps the token sealed, and refreshes it', { skip }, async () => {
+	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify(settings) });
+	const { saveLink } = await import('../src/links');
+	const { refreshLinkedRoles } = await import('../src/linkedRoles');
+	const start = await route(new Request(`${ORIGIN}/linked-roles`));
+	assert.equal(start.status, 302);
+	const state = new URL(start.headers.get('location') ?? '').searchParams.get('state');
+	const nonce = `__Host-linked=${state}`;
+	const finish = () =>
+		route(new Request(`${ORIGIN}/linked-roles/callback?code=c&state=${state}`, { headers: { cookie: nonce } }));
+
+	assert.equal((await finish()).status, 400, 'no 42 account linked yet');
+	await saveLink({ guildId: GUILD, userId: MEMBER, ftId: 42, ftLogin: 'jdoe' });
+	writes.length = 0;
+	bodies.length = 0;
+	assert.equal((await finish()).status, 200);
+	const put = writes.indexOf(`PUT /users/@me/applications/${APP}/role-connection`);
+	assert.ok(put >= 0);
+	assert.deepEqual(JSON.parse(bodies[put]!), { platform_name: '42', platform_username: 'jdoe', metadata: { level: '0', projects: '0', student: '1' } });
+	const { rows } = await db.db().query<{ refresh_token: Buffer }>('SELECT refresh_token FROM role_connections WHERE user_id = $1', [MEMBER]);
+	assert.ok(rows[0] && !rows[0].refresh_token.toString().includes('refresh-'), 'stored sealed, never in clear');
+
+	await db.db().query("UPDATE role_connections SET updated_at = now() - interval '8 days'");
+	writes.length = 0;
+	assert.equal(await refreshLinkedRoles(), '1 refreshed');
+	assert.ok(writes.includes('POST /oauth2/token') && writes.includes(`PUT /users/@me/applications/${APP}/role-connection`));
+	assert.notDeepEqual((await db.db().query<{ refresh_token: Buffer }>('SELECT refresh_token FROM role_connections')).rows[0]?.refresh_token, rows[0]!.refresh_token, 'the new refresh token replaces the old one');
+
+	const wrong = await route(new Request(`${ORIGIN}/linked-roles/callback?code=c&state=forged`, { headers: { cookie: nonce } }));
+	assert.equal(wrong.status, 400, 'a state this browser did not start is refused');
 });

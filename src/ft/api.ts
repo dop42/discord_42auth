@@ -15,7 +15,7 @@ export interface FtUser {
 	/** Staff skip the student and campus rules in `checkEligibility`. */
 	'staff?': boolean;
 	/** Every campus the account was ever attached to, not only the current one. */
-	campus: Array<{ id: number; name: string }>;
+	campus: Array<{ id: number; name: string; time_zone?: string }>;
 	/** Links into `campus`; the one flagged `is_primary` is the current campus. */
 	campus_users: Array<{ campus_id: number; is_primary: boolean }>;
 	/** Every cursus ever joined; one whose `end_at` is past is over (a finished piscine). */
@@ -216,7 +216,7 @@ export async function fetchUser(
  * the first entry keeps an account with no primary link from being judged on its piscine
  * campus; `checkEligibility` then refuses it whenever a campus is configured.
  */
-export function primaryCampus(user: FtUser): { id: number; name: string } | undefined {
+export function primaryCampus(user: FtUser): FtUser['campus'][number] | undefined {
 	const link = user.campus_users.find((entry) => entry.is_primary);
 	if (!link) return undefined;
 	return user.campus.find((campus) => campus.id === link.campus_id);
@@ -230,13 +230,18 @@ const PAGE_SIZE = 100;
  * @param path a list route with its filters, without paging
  * @throws {FtError}
  */
-async function fetchAll<T>(path: string, accessToken: string): Promise<T[]> {
+async function fetchAll<T>(
+	path: string,
+	accessToken: string,
+	priority: Priority = 'interactive',
+): Promise<T[]> {
 	const items: T[] = [];
 	for (let page = 1; ; page++) {
 		const separator = path.includes('?') ? '&' : '?';
 		const response = await ftFetch(
 			`${path}${separator}page[size]=${PAGE_SIZE}&page[number]=${page}`,
 			{ headers: { Authorization: `Bearer ${accessToken}` } },
+			priority,
 		);
 		if (!response.ok) throw new FtError(response.status);
 		const batch = (await response.json()) as T[];
@@ -257,8 +262,16 @@ export interface FtLocation {
  * @remarks One call per hundred people on campus, whatever the number of servers asking.
  * @throws {FtError}
  */
-export function fetchCampusLocations(campusId: number, accessToken: string): Promise<FtLocation[]> {
-	return fetchAll<FtLocation>(`/v2/campus/${campusId}/locations?filter[active]=true`, accessToken);
+export function fetchCampusLocations(
+	campusId: number,
+	accessToken: string,
+	priority: Priority = 'interactive',
+): Promise<FtLocation[]> {
+	return fetchAll<FtLocation>(
+		`/v2/campus/${campusId}/locations?filter[active]=true`,
+		accessToken,
+		priority,
+	);
 }
 
 export interface FtProject {
@@ -312,4 +325,105 @@ export async function fetchValidations(
 		}
 	}
 	return marks;
+}
+
+/** An ISO instant for an intra `range[...]` filter. */
+const iso = (date: Date) => date.toISOString();
+
+/**
+ * Looks a campus up by its name, as the intra spells it.
+ * @returns null when no campus has that name
+ * @throws {FtError}
+ */
+export async function fetchCampusByName(
+	name: string,
+	accessToken: string,
+): Promise<{ id: number; name: string; time_zone: string } | null> {
+	const response = await ftFetch(
+		`/v2/campus?filter[name]=${encodeURIComponent(name)}`,
+		{ headers: { Authorization: `Bearer ${accessToken}` } },
+		'background',
+	);
+	if (!response.ok) throw new FtError(response.status);
+	const campuses = (await response.json()) as Array<{ id: number; name: string; time_zone: string }>;
+	return campuses.find((campus) => campus.name.toLowerCase() === name.toLowerCase()) ?? null;
+}
+
+/** A project marked, as the hall of fame reads it. */
+export interface FtMark {
+	final_mark: number | null;
+	'validated?': boolean | null;
+	marked_at: string | null;
+	project: { name: string; slug: string };
+	user: { id: number; login: string };
+}
+
+/**
+ * Lists the projects some accounts got marked on between two instants.
+ * @remarks Asked by chunks of a hundred ids, like `fetchValidations`.
+ * @throws {FtError}
+ */
+export async function fetchMarks(userIds: number[], from: Date, to: Date, accessToken: string): Promise<FtMark[]> {
+	const marks: FtMark[] = [];
+	for (let start = 0; start < userIds.length; start += PAGE_SIZE) {
+		const ids = userIds.slice(start, start + PAGE_SIZE).join(',');
+		marks.push(
+			...(await fetchAll<FtMark>(
+				`/v2/projects_users?filter[user_id]=${ids}&range[marked_at]=${iso(from)},${iso(to)}`,
+				accessToken,
+				'background',
+			)),
+		);
+	}
+	return marks;
+}
+
+/** A campus event or exam, as the intra lists them. */
+export interface FtEvent {
+	id: number;
+	name: string;
+	/** Events only: `event`, `association`, `conference`… */
+	kind?: string;
+	description?: string | null;
+	location: string | null;
+	begin_at: string;
+	end_at: string;
+	updated_at: string;
+	/** Exams only: the projects that can be taken. */
+	projects?: Array<{ name: string }>;
+}
+
+/**
+ * Lists a campus's events, or its exams, starting between two instants.
+ * @throws {FtError}
+ */
+export function fetchCampusEvents(
+	campusId: number,
+	source: 'events' | 'exams',
+	from: Date,
+	to: Date,
+	accessToken: string,
+): Promise<FtEvent[]> {
+	return fetchAll<FtEvent>(
+		`/v2/campus/${campusId}/${source}?range[begin_at]=${iso(from)},${iso(to)}`,
+		accessToken,
+		'background',
+	);
+}
+
+/** One session on a campus computer; `end_at` is null while it is still open. */
+export interface FtSession {
+	begin_at: string;
+	end_at: string | null;
+}
+
+/**
+ * Lists an account's sessions on campus computers started after an instant.
+ * @throws {FtError}
+ */
+export function fetchSessions(userId: number, from: Date, to: Date, accessToken: string): Promise<FtSession[]> {
+	return fetchAll<FtSession>(
+		`/v2/users/${userId}/locations?range[begin_at]=${iso(from)},${iso(to)}`,
+		accessToken,
+	);
 }

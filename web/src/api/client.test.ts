@@ -43,6 +43,10 @@ describe('request', () => {
 				logChannelId: null,
 				roleRules: [],
 				helpers: false,
+				fameChannelId: null,
+				syncEvents: false,
+				syncExams: false,
+				counterChannelId: null,
 			})
 			.catch((e: unknown) => e)) as HttpError;
 		expect(error.status).toBe(400);
@@ -67,6 +71,10 @@ describe('request', () => {
 			logChannelId: null,
 			roleRules: [],
 			helpers: false,
+			fameChannelId: null,
+			syncEvents: false,
+			syncExams: false,
+			counterChannelId: null,
 		});
 		const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 		expect(url).toBe('/api/guilds/a%2Fb');

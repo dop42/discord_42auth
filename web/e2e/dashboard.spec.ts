@@ -55,6 +55,10 @@ test('edit and save settings', async ({ page }) => {
 			logChannelId: '300000000000000001',
 			roleRules: [],
 			helpers: true,
+			fameChannelId: null,
+			syncEvents: false,
+			syncExams: false,
+			counterChannelId: null,
 		},
 	]);
 });

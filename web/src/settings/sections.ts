@@ -14,7 +14,17 @@ export interface SettingsSection {
 export const SETTINGS_SECTIONS: SettingsSection[] = [
 	{ id: 'access', fields: ['roleId', 'campus', 'studentsOnly'] },
 	{ id: 'members', fields: ['roleRules', 'nickname'] },
-	{ id: 'features', fields: ['helpers', 'logChannelId'] },
+	{
+		id: 'features',
+		fields: [
+			'helpers',
+			'fameChannelId',
+			'syncEvents',
+			'syncExams',
+			'counterChannelId',
+			'logChannelId',
+		],
+	},
 ];
 
 /** Element id of a category, and of its heading, which takes the focus when it is jumped to. */

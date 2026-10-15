@@ -14,7 +14,9 @@ const ESCAPES: Record<string, string> = {
  */
 const escapeHtml = (text: string) => text.replace(/[&<>"]/g, (char) => ESCAPES[char]!);
 
-const BAD = '#e74c3c';
+/** The brand's dark theme: plum night, pink accent; a refusal stays red, distinct from the pink. */
+const BAD = '#ff6b5e';
+const GOOD = '#ff7cb4';
 
 /**
  * Wraps a body fragment in the shared page shell.
@@ -27,11 +29,11 @@ function layout(locale: string, accent: string, body: string, status: number): R
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-	body { margin:0; min-height:100vh; display:grid; place-items:center; background:#1e1f22; color:#dbdee1; font:16px/1.6 system-ui,sans-serif; }
+	body { margin:0; min-height:100vh; display:grid; place-items:center; background:#13060d; color:#fff2f8; font:16px/1.6 system-ui,sans-serif; }
 	main { max-width:30rem; padding:2rem; text-align:center; }
 	h1 { margin:0 0 .75rem; font-size:1.4rem; color:${accent}; }
-	p { margin:0 0 1rem; color:#b5bac1; }
-	svg { height:3.5rem; margin-bottom:1.25rem; fill:#dbdee1; }
+	p { margin:0 0 1rem; color:#dcb4c7; }
+	svg { height:3.5rem; margin-bottom:1.25rem; fill:#ff7cb4; }
 </style>
 <main><svg viewBox="${LOGO_VIEWBOX}" aria-hidden="true"><path d="${LOGO_PATH}"/></svg>${body}</main>`;
 	return new Response(html, {
@@ -69,3 +71,8 @@ export function renderPage(title: string, body: string, locale: string): Respons
 	return layout(locale, BAD, `<h1>${escapeHtml(title)}</h1><p>${escapeHtml(body)}</p>`, 400);
 }
 
+
+/** Renders the page a flow ends on when it went well and there is nowhere to send the member back. */
+export function renderDone(title: string, body: string, locale: string): Response {
+	return layout(locale, GOOD, `<h1>${escapeHtml(title)}</h1><p>${escapeHtml(body)}</p>`, 200);
+}

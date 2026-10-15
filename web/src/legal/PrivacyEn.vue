@@ -42,7 +42,21 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 		</li>
 		<li>
 			whether they chose, with <code>/visibility</code>, not to appear in
-			<code>/helpers</code>.
+			<code>/helpers</code> or the hall of fame.
+		</li>
+	</ul>
+	<p>And only if the member asks for it themselves:</p>
+	<ul>
+		<li>
+			with <code>/reminder</code>: their Discord ID, the number of days chosen, their language
+			and the date of the last deadline reminded about. Erased with
+			<code>/reminder days:0</code>, or as soon as they have no 42 link left;
+		</li>
+		<li>
+			with Discord Linked Roles: their Discord ID and a Discord refresh token,
+			<strong>encrypted</strong>, to update the level shown on their profile every week.
+			Erased if they remove the app in their Discord settings, or as soon as they have no 42
+			link left.
 		</li>
 	</ul>
 
@@ -72,6 +86,15 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 		validated a given project, with their seat and mark. The campus seats are kept
 		<strong>two minutes in memory</strong> to limit calls to 42, then forgotten; nothing of them
 		is written to the database. Any member can stop appearing with <code>/visibility</code>.
+	</p>
+	<p>
+		Depending on what the admins turn on: the <strong>hall of fame</strong> posts in a channel
+		of the server the projects its members validate, with the mark (never for a member hidden
+		with <code>/visibility</code>); the <strong>campus events</strong> and the
+		<strong>counter</strong>
+		only hold public campus information and a number of people, never a name. The
+		<code>/logtime</code> command shows a member, and them alone, their own time on campus, read
+		live and not kept.
 	</p>
 	<p>
 		Your IP address is used, in memory and for one minute, to limit the number of requests. It

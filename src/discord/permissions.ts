@@ -2,12 +2,17 @@ import { env } from '../env';
 import type { Guild, Member } from './rest';
 import { Permissions } from './types';
 
-/** What the bot needs: grant the role, rename, and write in the log channel. */
+/**
+ * What the bot needs: grant the role, rename, write in the log and hall of fame channels,
+ * mirror the campus events, and rename the counter channel.
+ */
 const BOT_PERMISSIONS =
 	Permissions.MANAGE_ROLES |
 	Permissions.MANAGE_NICKNAMES |
 	Permissions.VIEW_CHANNEL |
-	Permissions.SEND_MESSAGES;
+	Permissions.SEND_MESSAGES |
+	Permissions.MANAGE_EVENTS |
+	Permissions.MANAGE_CHANNELS;
 
 /**
  * Tells whether a set of permission bits allows configuring the bot.

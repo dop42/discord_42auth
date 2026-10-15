@@ -12,7 +12,7 @@ const prefs = usePrefsStore();
 		<svg class="logo__mark" :viewBox="LOGO_VIEWBOX" aria-hidden="true" focusable="false">
 			<path :d="LOGO_PATH" />
 		</svg>
-		<span v-if="name">{{ prefs.t.appName }}</span>
+		<span v-if="name" class="logo__name">{{ prefs.t.appName }}</span>
 	</span>
 </template>
 
@@ -27,11 +27,11 @@ const prefs = usePrefsStore();
 	letter-spacing: -0.02em;
 }
 
-/* Follows the text colour, so it switches with the theme like everything else. */
+/* Plum on the light theme, pink on the dark one: the accent colour of each. */
 .logo__mark {
 	height: 1.5em;
 	width: auto;
-	fill: currentColor;
+	fill: var(--accent-strong);
 	flex: none;
 }
 </style>

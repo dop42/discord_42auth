@@ -26,6 +26,10 @@ const FIELDS: Array<keyof GuildSettings> = [
 	'roleRules',
 	'nickname',
 	'helpers',
+	'fameChannelId',
+	'syncEvents',
+	'syncExams',
+	'counterChannelId',
 	'logChannelId',
 ];
 

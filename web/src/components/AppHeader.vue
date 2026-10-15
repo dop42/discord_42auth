@@ -214,9 +214,9 @@ const user = computed(() => session.me?.user ?? null);
 
 .user {
 	display: flex;
+	flex: none;
 	align-items: center;
 	gap: 0.625rem;
-	min-width: 0;
 }
 
 .user__avatar {
@@ -264,6 +264,14 @@ const user = computed(() => session.me?.user ?? null);
 .logout:hover {
 	color: var(--fg);
 	border-color: var(--fg-faint);
+}
+
+/* Sur un petit téléphone, le logo garde sa marque seule : le lien porte déjà le nom pour les
+   lecteurs d'écran, et la place va aux réglages et au compte. */
+@media (max-width: 479px) {
+	.header__logo :deep(.logo__name) {
+		display: none;
+	}
 }
 
 @media (max-width: 559px) {

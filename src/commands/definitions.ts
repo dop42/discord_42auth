@@ -61,4 +61,34 @@ export const commands = [
 		dm_permission: false,
 		options: [{ name: 'shown', type: OptionType.BOOLEAN, required: true, ...described('cmd.visibility.shown') }],
 	},
+	{
+		name: 'logtime',
+		...described('cmd.logtime'),
+		dm_permission: false,
+		options: [
+			{
+				name: 'month',
+				type: OptionType.STRING,
+				required: false,
+				min_length: 7,
+				max_length: 7,
+				...described('cmd.logtime.month'),
+			},
+		],
+	},
+	{
+		name: 'reminder',
+		...described('cmd.reminder'),
+		dm_permission: false,
+		options: [
+			{
+				name: 'days',
+				type: OptionType.INTEGER,
+				required: true,
+				min_value: 0,
+				max_value: 60,
+				...described('cmd.reminder.days'),
+			},
+		],
+	},
 ];

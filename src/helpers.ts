@@ -1,20 +1,17 @@
 import { TtlCache } from './cache';
+import { campusLocations } from './campus';
 import { ComponentType, MessageFlags } from './discord/types';
 import {
 	fetchAppToken,
-	fetchCampusLocations,
 	fetchProject,
 	fetchUser,
 	fetchValidations,
 	primaryCampus,
-	type FtLocation,
 	type FtProject,
 } from './ft/api';
 import { t } from './i18n';
 import { visibleLinks, type Link } from './links';
 
-/** Who sits where changes by the minute; two of them keep a busy campus to a few calls. */
-const locations = new TtlCache<number, FtLocation[]>(2 * 60_000);
 /** A project's name and existence change about never. */
 const projects = new TtlCache<string, FtProject | null>(24 * 60 * 60_000);
 /** The campus of a 42 account, by account id; null when it has no primary campus. */
@@ -68,7 +65,7 @@ export async function findHelpers(
 	});
 	if (campusId === null) return { project, helpers: [] };
 
-	const present = await locations.get(campusId, () => fetchCampusLocations(campusId, token));
+	const present = await campusLocations(campusId, 'interactive');
 	const seats = new Map(present.map((location) => [location.user.id, location.host]));
 	const links = (await visibleLinks(caller.guildId, [...seats.keys()])).filter(
 		(link) => link.userId !== caller.userId,

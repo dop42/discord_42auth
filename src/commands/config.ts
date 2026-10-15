@@ -70,6 +70,8 @@ function formatSettings(settings: Settings, locale: string): string {
 	const condition = (rule: RoleRule) =>
 		rule.kind === 'level' ? `≥ \`${rule.value}\`` : `\`${rule.value}\``;
 
+	const yesNo = (on: boolean) => (on ? t(locale, 'show.yes') : t(locale, 'show.no'));
+	const channel = (id: string | null) => (id ? `<#${id}>` : t(locale, 'show.logs.none'));
 	const role = settings.roleId ? `<@&${settings.roleId}>` : t(locale, 'show.role.unset');
 	const logs = settings.logChannelId ? `<#${settings.logChannelId}>` : t(locale, 'show.logs.none');
 	const rules = settings.roleRules.length
@@ -79,10 +81,14 @@ function formatSettings(settings: Settings, locale: string): string {
 	return [
 		`**${t(locale, 'show.role')}** — ${role}`,
 		`**${t(locale, 'show.campus')}** — ${settings.campus ?? t(locale, 'show.campus.any')}`,
-		`**${t(locale, 'show.students')}** — ${settings.studentsOnly ? t(locale, 'show.yes') : t(locale, 'show.no')}`,
+		`**${t(locale, 'show.students')}** — ${yesNo(settings.studentsOnly)}`,
 		`**${t(locale, 'show.nickname')}** — ${nickname}`,
 		`**${t(locale, 'show.logs')}** — ${logs}`,
-		`**${t(locale, 'show.helpers')}** — ${settings.helpers ? t(locale, 'show.yes') : t(locale, 'show.no')}`,
+		`**${t(locale, 'show.helpers')}** — ${yesNo(settings.helpers)}`,
+		`**${t(locale, 'show.fame')}** — ${channel(settings.fameChannelId)}`,
+		`**${t(locale, 'show.events')}** — ${yesNo(settings.syncEvents)}`,
+		`**${t(locale, 'show.exams')}** — ${yesNo(settings.syncExams)}`,
+		`**${t(locale, 'show.counter')}** — ${channel(settings.counterChannelId)}`,
 		'',
 		`**${t(locale, 'show.rules')}**`,
 		...rules,

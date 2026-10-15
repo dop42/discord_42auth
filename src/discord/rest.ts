@@ -206,6 +206,74 @@ export async function botGuildIds(): Promise<Set<string>> {
 	}
 }
 
+/** What the bot sends to create or update a Discord event mirroring an intra one. */
+export interface ScheduledEventBody {
+	name: string;
+	description: string;
+	scheduled_start_time: string;
+	scheduled_end_time: string;
+	entity_metadata: { location: string };
+}
+
+/**
+ * Creates an external Discord event, one that happens somewhere else than a voice channel.
+ * @returns its id
+ * @throws {DiscordError}
+ */
+export async function createScheduledEvent(guildId: string, body: ScheduledEventBody): Promise<string> {
+	const path = `/guilds/${guildId}/scheduled-events`;
+	// 2 is "guild only", the one privacy level Discord accepts; 3 is an external event.
+	const response = await request('POST', path, { ...body, privacy_level: 2, entity_type: 3 });
+	if (!response.ok) throw new DiscordError(response.status, path);
+	return ((await response.json()) as { id: string }).id;
+}
+
+/**
+ * Updates a Discord event the bot created.
+ * @returns false when it no longer exists: an admin deleted it by hand
+ * @throws {DiscordError}
+ */
+export async function updateScheduledEvent(
+	guildId: string,
+	eventId: string,
+	body: ScheduledEventBody,
+): Promise<boolean> {
+	const path = `/guilds/${guildId}/scheduled-events/${eventId}`;
+	const response = await request('PATCH', path, body);
+	if (response.status === 404) return false;
+	if (!response.ok) throw new DiscordError(response.status, path);
+	return true;
+}
+
+/** Deletes a Discord event the bot created, best-effort: one already gone is fine. */
+export async function deleteScheduledEvent(guildId: string, eventId: string): Promise<void> {
+	await request('DELETE', `/guilds/${guildId}/scheduled-events/${eventId}`).catch(() => null);
+}
+
+/**
+ * Renames a channel.
+ * @remarks Discord allows two renames per channel every ten minutes; the counter never asks
+ * for more.
+ * @throws {DiscordError}
+ */
+export async function renameChannel(channelId: string, name: string): Promise<void> {
+	const path = `/channels/${channelId}`;
+	const response = await request('PATCH', path, { name });
+	if (!response.ok) throw new DiscordError(response.status, path);
+}
+
+/**
+ * Sends a private message to a user who shares a server with the bot.
+ * @returns whether it was delivered; false when their private messages are closed
+ */
+export async function sendDirectMessage(userId: string, body: unknown): Promise<boolean> {
+	const response = await request('POST', '/users/@me/channels', { recipient_id: userId }).catch(() => null);
+	if (!response?.ok) return false;
+	const { id } = (await response.json()) as { id: string };
+	const sent = await request('POST', `/channels/${id}/messages`, body).catch(() => null);
+	return sent?.ok ?? false;
+}
+
 // --- Dashboard login: these run with the admin's own OAuth2 token, never the bot's. ---
 
 export interface OAuthUser {
@@ -223,27 +291,73 @@ export interface OAuthGuild {
 	permissions: string;
 }
 
+/** What Discord hands back for a user's OAuth2 grant. */
+export interface DiscordTokens {
+	access_token: string;
+	refresh_token: string;
+}
+
 /**
- * Trades a dashboard login code for a user access token.
- * @remarks The token is used for two reads during the login and then dropped; it is never
- * stored. Later permission checks go through the bot instead.
+ * Calls Discord's token endpoint with the application's credentials.
+ * @throws {DiscordError}
  */
-export async function exchangeDiscordCode(code: string): Promise<string> {
+async function tokenRequest(grant: Record<string, string>): Promise<DiscordTokens> {
 	const response = await fetch(`${DISCORD_API}/oauth2/token`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
-			grant_type: 'authorization_code',
 			client_id: env.discordAppId,
 			client_secret: env.discordClientSecret,
-			code,
-			redirect_uri: env.discordRedirectUri,
+			...grant,
 		}),
 		signal: AbortSignal.timeout(TIMEOUT_MS),
 	});
-	if (!response.ok) throw new Error(`Discord token exchange failed with ${response.status}`);
-	const { access_token } = (await response.json()) as { access_token: string };
-	return access_token;
+	if (!response.ok) throw new DiscordError(response.status, '/oauth2/token');
+	return (await response.json()) as DiscordTokens;
+}
+
+/**
+ * Trades an OAuth2 code for the user's tokens.
+ * @param redirectUri the one the authorization was started with
+ * @throws {DiscordError}
+ */
+export const exchangeDiscordCodeFor = (code: string, redirectUri: string) =>
+	tokenRequest({ grant_type: 'authorization_code', code, redirect_uri: redirectUri });
+
+/**
+ * Trades a refresh token for new tokens; the old refresh token stops working.
+ * @throws {DiscordError}
+ */
+export const refreshDiscordToken = (refreshToken: string) =>
+	tokenRequest({ grant_type: 'refresh_token', refresh_token: refreshToken });
+
+/**
+ * Trades a dashboard login code for a user access token.
+ * @remarks The token is used for two reads during the login and then dropped; it is never
+ * stored. Later permission checks go through the bot instead.
+ * @throws {DiscordError}
+ */
+export async function exchangeDiscordCode(code: string): Promise<string> {
+	return (await exchangeDiscordCodeFor(code, env.discordRedirectUri)).access_token;
+}
+
+/**
+ * Sets what the member's Discord profile shows for this application (Linked Roles).
+ * @param token the member's own access token, with `role_connections.write`
+ * @throws {DiscordError}
+ */
+export async function putRoleConnection(
+	token: string,
+	connection: { platform_name: string; platform_username: string | null; metadata: Record<string, string> },
+): Promise<void> {
+	const path = `/users/@me/applications/${env.discordAppId}/role-connection`;
+	const response = await fetch(`${DISCORD_API}${path}`, {
+		method: 'PUT',
+		headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+		body: JSON.stringify(connection),
+		signal: AbortSignal.timeout(TIMEOUT_MS),
+	});
+	if (!response.ok) throw new DiscordError(response.status, path);
 }
 
 /**

@@ -129,3 +129,26 @@ export async function setHidden(guildId: string, userId: string, hidden: boolean
 	);
 	return (rowCount ?? 0) > 0;
 }
+
+/** Every link of one server, but the members who hid themselves with `/visibility`. */
+export async function shownLinks(guildId: string): Promise<Link[]> {
+	const { rows } = await db().query<{ user_id: string; ft_id: number; ft_login: string }>(
+		'SELECT user_id, ft_id, ft_login FROM links WHERE guild_id = $1 AND NOT hidden',
+		[guildId],
+	);
+	return rows.map((row) => ({ guildId, userId: row.user_id, ftId: row.ft_id, ftLogin: row.ft_login }));
+}
+
+/**
+ * Returns the 42 account a Discord user verified most recently, on any server.
+ * @remarks For what belongs to the person rather than to one server: the deadline reminder
+ * and the Linked Roles of their Discord profile.
+ */
+export async function latestLink(userId: string): Promise<Link | undefined> {
+	const { rows } = await db().query<{ guild_id: string; ft_id: number; ft_login: string }>(
+		'SELECT guild_id, ft_id, ft_login FROM links WHERE user_id = $1 ORDER BY verified_at DESC LIMIT 1',
+		[userId],
+	);
+	const row = rows[0];
+	return row && { guildId: row.guild_id, userId, ftId: row.ft_id, ftLogin: row.ft_login };
+}

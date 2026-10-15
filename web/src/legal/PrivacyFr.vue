@@ -44,7 +44,21 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 		</li>
 		<li>
 			s’il a choisi, avec <code>/visibility</code>, de ne pas apparaître dans
-			<code>/helpers</code>.
+			<code>/helpers</code> ni dans le hall of fame.
+		</li>
+	</ul>
+	<p>Et seulement si le membre le demande lui-même :</p>
+	<ul>
+		<li>
+			avec <code>/reminder</code> : son identifiant Discord, le nombre de jours choisi, sa
+			langue et la date de la dernière échéance rappelée. Effacé avec
+			<code>/reminder days:0</code>, ou dès qu’il n’a plus aucun lien 42 ;
+		</li>
+		<li>
+			avec les rôles liés de Discord : son identifiant Discord et un jeton de rafraîchissement
+			Discord, <strong>chiffré</strong>, pour mettre à jour chaque semaine le niveau affiché
+			sur son profil. Effacé s’il retire l’application dans ses réglages Discord, ou dès qu’il
+			n’a plus aucun lien 42.
 		</li>
 	</ul>
 
@@ -78,6 +92,14 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 		postes occupés du campus sont gardés <strong>deux minutes en mémoire</strong> pour limiter
 		les appels à 42, puis oubliés ; rien n’en est écrit en base. Chaque membre peut ne plus
 		apparaître avec <code>/visibility</code>.
+	</p>
+	<p>
+		Selon ce que les administrateurs activent : le <strong>hall of fame</strong> publie dans un
+		salon du serveur les projets validés par ses membres, avec la note (jamais pour un membre
+		masqué avec <code>/visibility</code>) ; les <strong>événements du campus</strong> et le
+		<strong>compteur</strong> ne contiennent que des informations publiques du campus et un
+		nombre de personnes, jamais de nom. La commande <code>/logtime</code> montre à un membre, et
+		à lui seul, son propre temps au campus, lu en direct et non conservé.
 	</p>
 	<p>
 		Votre adresse IP sert, en mémoire et pendant une minute, à limiter le nombre de requêtes.

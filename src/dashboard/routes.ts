@@ -24,7 +24,7 @@ import {
 	type OAuthGuild,
 	type OAuthUser,
 } from '../discord/rest';
-import { MessageFlags, SNOWFLAKE, TEXT_CHANNEL_TYPES } from '../discord/types';
+import { MessageFlags, SNOWFLAKE, TEXT_CHANNEL_TYPES, VOICE_CHANNEL_TYPE } from '../discord/types';
 import { env } from '../env';
 import { apiJson, cookie, readCookie } from '../http';
 import { resolveLocale } from '../i18n';
@@ -185,12 +185,19 @@ async function authorize(session: Session, guildId: string): Promise<Guild | Res
 }
 
 /** Lists the roles and channels the settings form may offer. */
-async function options(guild: Guild): Promise<{ roles: RoleOption[]; channels: ChannelOption[] }> {
+async function options(
+	guild: Guild,
+): Promise<{ roles: RoleOption[]; channels: ChannelOption[]; voiceChannels: ChannelOption[] }> {
 	const [bot, channels] = await Promise.all([
 		cached(`member:${guild.id}:${env.discordAppId}`, () => getMember(guild.id, env.discordAppId)),
 		cached(`channels:${guild.id}`, () => getChannels(guild.id)),
 	]);
 	const top = bot ? highestPosition(guild, bot) : 0;
+	const ofTypes = (accepted: (type: number) => boolean) =>
+		channels
+			.filter((channel) => accepted(channel.type))
+			.sort((a, b) => a.position - b.position)
+			.map(({ id, name }) => ({ id, name }));
 
 	return {
 		roles: guild.roles
@@ -202,10 +209,8 @@ async function options(guild: Guild): Promise<{ roles: RoleOption[]; channels: C
 				color: role.color,
 				assignable: !role.managed && role.position < top,
 			})),
-		channels: channels
-			.filter((channel) => TEXT_CHANNEL_TYPES.has(channel.type))
-			.sort((a, b) => a.position - b.position)
-			.map(({ id, name }) => ({ id, name })),
+		channels: ofTypes((type) => TEXT_CHANNEL_TYPES.has(type)),
+		voiceChannels: ofTypes((type) => type === VOICE_CHANNEL_TYPE),
 	};
 }
 
@@ -216,7 +221,7 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 
 	switch (request.method) {
 		case 'GET': {
-			const [settings, { roles, channels }, verifiedCount] = await Promise.all([
+			const [settings, { roles, channels, voiceChannels }, verifiedCount] = await Promise.all([
 				getSettings(guildId),
 				options(guild),
 				countLinks(guildId),
@@ -226,6 +231,7 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 				settings,
 				roles,
 				channels,
+				voiceChannels,
 				verifiedCount,
 			};
 			return apiJson(detail);
@@ -235,7 +241,7 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 			if (!parsed.ok) return error(400, 'invalid', parsed.field, parsed.index);
 			const { settings } = parsed;
 
-			const { roles, channels } = await options(guild);
+			const { roles, channels, voiceChannels } = await options(guild);
 			const assignable = (id: string) => roles.some((r) => r.id === id && r.assignable);
 			if (settings.roleId && !assignable(settings.roleId)) {
 				return error(400, 'invalid', 'roleId');
@@ -244,6 +250,18 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 			if (badRule !== -1) return error(400, 'invalid', 'roleRules', badRule);
 			if (settings.logChannelId && !channels.some((c) => c.id === settings.logChannelId)) {
 				return error(400, 'invalid', 'logChannelId');
+			}
+			if (settings.fameChannelId && !channels.some((c) => c.id === settings.fameChannelId)) {
+				return error(400, 'invalid', 'fameChannelId');
+			}
+			if (settings.counterChannelId && !voiceChannels.some((c) => c.id === settings.counterChannelId)) {
+				return error(400, 'invalid', 'counterChannelId');
+			}
+			// The events and the counter read one campus: without it there is nothing to show.
+			if (!settings.campus) {
+				if (settings.syncEvents) return error(400, 'invalid', 'syncEvents');
+				if (settings.syncExams) return error(400, 'invalid', 'syncExams');
+				if (settings.counterChannelId) return error(400, 'invalid', 'counterChannelId');
 			}
 
 			await saveSettings(guildId, settings);

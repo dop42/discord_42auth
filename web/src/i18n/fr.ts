@@ -70,7 +70,8 @@ export const fr = {
 	'sections.members.lead':
 		'Ce que le bot donne à chaque membre vérifié : rôles et pseudo, revérifiés chaque semaine.',
 	'sections.features': 'Fonctionnalités',
-	'sections.features.lead': 'L’entraide entre étudiants et le journal des vérifications.',
+	'sections.features.lead':
+		'Ce que le bot fait pour la vie du serveur : entraide, hall of fame, événements, compteur, et le journal des vérifications.',
 	'switch.on': 'Activé',
 	'switch.off': 'Désactivé',
 	'settings.refused': 'Un réglage a été refusé : corrigez le champ signalé, puis enregistrez.',
@@ -95,6 +96,19 @@ export const fr = {
 	'settings.helpers': 'Entraide au campus',
 	'settings.helpers.help':
 		'Permet aux membres vérifiés de taper /helpers minishell pour voir qui, sur le serveur, est au campus en ce moment et a validé le projet, avec son poste. Chaque membre peut se masquer avec /visibility.',
+	'settings.off': 'Désactivé',
+	'settings.fame': 'Hall of fame',
+	'settings.fame.help':
+		'Le bot annonce dans ce salon chaque projet validé par un membre, avec sa note, sans mentionner personne. Les membres masqués avec /visibility ne sont jamais annoncés.',
+	'settings.events': 'Événements du campus',
+	'settings.events.help':
+		'Copie les événements et les examens des deux prochaines semaines dans les événements Discord du serveur, mis à jour chaque heure. Le bot doit avoir la permission Gérer les événements.',
+	'settings.events.events': 'Événements',
+	'settings.events.exams': 'Examens',
+	'settings.counter': 'Compteur du campus',
+	'settings.counter.help':
+		'Renomme ce salon vocal toutes les 10 minutes avec le nombre de personnes au campus et le nombre de membres du serveur parmi elles. Le bot doit avoir la permission Gérer les salons.',
+	'settings.needsCampus': 'Nécessite un campus, à définir dans la catégorie Accès.',
 	'settings.nickname': 'Pseudo des membres vérifiés',
 	'settings.nickname.help':
 		'Le nom affiché sur le serveur après la vérification. Le login devient visible de tous les membres.',

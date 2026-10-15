@@ -64,17 +64,20 @@ const prefs = usePrefsStore();
 	margin-top: 0.875rem;
 }
 
+/* La puce est posée en absolu : en flex, chaque bout de texte et chaque <code> devenait un bloc
+   qui ne passe pas à la ligne, et une puce un peu longue élargissait la page sur mobile. */
 .prose :deep(li) {
-	display: flex;
-	gap: 0.75rem;
+	position: relative;
+	padding-left: 1.125rem;
 }
 
 .prose :deep(li)::before {
 	content: '';
-	flex: none;
+	position: absolute;
+	top: 0.7rem;
+	left: 0;
 	width: 0.375rem;
 	height: 0.375rem;
-	margin-top: 0.7rem;
 	border-radius: 1px;
 	background: linear-gradient(135deg, var(--fg), var(--fg-faint));
 }

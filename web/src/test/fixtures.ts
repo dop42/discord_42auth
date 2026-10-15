@@ -10,11 +10,16 @@ export const sampleDetail = (): GuildDetail => ({
 		logChannelId: null,
 		roleRules: [],
 		helpers: false,
+		fameChannelId: null,
+		syncEvents: false,
+		syncExams: false,
+		counterChannelId: null,
 	},
 	roles: [
 		{ id: '200000000000000002', name: 'Staff', color: 0xff0000, assignable: false },
 		{ id: '200000000000000001', name: 'Verified', color: 0, assignable: true },
 	],
 	channels: [{ id: '300000000000000001', name: 'logs' }],
+	voiceChannels: [{ id: '300000000000000002', name: 'Général' }],
 	verifiedCount: 3,
 });

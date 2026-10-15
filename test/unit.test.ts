@@ -6,6 +6,12 @@ import { Permissions } from '../src/discord/types';
 import type { FtUser } from '../src/ft/api';
 import { clientAddress, PEER_HEADER, RateLimiter } from '../src/ratelimit';
 import { TtlCache } from '../src/cache';
+import { seal, unseal } from '../src/crypto';
+import { eventBody } from '../src/events';
+import { fameMessages } from '../src/fame';
+import { connectionOf } from '../src/linkedRoles';
+import { formatDuration, localMidnight, periodsFor, timeIn } from '../src/logtime';
+import { deadlineOf, reminderDue } from '../src/reminders';
 import { helpersMessage, projectSlug } from '../src/helpers';
 import { profileMessage } from '../src/profile';
 import { matchingRoles, poolOf } from '../src/rules';
@@ -177,6 +183,85 @@ test('the cache shares a load, keeps it until it expires, and forgets a failure'
 	assert.equal(await cache.get('a', load, 1000), 2);
 	await assert.rejects(cache.get('b', () => Promise.reject(new Error('down')), 0));
 	assert.equal(await cache.get('b', load, 0), 3);
+});
+
+test('the hall of fame lists validations oldest first, members only, within Discord limits', () => {
+	const mark = (id: number, project: string, at: string, validated = true) => ({
+		final_mark: 100,
+		'validated?': validated,
+		marked_at: at,
+		project: { name: project, slug: project },
+		user: { id, login: `u${id}` },
+	});
+	const links = [{ guildId: 'g', userId: '11', ftId: 1, ftLogin: 'u1' }];
+	const messages = fameMessages(
+		[mark(1, 'cub3d', '2026-10-15T10:00:00Z'), mark(1, 'libft', '2026-10-15T09:00:00Z'), mark(1, 'push_swap', '2026-10-15T11:00:00Z', false), mark(2, 'minishell', '2026-10-15T10:00:00Z')],
+		links,
+		'en-US',
+	);
+	assert.deepEqual(messages, ['<@11> validated **libft** — **100**\n<@11> validated **cub3d** — **100**']);
+	const many = fameMessages(Array.from({ length: 80 }, (_, i) => mark(1, `project-${i}`, `2026-10-15T10:${String(i % 60).padStart(2, '0')}:00Z`)), links, 'en-US');
+	assert.ok(many.length > 1 && many.every((message) => message.length <= 2000));
+});
+
+test('a Discord event fits Discord limits and names an exam by its projects', () => {
+	const base = { id: 7, name: 'x'.repeat(150), description: 'd'.repeat(1500), location: '', begin_at: '2026-10-20T10:00:00Z', end_at: '2026-10-20T12:00:00Z', updated_at: '2026-10-01T00:00:00Z' };
+	const event = eventBody(base, 'event', 'Paris', 'en-US');
+	assert.equal([...event.name].length, 100);
+	assert.ok(event.description.length <= 1000 && event.description.endsWith('https://profile.intra.42.fr/events/7'));
+	assert.equal(event.entity_metadata.location, 'Paris');
+	const exam = eventBody({ ...base, name: 'Exam Stud - https://meta', projects: [{ name: 'Exam Rank 02' }, { name: 'Exam Rank 03' }] }, 'exam', 'Paris', 'en-US');
+	assert.equal(exam.name, 'Exam · Exam Rank 02 · Exam Rank 03');
+	assert.doesNotMatch(exam.description, /profile\.intra/);
+});
+
+test('logtime splits sessions at local midnights and counts an open one up to now', () => {
+	assert.equal(localMidnight(2026, 10, 1, 'Europe/Paris').toISOString(), '2026-09-30T22:00:00.000Z');
+	assert.equal(localMidnight(2026, 1, 1, 'Europe/Paris').toISOString(), '2025-12-31T23:00:00.000Z');
+	const now = new Date('2026-10-15T12:00:00Z'); // a Thursday
+	const periods = periodsFor(undefined, 'Europe/Paris', now);
+	assert.equal(periods.month.from.toISOString(), '2026-09-30T22:00:00.000Z');
+	assert.equal(periods.week?.from.toISOString(), '2026-10-11T22:00:00.000Z');
+	assert.equal(periods.today?.from.toISOString(), '2026-10-14T22:00:00.000Z');
+	assert.equal(periodsFor('2026-09', 'Europe/Paris', now).week, undefined);
+
+	const sessions = [
+		{ begin_at: '2026-09-30T20:00:00Z', end_at: '2026-09-30T23:00:00Z' }, // one hour falls in October
+		{ begin_at: '2026-10-15T10:00:00Z', end_at: null }, // still open: two hours so far
+	];
+	assert.equal(timeIn(sessions, periods.month, now), 3 * 3600_000);
+	assert.equal(timeIn(sessions, periods.today!, now), 2 * 3600_000);
+	assert.equal(formatDuration(3 * 3600_000 + 5 * 60_000), '3 h 05');
+});
+
+test('a reminder is due once per deadline, within the days asked for', () => {
+	const now = new Date('2026-10-15T00:00:00Z');
+	const deadline = new Date('2026-10-20T00:00:00Z');
+	assert.equal(reminderDue(deadline, 7, null, now), true);
+	assert.equal(reminderDue(deadline, 3, null, now), false);
+	assert.equal(reminderDue(deadline, 7, deadline, now), false, 'already reminded about this one');
+	assert.equal(reminderDue(deadline, 7, new Date('2026-10-01T00:00:00Z'), now), true, 'a new deadline');
+	assert.equal(reminderDue(null, 7, null, now), false);
+	assert.equal(deadlineOf(cadet, now)?.toISOString(), '2026-10-18T06:42:00.000Z');
+	assert.equal(deadlineOf(cadet, new Date('2026-11-01T00:00:00Z')), null, 'a passed deadline is no reminder');
+});
+
+test('Linked Roles show the floored main level, validated projects and student status', () => {
+	assert.deepEqual(connectionOf(cadet), {
+		platform_name: '42',
+		platform_username: 'jdoe',
+		metadata: { level: '4', projects: '1', student: '1' },
+	});
+	assert.equal(connectionOf({ ...cadet, 'alumni?': true }).metadata.student, '0');
+});
+
+test('a sealed token opens back, and an altered one does not', () => {
+	process.env.STATE_SECRET ??= 'x'.repeat(32);
+	const sealed = seal('refresh-token');
+	assert.equal(unseal(sealed), 'refresh-token');
+	assert.notDeepEqual(seal('refresh-token'), sealed, 'a fresh nonce each time');
+	sealed[sealed.length - 1]! ^= 1;
+	assert.throws(() => unseal(sealed));
 });
 
 test('the rate limiter counts per key and says how long to wait', () => {

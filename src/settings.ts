@@ -21,6 +21,10 @@ export const DEFAULTS: GuildSettings = {
 	logChannelId: null,
 	roleRules: [],
 	helpers: false,
+	fameChannelId: null,
+	syncEvents: false,
+	syncExams: false,
+	counterChannelId: null,
 };
 
 const CAMPUS_MAX = 64;
@@ -33,12 +37,17 @@ interface Row {
 	log_channel_id: string | null;
 	role_rules: RoleRule[];
 	helpers: boolean;
+	fame_channel_id: string | null;
+	sync_events: boolean;
+	sync_exams: boolean;
+	counter_channel_id: string | null;
 }
 
 /** Reads what one server does, or the defaults when it was never configured. */
 export async function getSettings(guildId: string): Promise<GuildSettings> {
 	const { rows } = await db().query<Row>(
-		`SELECT role_id, campus, students_only, nickname_mode, log_channel_id, role_rules, helpers
+		`SELECT role_id, campus, students_only, nickname_mode, log_channel_id, role_rules, helpers,
+			fame_channel_id, sync_events, sync_exams, counter_channel_id
 		 FROM guilds WHERE guild_id = $1`,
 		[guildId],
 	);
@@ -52,6 +61,10 @@ export async function getSettings(guildId: string): Promise<GuildSettings> {
 		logChannelId: row.log_channel_id,
 		roleRules: row.role_rules,
 		helpers: row.helpers,
+		fameChannelId: row.fame_channel_id,
+		syncEvents: row.sync_events,
+		syncExams: row.sync_exams,
+		counterChannelId: row.counter_channel_id,
 	};
 }
 
@@ -59,11 +72,16 @@ export async function getSettings(guildId: string): Promise<GuildSettings> {
 export async function saveSettings(guildId: string, settings: GuildSettings): Promise<void> {
 	await db().query(
 		`INSERT INTO guilds
-			(guild_id, role_id, campus, students_only, nickname_mode, log_channel_id, role_rules, helpers)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			(guild_id, role_id, campus, students_only, nickname_mode, log_channel_id, role_rules, helpers,
+			 fame_channel_id, sync_events, sync_exams, counter_channel_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		 ON CONFLICT (guild_id) DO UPDATE SET
 			role_id = $2, campus = $3, students_only = $4, nickname_mode = $5,
-			log_channel_id = $6, role_rules = $7, helpers = $8, updated_at = now()`,
+			log_channel_id = $6, role_rules = $7, helpers = $8,
+			-- A channel newly chosen starts from now, not from whatever was missed before.
+			fame_checked_at = CASE WHEN guilds.fame_channel_id IS DISTINCT FROM $9 THEN NULL ELSE guilds.fame_checked_at END,
+			fame_channel_id = $9, sync_events = $10, sync_exams = $11, counter_channel_id = $12,
+			updated_at = now()`,
 		[
 			guildId,
 			settings.roleId,
@@ -73,6 +91,10 @@ export async function saveSettings(guildId: string, settings: GuildSettings): Pr
 			settings.logChannelId,
 			JSON.stringify(settings.roleRules),
 			settings.helpers,
+			settings.fameChannelId,
+			settings.syncEvents,
+			settings.syncExams,
+			settings.counterChannelId,
 		],
 	);
 }
@@ -108,6 +130,10 @@ export function parseSettings(body: unknown): Parsed {
 	if (!id(input.logChannelId)) return { ok: false, field: 'logChannelId' };
 	if (typeof input.studentsOnly !== 'boolean') return { ok: false, field: 'studentsOnly' };
 	if (typeof input.helpers !== 'boolean') return { ok: false, field: 'helpers' };
+	if (!id(input.fameChannelId)) return { ok: false, field: 'fameChannelId' };
+	if (typeof input.syncEvents !== 'boolean') return { ok: false, field: 'syncEvents' };
+	if (typeof input.syncExams !== 'boolean') return { ok: false, field: 'syncExams' };
+	if (!id(input.counterChannelId)) return { ok: false, field: 'counterChannelId' };
 	if (!NICKNAME_MODES.includes(input.nickname as NicknameMode)) {
 		return { ok: false, field: 'nickname' };
 	}
@@ -140,6 +166,10 @@ export function parseSettings(body: unknown): Parsed {
 			logChannelId: input.logChannelId as string | null,
 			roleRules,
 			helpers: input.helpers,
+			fameChannelId: input.fameChannelId as string | null,
+			syncEvents: input.syncEvents,
+			syncExams: input.syncExams,
+			counterChannelId: input.counterChannelId as string | null,
 		},
 	};
 }

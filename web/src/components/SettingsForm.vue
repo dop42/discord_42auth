@@ -29,6 +29,7 @@ const nicknameLabels = computed<Record<NicknameMode, { label: string; example: s
 
 const roles = computed(() => store.detail?.roles ?? []);
 const channels = computed(() => store.detail?.channels ?? []);
+const voiceChannels = computed(() => store.detail?.voiceChannels ?? []);
 const someUnassignable = computed(() => roles.value.some((role) => !role.assignable));
 
 const invalid = (field: keyof GuildSettings) => store.invalidField === field;
@@ -76,6 +77,10 @@ const controlOf: Record<keyof GuildSettings, () => string> = {
 	nickname: () => `nickname-${store.draft?.nickname ?? 'login'}`,
 	helpers: () => 'helpers',
 	logChannelId: () => 'logs',
+	fameChannelId: () => 'fame',
+	syncEvents: () => 'sync-events',
+	syncExams: () => 'sync-exams',
+	counterChannelId: () => 'counter',
 	roleRules: () =>
 		store.invalidIndex === null ? 'add-rule' : `rule-${String(store.invalidIndex)}-value`,
 };
@@ -104,11 +109,25 @@ function onRole(event: Event): void {
 	store.draft.roleId = value === '' ? null : value;
 }
 
-function onChannel(event: Event): void {
+/** Stores the channel picked in one of the channel selects, or none. */
+function onChannelOf(
+	field: 'logChannelId' | 'fameChannelId' | 'counterChannelId',
+	event: Event,
+): void {
 	if (!store.draft) return;
 	const value = (event.target as HTMLSelectElement).value;
-	store.draft.logChannelId = value === '' ? null : value;
+	store.draft[field] = value === '' ? null : value;
 }
+
+/** The campus notice, for the controls that need one, while no campus is set. */
+const campusNote = computed(() => (store.draft?.campus ? [] : ['events-campus']));
+const counterNote = computed(() => (store.draft?.campus ? [] : ['counter-campus']));
+
+/**
+ * Why a setting was refused: for the ones that need a campus, saying so is the useful part.
+ */
+const refusal = () =>
+	store.draft?.campus ? prefs.t['settings.invalid'] : prefs.t['settings.needsCampus'];
 </script>
 
 <template>
@@ -428,6 +447,119 @@ function onChannel(event: Event): void {
 
 			<div class="row">
 				<div class="row__label">
+					<label for="fame" class="row__title">{{ prefs.t['settings.fame'] }}</label>
+					<p id="fame-help" class="hint">{{ prefs.t['settings.fame.help'] }}</p>
+				</div>
+				<div class="row__control">
+					<select
+						id="fame"
+						:class="fieldClass('fameChannelId')"
+						:value="store.draft.fameChannelId ?? ''"
+						:aria-invalid="invalid('fameChannelId')"
+						:aria-describedby="describedBy('fameChannelId', 'fame-help')"
+						@change="onChannelOf('fameChannelId', $event)"
+					>
+						<option value="">{{ prefs.t['settings.off'] }}</option>
+						<option v-for="channel in channels" :key="channel.id" :value="channel.id">
+							#{{ channel.name }}
+						</option>
+					</select>
+					<p
+						v-if="invalid('fameChannelId')"
+						:id="errorId('fameChannelId')"
+						class="error-text"
+					>
+						{{ prefs.t['settings.invalid'] }}
+					</p>
+				</div>
+			</div>
+
+			<fieldset class="row" aria-describedby="events-help">
+				<div class="row__label">
+					<legend class="row__title">{{ prefs.t['settings.events'] }}</legend>
+					<p id="events-help" class="hint">{{ prefs.t['settings.events.help'] }}</p>
+				</div>
+				<div class="row__control">
+					<div class="switches">
+						<div class="switches__item">
+							<span id="sync-events-label">{{
+								prefs.t['settings.events.events']
+							}}</span>
+							<BaseSwitch
+								id="sync-events"
+								v-model="store.draft.syncEvents"
+								labelledby="sync-events-label"
+								:describedby="describedBy('syncEvents', ...campusNote)"
+								:invalid="invalid('syncEvents')"
+							/>
+						</div>
+						<div class="switches__item">
+							<span id="sync-exams-label">{{
+								prefs.t['settings.events.exams']
+							}}</span>
+							<BaseSwitch
+								id="sync-exams"
+								v-model="store.draft.syncExams"
+								labelledby="sync-exams-label"
+								:describedby="describedBy('syncExams', ...campusNote)"
+								:invalid="invalid('syncExams')"
+							/>
+						</div>
+					</div>
+					<p v-if="invalid('syncEvents')" :id="errorId('syncEvents')" class="error-text">
+						{{ refusal() }}
+					</p>
+					<p v-if="invalid('syncExams')" :id="errorId('syncExams')" class="error-text">
+						{{ refusal() }}
+					</p>
+					<p v-if="!store.draft.campus" id="events-campus" class="notice">
+						{{ prefs.t['settings.needsCampus'] }}
+					</p>
+				</div>
+			</fieldset>
+
+			<div class="row">
+				<div class="row__label">
+					<label for="counter" class="row__title">{{
+						prefs.t['settings.counter']
+					}}</label>
+					<p id="counter-help" class="hint">{{ prefs.t['settings.counter.help'] }}</p>
+				</div>
+				<div class="row__control">
+					<select
+						id="counter"
+						:class="fieldClass('counterChannelId')"
+						:value="store.draft.counterChannelId ?? ''"
+						:aria-invalid="invalid('counterChannelId')"
+						:aria-describedby="
+							describedBy('counterChannelId', 'counter-help', ...counterNote)
+						"
+						@change="onChannelOf('counterChannelId', $event)"
+					>
+						<option value="">{{ prefs.t['settings.off'] }}</option>
+						<option
+							v-for="channel in voiceChannels"
+							:key="channel.id"
+							:value="channel.id"
+						>
+							{{ channel.name }}
+						</option>
+					</select>
+					<p
+						v-if="invalid('counterChannelId')"
+						:id="errorId('counterChannelId')"
+						class="error-text"
+					>
+						{{ refusal() }}
+					</p>
+					<p v-if="!store.draft.campus" id="counter-campus" class="notice">
+						{{ prefs.t['settings.needsCampus'] }}
+					</p>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="row__label">
 					<label for="logs" class="row__title">{{ prefs.t['settings.logs'] }}</label>
 					<p id="logs-help" class="hint">{{ prefs.t['settings.logs.help'] }}</p>
 				</div>
@@ -440,7 +572,7 @@ function onChannel(event: Event): void {
 						:aria-describedby="
 							describedBy('logChannelId', 'logs-help', 'logs-retention')
 						"
-						@change="onChannel"
+						@change="onChannelOf('logChannelId', $event)"
 					>
 						<option value="">{{ prefs.t['settings.logs.none'] }}</option>
 						<option v-for="channel in channels" :key="channel.id" :value="channel.id">
@@ -627,6 +759,19 @@ fieldset.row > .row__label > legend {
 }
 
 /* Règles de rôles : une carte par règle, trois champs côte à côte dès qu'il y a la place. */
+/* Deux interrupteurs côte à côte, chacun avec son libellé au-dessus. */
+.switches {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.25rem 2.5rem;
+}
+
+.switches__item {
+	display: grid;
+	gap: 0.5rem;
+	font-size: 0.9375rem;
+}
+
 .rules {
 	display: grid;
 	gap: 0.75rem;

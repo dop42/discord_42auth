@@ -3,8 +3,10 @@ import { handleConfig } from '../commands/config';
 import { AUTH_BUTTON } from '../commands/definitions';
 import { handleForget } from '../commands/forget';
 import { handleHelpers } from '../commands/helpers';
+import { handleLogtime } from '../commands/logtime';
 import { handlePanel } from '../commands/panel';
 import { handleProfile } from '../commands/profile';
+import { handleReminder } from '../commands/reminder';
 import { handleVisibility } from '../commands/visibility';
 import { ephemeral, json } from '../discord/responses';
 import { InteractionResponseType, InteractionType, type Interaction } from '../discord/types';
@@ -71,6 +73,10 @@ export async function handleInteraction(request: Request): Promise<Response> {
 				return await handleHelpers(interaction);
 			case 'visibility':
 				return await handleVisibility(interaction);
+			case 'logtime':
+				return await handleLogtime(interaction);
+			case 'reminder':
+				return await handleReminder(interaction);
 			default:
 				throw new Error(`unknown command: ${interaction.data?.name}`);
 		}

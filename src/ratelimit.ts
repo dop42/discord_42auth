@@ -82,7 +82,7 @@ const api = new RateLimiter(120, 60_000);
 export function limit(request: Request): Response | null {
 	const { pathname } = new URL(request.url);
 	const limiter =
-		pathname === '/api/callback' || pathname.startsWith('/auth/')
+		pathname === '/api/callback' || pathname.startsWith('/auth/') || pathname.startsWith('/linked-roles')
 			? logins
 			: pathname.startsWith('/api/') && pathname !== '/api/interactions'
 				? api

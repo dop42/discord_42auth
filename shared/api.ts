@@ -52,6 +52,14 @@ export interface GuildSettings {
 	 * project, with their seat. Members can still hide themselves with `/visibility`.
 	 */
 	helpers: boolean;
+	/** Channel where the bot announces each project its members validate. `null` disables it. */
+	fameChannelId: string | null;
+	/** Copy the campus events into the server's Discord events. Needs `campus`. */
+	syncEvents: boolean;
+	/** Copy the campus exams too. Needs `campus`. */
+	syncExams: boolean;
+	/** Voice channel renamed with how many people are on campus. Needs `campus`. */
+	counterChannelId: string | null;
 }
 
 /** `GET /api/meta` — public, no session needed. */
@@ -103,6 +111,8 @@ export interface GuildDetail {
 	roles: RoleOption[];
 	/** Text and announcement channels, in Discord order. */
 	channels: ChannelOption[];
+	/** Voice channels, for the campus counter. */
+	voiceChannels: ChannelOption[];
 	/** Members currently linked to a 42 account in this server. */
 	verifiedCount: number;
 }

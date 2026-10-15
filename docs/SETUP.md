@@ -24,8 +24,12 @@ touching any of this.
 
 - *General Information* → copy the **Application ID** and the **Public Key**.
 - *Bot* → **Reset Token** → copy it. Leave **Public Bot** on so admins can add it.
-- *OAuth2* → copy the **Client Secret**, and add the redirect
-  `https://<your-domain>/auth/callback` — this is the dashboard login.
+- *OAuth2* → copy the **Client Secret**, and add two redirects:
+  `https://<your-domain>/auth/callback` (the dashboard login) and
+  `https://<your-domain>/linked-roles/callback` (Linked Roles).
+- *General Information* → **Linked Roles Verification URL**
+  `https://<your-domain>/linked-roles`. A member who opens a linked role in a server
+  lands there, and their Discord profile then shows their 42 level.
 - *General Information* → fill in **Privacy Policy URL** `https://<your-domain>/privacy`
   and **Terms of Service URL** `https://<your-domain>/terms`. Discord requires both
   before a bot can be verified, and they are the pages admins and members are sent to.
@@ -84,8 +88,9 @@ npm run register
 ```
 
 Commands are global: they reach every server the bot joins, within a few
-minutes. Run it again whenever `src/commands/definitions.ts` or a `cmd.*`
-translation changes.
+minutes. The same run registers the three Linked Roles fields (level, validated
+projects, active student). Run it again whenever `src/commands/definitions.ts`,
+a `cmd.*` translation or `ROLE_METADATA` changes.
 
 > **Coming from the Vercel version?** Keep `GUILD_ID` in `.env` for this one run:
 > the script also clears that server's old guild commands, which would otherwise
@@ -191,7 +196,9 @@ stop Caddy and close 80 and 443.
 | `/forget` | Everyone | Erases the caller's 42 link on this server and takes the role back |
 | `/profile [member]` | Everyone | Shows a verified member's 42 card, only to the caller: level, projects, seat on campus, piscine. Another member's card needs the caller verified on this server too, admins included; the deadline, evaluation points and wallet only show on one's own card. Read live, nothing kept, 5 per minute per member |
 | `/helpers <project>` | Verified members | Lists, only to the caller, the server's members logged in on the caller's campus right now who validated the project, with seat and best mark. Off until *Campus helpers* is turned on. Name or slug (`CPP Module 00` or `cpp-module-00`) |
-| `/visibility <shown>` | Verified members | `False` hides the caller from `/helpers` on this server, `True` shows them again. Kept until the link goes |
+| `/visibility <shown>` | Verified members | `False` hides the caller from `/helpers` and the hall of fame on this server, `True` shows them again. Kept until the link goes |
+| `/logtime [month]` | Verified members | The caller's own time on campus, in the campus's time zone: the month, and for the current month the week and the day. `month` is `YYYY-MM`. Read live, nothing kept |
+| `/reminder <days>` | Verified members | A private message that many days before the caller's deadline (blackhole); `0` turns it off. Sent once per deadline, in the caller's language. Campuses without a deadline never send one |
 
 ### Settings
 
@@ -204,6 +211,9 @@ stop Caddy and close 80 and 443.
 | Log channel | Posts who authenticated as whom, and whose verification the weekly check revoked. Those messages stay in Discord, under your responsibility |
 | Extra roles | Up to 25 rules granting a role on top of the verified one: by primary campus, by cursus currently running (`42cursus`, `c-piscine`), by coalition, by validated project (`minishell`), by level reached in the main cursus (`10` means 10 or more, piscine levels do not count), or by piscine (`2025` for the year, `2025-07` for July). Names or slugs, case-insensitive |
 | Campus helpers | Turns on `/helpers`. It tells verified members where people sit, so it is off by default; members can still hide with `/visibility`. The campus seats are cached two minutes in memory and shared by every server, so a search costs one to four 42 calls whatever the server size |
+| Hall of fame | A channel where the bot announces every project a member validates, with the mark, without pinging anyone. Checked every 15 minutes; members hidden with `/visibility` are never announced. A channel just chosen starts from now |
+| Campus events | Copies the campus events, the exams, or both, of the next two weeks into the server's Discord events, every hour: created, updated, and removed when the intra cancels them. Needs a campus and the **Manage Events** permission |
+| Campus counter | A voice channel renamed every 10 minutes: how many people are on campus, and how many of them are members here. Needs a campus and the **Manage Channels** permission |
 
 Every account is looked up on the intra again once a week, with the 42
 application's own token. One that was closed, went alumni (with *Active

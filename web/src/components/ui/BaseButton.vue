@@ -95,8 +95,8 @@ withDefaults(
 }
 
 .btn--accent {
-	/* Le reflet reste argenté dans les deux thèmes : l'encre reste noire. */
-	color: #0a0a0a;
+	/* Le reflet reste rose dans les deux thèmes : l'encre reste prune. */
+	color: var(--on-accent);
 	font-weight: 500;
 	box-shadow:
 		var(--shadow-button),
