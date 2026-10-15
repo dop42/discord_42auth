@@ -102,12 +102,12 @@ export const en: Messages = {
 		'The bot announces in this channel every project a member validates, with the mark, without pinging anyone. Members hidden with /visibility are never announced.',
 	'settings.events': 'Campus events',
 	'settings.events.help':
-		'Copies the events and exams of the next two weeks into the server’s Discord events, updated every hour. The bot needs the Manage Events permission.',
+		'Copies the events and exams of the next two weeks into the server’s Discord events as soon as you save, then updated every hour. The bot needs the Manage Events permission.',
 	'settings.events.events': 'Events',
 	'settings.events.exams': 'Exams',
 	'settings.counter': 'Campus counter',
 	'settings.counter.help':
-		'Renames this voice channel every 10 minutes with how many people are on campus, and how many of them are members of the server. The bot needs the Manage Channels permission.',
+		'Renames this voice channel as soon as you save, then every 10 minutes, with how many people are on campus, and how many of them are members of the server. The bot needs the Manage Channels permission.',
 	'settings.needsCampus': 'Needs a campus, set in the Access category.',
 	'settings.nickname': 'Nickname of verified members',
 	'settings.nickname.help':

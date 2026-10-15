@@ -105,12 +105,12 @@ export const fr = {
 		'Le bot annonce dans ce salon chaque projet validé par un membre, avec sa note, sans mentionner personne. Les membres masqués avec /visibility ne sont jamais annoncés.',
 	'settings.events': 'Événements du campus',
 	'settings.events.help':
-		'Copie les événements et les examens des deux prochaines semaines dans les événements Discord du serveur, mis à jour chaque heure. Le bot doit avoir la permission Gérer les événements.',
+		'Copie les événements et les examens des deux prochaines semaines dans les événements Discord du serveur dès l’enregistrement, puis les met à jour chaque heure. Le bot doit avoir la permission Gérer les événements.',
 	'settings.events.events': 'Événements',
 	'settings.events.exams': 'Examens',
 	'settings.counter': 'Compteur du campus',
 	'settings.counter.help':
-		'Renomme ce salon vocal toutes les 10 minutes avec le nombre de personnes au campus et le nombre de membres du serveur parmi elles. Le bot doit avoir la permission Gérer les salons.',
+		'Renomme ce salon vocal dès l’enregistrement, puis toutes les 10 minutes, avec le nombre de personnes au campus et le nombre de membres du serveur parmi elles. Le bot doit avoir la permission Gérer les salons.',
 	'settings.needsCampus': 'Nécessite un campus, à définir dans la catégorie Accès.',
 	'settings.nickname': 'Pseudo des membres vérifiés',
 	'settings.nickname.help':

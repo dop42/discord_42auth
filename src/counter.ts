@@ -22,17 +22,28 @@ export async function updateCounters(): Promise<string | void> {
 	let renamed = 0;
 	for (const row of rows) {
 		await forEachGuild('counter', async () => {
-			const campus = await campusNamed(row.campus);
-			if (!campus) return;
-			const present = await campusLocations(campus.id, 'background');
-			const here = (await visibleLinks(row.guild_id, present.map((location) => location.user.id))).length;
-			const locale = resolveLocale((await getGuild(row.guild_id)).preferred_locale);
-			const name = t(locale, 'counter.name', { count: present.length, here });
-			if (shown.get(row.counter_channel_id) === name) return;
-			await renameChannel(row.counter_channel_id, name);
-			shown.set(row.counter_channel_id, name);
-			renamed++;
+			if (await updateCounter(row.guild_id, row.counter_channel_id, row.campus)) renamed++;
 		});
 	}
 	return renamed ? `${renamed} renamed` : undefined;
+}
+
+/**
+ * Renames one server's counter channel, unless it already shows that count.
+ * @remarks Called by the job and when an admin saves a counter channel or a campus, so the
+ * channel is right at once instead of at the next ten minutes.
+ * @returns whether the channel was renamed
+ * @throws {DiscordError} 403 when the bot lacks Manage Channels
+ */
+export async function updateCounter(guildId: string, channelId: string, campusName: string): Promise<boolean> {
+	const campus = await campusNamed(campusName);
+	if (!campus) return false;
+	const present = await campusLocations(campus.id, 'background');
+	const here = (await visibleLinks(guildId, present.map((location) => location.user.id))).length;
+	const locale = resolveLocale((await getGuild(guildId)).preferred_locale);
+	const name = t(locale, 'counter.name', { count: present.length, here });
+	if (shown.get(channelId) === name) return false;
+	await renameChannel(channelId, name);
+	shown.set(channelId, name);
+	return true;
 }

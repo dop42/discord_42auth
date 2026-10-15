@@ -29,6 +29,7 @@ import { env } from '../env';
 import { apiJson, cookie, readCookie } from '../http';
 import { resolveLocale } from '../i18n';
 import { applyAutomod, automodChanged } from '../automod';
+import { updateCounter } from '../counter';
 import { syncGuildEvents } from '../events';
 import { forEachGuild } from '../jobs';
 import { countLinks, listLinks, PAGE_SIZE } from '../links';
@@ -290,6 +291,15 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 				(before.campus !== settings.campus && (settings.syncEvents || settings.syncExams))
 			) {
 				void forEachGuild('events', async () => void (await syncGuildEvents(guildId)));
+			}
+			// Same for the counter: a channel or campus just chosen is renamed now.
+			if (
+				settings.counterChannelId &&
+				settings.campus &&
+				(before.counterChannelId !== settings.counterChannelId || before.campus !== settings.campus)
+			) {
+				const { counterChannelId, campus } = settings;
+				void forEachGuild('counter', async () => void (await updateCounter(guildId, counterChannelId, campus)));
 			}
 			return apiJson(settings);
 		}
