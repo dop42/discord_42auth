@@ -57,8 +57,6 @@ export interface FtProjectUser {
 export interface FtCoalition {
 	name: string;
 	slug: string;
-	/** Hex colour, e.g. `#4caf50`. */
-	color?: string;
 }
 
 /** Raised when the intranet answers something other than a success or a "not found". */

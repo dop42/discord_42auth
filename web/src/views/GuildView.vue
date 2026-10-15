@@ -11,8 +11,10 @@ import DangerZone from '@/components/DangerZone.vue';
 import MembersPanel from '@/components/MembersPanel.vue';
 import PanelPost from '@/components/PanelPost.vue';
 import SettingsForm from '@/components/SettingsForm.vue';
+import SettingsNav from '@/components/SettingsNav.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import GuildAvatar from '@/components/ui/GuildAvatar.vue';
+import { sectionId } from '@/settings/sections';
 import { useGuildStore } from '@/stores/guild';
 import { useMembersStore } from '@/stores/members';
 import { useSessionStore } from '@/stores/session';
@@ -91,10 +93,7 @@ async function onErased(): Promise<void> {
 				:icon="store.detail.guild.icon"
 				:size="72"
 			/>
-			<div class="head__text">
-				<p class="eyebrow">{{ prefs.t['settings.eyebrow'] }}</p>
-				<h1 class="head__title">{{ store.detail.guild.name }}</h1>
-			</div>
+			<h1 class="head__title">{{ store.detail.guild.name }}</h1>
 			<p class="count">
 				<span class="count__n">{{ store.detail.verifiedCount }}</span>
 				<span class="count__label">{{
@@ -120,11 +119,18 @@ async function onErased(): Promise<void> {
 			/></RouterLink>
 		</nav>
 
-		<template v-if="tab === 'settings'">
-			<SettingsForm />
-			<PanelPost />
-			<DangerZone :guild-name="store.detail.guild.name" @erased="onErased" />
-		</template>
+		<div v-if="tab === 'settings'" class="layout">
+			<SettingsNav />
+			<div class="layout__content">
+				<SettingsForm />
+				<div :id="sectionId('panel')" class="layout__target">
+					<PanelPost />
+				</div>
+				<div :id="sectionId('danger')" class="layout__target">
+					<DangerZone :guild-name="store.detail.guild.name" @erased="onErased" />
+				</div>
+			</div>
+		</div>
 		<MembersPanel v-else :guild-id="id" @changed="onMembersChanged" />
 	</template>
 </template>
@@ -188,6 +194,23 @@ async function onErased(): Promise<void> {
 	left: 0;
 }
 
+/* Réglages : la navigation à gauche dès qu'il y a la place, le contenu à droite. */
+.layout__content {
+	min-width: 0;
+	container-type: inline-size;
+}
+
+.layout__target {
+	scroll-margin-top: 5.5rem;
+}
+
+@media (min-width: 1100px) {
+	.layout {
+		display: grid;
+		grid-template-columns: 15rem minmax(0, 1fr);
+	}
+}
+
 .state {
 	display: grid;
 	justify-items: start;
@@ -202,13 +225,8 @@ async function onErased(): Promise<void> {
 	gap: 1.5rem;
 }
 
-.head__text {
-	display: grid;
-	gap: 0.5rem;
-	min-width: 0;
-}
-
 .head__title {
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

@@ -343,7 +343,7 @@ ol {
 	width: 100%;
 	height: 3rem;
 	padding-inline: 1rem;
-	border: 1px solid var(--border-strong);
+	border: 1px solid var(--border-input);
 	border-radius: var(--radius-m);
 	background: var(--bg);
 	box-shadow: var(--shadow-well);
@@ -355,7 +355,7 @@ ol {
 }
 
 .field:hover {
-	border-color: var(--fg-faint);
+	border-color: var(--fg-muted);
 }
 
 .field:focus-visible {

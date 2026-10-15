@@ -6,16 +6,10 @@ import { api, HttpError } from '@/api/client';
 type LoadState = 'idle' | 'loading' | 'ready' | 'forbidden' | 'notFound' | 'error';
 type SaveState = 'idle' | 'saving' | 'saved' | 'invalid' | 'rateLimited' | 'error';
 
-const same = (a: GuildSettings, b: GuildSettings) =>
-	a.roleId === b.roleId &&
-	a.campus === b.campus &&
-	a.studentsOnly === b.studentsOnly &&
-	a.nickname === b.nickname &&
-	a.logChannelId === b.logChannelId &&
-	a.helpers === b.helpers &&
-	a.roleRules.length === b.roleRules.length &&
-	a.roleRules.every((rule, i) => {
-		const other = b.roleRules[i];
+const sameRules = (a: GuildSettings['roleRules'], b: GuildSettings['roleRules']) =>
+	a.length === b.length &&
+	a.every((rule, i) => {
+		const other = b[i];
 		return (
 			other !== undefined &&
 			rule.kind === other.kind &&
@@ -23,6 +17,27 @@ const same = (a: GuildSettings, b: GuildSettings) =>
 			rule.roleId === other.roleId
 		);
 	});
+
+/** Every setting, in the order the form shows them. */
+const FIELDS: Array<keyof GuildSettings> = [
+	'roleId',
+	'campus',
+	'studentsOnly',
+	'roleRules',
+	'nickname',
+	'helpers',
+	'logChannelId',
+];
+
+/** The settings that differ between two versions; empty when they are the same. */
+const differences = (a: GuildSettings, b: GuildSettings) =>
+	new Set(
+		FIELDS.filter((field) =>
+			field === 'roleRules' ? !sameRules(a.roleRules, b.roleRules) : a[field] !== b[field],
+		),
+	);
+
+const same = (a: GuildSettings, b: GuildSettings) => differences(a, b).size === 0;
 
 /** A copy the form can edit without touching what is saved. */
 const copy = (settings: GuildSettings): GuildSettings => ({
@@ -40,12 +55,13 @@ export const useGuildStore = defineStore('guild', () => {
 	/** For an invalid `roleRules`: which rule, from 0. */
 	const invalidIndex = ref<number | null>(null);
 
-	const dirty = computed(
-		() =>
-			detail.value !== null &&
-			draft.value !== null &&
-			!same(detail.value.settings, draft.value),
+	/** The settings edited and not saved yet, so the navigation can point at them. */
+	const changed = computed(() =>
+		detail.value && draft.value
+			? differences(detail.value.settings, draft.value)
+			: new Set<keyof GuildSettings>(),
 	);
+	const dirty = computed(() => changed.value.size > 0);
 
 	/** Lets the caller react to a 401 (send the user back to the landing page). */
 	let onUnauthenticated: () => void = () => undefined;
@@ -155,6 +171,7 @@ export const useGuildStore = defineStore('guild', () => {
 		saveState,
 		invalidField,
 		invalidIndex,
+		changed,
 		dirty,
 		hydrate,
 		load,

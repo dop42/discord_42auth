@@ -12,12 +12,6 @@ const shownCursus = (entry: FtCursusUser, now: Date) =>
 
 const unix = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
 
-/** `#4caf50` → 0x4caf50, or undefined when the intra sent nothing usable. */
-function accentOf(coalitions: FtCoalition[]): number | undefined {
-	const hex = coalitions[0]?.color?.match(/^#([0-9a-f]{6})$/i)?.[1];
-	return hex ? parseInt(hex, 16) : undefined;
-}
-
 export interface ProfileOptions {
 	/** Whose card it is, for the footer. */
 	memberId: string;
@@ -106,7 +100,6 @@ export function profileMessage(
 		components: [
 			{
 				type: ComponentType.CONTAINER,
-				accent_color: accentOf(coalitions),
 				components: [
 					top,
 					{ type: ComponentType.SEPARATOR, divider: true, spacing: 1 },

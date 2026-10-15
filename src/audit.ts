@@ -14,9 +14,6 @@ export interface AuditEntry {
 
 const TITLES = { ok: 'log.ok', refused: 'log.refused', revoked: 'log.revoked' } as const;
 
-/** Side stripe of the message: green, red, orange — readable at a glance in a busy channel. */
-const COLORS = { ok: 0x57f287, refused: 0xed4245, revoked: 0xe67e22 } as const;
-
 /**
  * Records one event in the server's log channel.
  * @remarks Uses the server's language rather than the member's: this line is written for
@@ -45,7 +42,6 @@ export async function audit(channelId: string | null, locale: string, entry: Aud
 		components: [
 			{
 				type: ComponentType.CONTAINER,
-				accent_color: COLORS[entry.outcome],
 				components: [
 					{ type: ComponentType.TEXT_DISPLAY, content: `### ${t(locale, TITLES[entry.outcome])}` },
 					{ type: ComponentType.SEPARATOR, divider: true, spacing: 1 },

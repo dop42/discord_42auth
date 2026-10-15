@@ -151,13 +151,13 @@ async function post(): Promise<void> {
 	color: var(--ok);
 }
 
-@media (min-width: 560px) {
+@container (min-width: 35rem) {
 	.panel__row {
 		grid-template-columns: minmax(0, 1fr) auto;
 	}
 }
 
-@media (min-width: 960px) {
+@container (min-width: 48rem) {
 	.panel {
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
 		gap: clamp(2rem, 5vw, 5rem);

@@ -101,7 +101,7 @@ test('adds a role rule and saves it', async ({ page }) => {
 	const recorded = await mockApi(page, { loggedIn: true });
 	await page.goto('/guilds/100000000000000001');
 	await page.getByRole('button', { name: 'Ajouter une règle' }).click();
-	const rule = page.getByRole('listitem', { name: 'Règle 1' });
+	const rule = page.getByRole('group', { name: 'Règle 1' });
 	await rule.getByLabel('Condition').selectOption({ label: 'Cursus en cours' });
 	await rule.getByLabel('Valeur').fill('c-piscine');
 	await rule.getByLabel('Rôle donné').selectOption({ label: 'Verified' });
@@ -115,7 +115,7 @@ test('adds a role rule and saves it', async ({ page }) => {
 test('members tab: search, then unlink with a confirmation', async ({ page }) => {
 	const recorded = await mockApi(page, { loggedIn: true });
 	await page.goto('/guilds/100000000000000001');
-	await page.getByRole('link', { name: 'Membres' }).click();
+	await page.getByRole('link', { name: 'Membres', exact: true }).click();
 	await expect(page).toHaveURL(/\/guilds\/100000000000000001\/members$/);
 
 	const table = page.getByRole('table', { name: 'Membres vérifiés' });
@@ -145,4 +145,48 @@ test('switches to English and to the dark theme, and remembers both', async ({ p
 	await expect(page.getByRole('link', { name: 'Log in with Discord' })).toBeVisible();
 	await page.getByRole('link', { name: 'Privacy' }).click();
 	await expect(page.getByRole('heading', { name: 'Privacy policy' })).toBeVisible();
+});
+
+test('the categories navigation jumps to a category and marks unsaved edits', async ({ page }) => {
+	await mockApi(page, { loggedIn: true });
+	await page.goto('/guilds/100000000000000001');
+	const nav = page.getByRole('navigation', { name: 'Catégories des réglages' });
+	await expect(nav.getByRole('link', { name: 'Accès' })).toHaveAttribute(
+		'aria-current',
+		'location',
+	);
+
+	await page.getByRole('switch', { name: 'Entraide au campus' }).click();
+	await expect(page.getByRole('switch', { name: 'Entraide au campus' })).toHaveAttribute(
+		'aria-checked',
+		'true',
+	);
+	const features = nav.getByRole('link', { name: /Fonctionnalités/ });
+	await expect(features).toContainText('modifications non enregistrées');
+
+	await features.click();
+	await expect(page.getByRole('heading', { level: 2, name: 'Fonctionnalités' })).toBeFocused();
+	await expect(features).toHaveAttribute('aria-current', 'location');
+});
+
+test('a refused save takes the focus to the field to fix', async ({ page }) => {
+	await mockApi(page, { loggedIn: true });
+	await page.route('**/api/guilds/*', (route) =>
+		route.request().method() === 'PUT'
+			? route.fulfill({
+					status: 400,
+					contentType: 'application/json',
+					body: JSON.stringify({ error: 'invalid', field: 'logChannelId' }),
+				})
+			: route.fallback(),
+	);
+	await page.goto('/guilds/100000000000000001');
+	await page.getByLabel('Campus', { exact: true }).fill('Paris');
+	await page.getByRole('button', { name: 'Enregistrer' }).click();
+
+	const logs = page.getByLabel('Salon de journal');
+	await expect(logs).toBeFocused();
+	await expect(logs).toHaveAttribute('aria-invalid', 'true');
+	await expect(logs).toHaveAccessibleDescription(/refusé par le serveur/);
+	await expect(page.getByText('Un réglage a été refusé')).toBeVisible();
 });

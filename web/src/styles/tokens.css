@@ -32,6 +32,8 @@
 	--fg-faint: #6b6b6b;
 	--border: #ebebeb;
 	--border-strong: #d4d4d4;
+	/* Bord d'un champ ou d'un interrupteur : 3:1 au moins sur le fond, comme le demande le WCAG. */
+	--border-input: #8a8a8a;
 
 	--ok: #0a0a0a;
 	--warn: #262626;
@@ -80,6 +82,7 @@
 	--fg-faint: #8f8f8f;
 	--border: #1f1f1f;
 	--border-strong: #363636;
+	--border-input: #6b6b6b;
 
 	--ok: #fafafa;
 	--warn: #e5e5e5;
@@ -114,6 +117,7 @@
 		--fg-faint: #8f8f8f;
 		--border: #1f1f1f;
 		--border-strong: #363636;
+		--border-input: #6b6b6b;
 
 		--ok: #fafafa;
 		--warn: #e5e5e5;

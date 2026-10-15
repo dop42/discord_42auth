@@ -163,7 +163,7 @@ async function confirm(): Promise<void> {
 	margin-top: 0.5rem;
 }
 
-@media (min-width: 960px) {
+@container (min-width: 48rem) {
 	.danger {
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
 		gap: clamp(2rem, 5vw, 5rem);
