@@ -41,6 +41,7 @@ export const BOT_PERMISSIONS = [
 	'viewChannel',
 	'sendMessages',
 	'manageEvents',
+	'createEvents',
 	'manageChannels',
 	'manageGuild',
 ] as const;

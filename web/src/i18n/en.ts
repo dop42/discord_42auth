@@ -249,6 +249,7 @@ export const en: Messages = {
 		viewChannel: 'View Channels',
 		sendMessages: 'Send Messages',
 		manageEvents: 'Manage Events',
+		createEvents: 'Create Events',
 		manageChannels: 'Manage Channels',
 		manageGuild: 'Manage Server',
 	},

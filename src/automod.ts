@@ -100,11 +100,12 @@ export async function applyAutomod(guildId: string, settings: GuildSettings, loc
 			enabled: true,
 		};
 		if (row) {
-			await updateAutomodRule(guildId, row.rule_id, body);
-			continue;
+			if (await updateAutomodRule(guildId, row.rule_id, body)) continue;
+			await forget(kind);
 		}
-		const taken = kind === 'custom' ? undefined : rules.find((rule) => rule.trigger_type === TRIGGER[kind]);
-		if (taken) await updateAutomodRule(guildId, taken.id, body);
+		// A rule Discord lists but will not let the bot edit is left alone: one is created instead.
+		const existing = kind === 'custom' ? undefined : rules.find((rule) => rule.trigger_type === TRIGGER[kind]);
+		const taken = existing && (await updateAutomodRule(guildId, existing.id, body)) ? existing : undefined;
 		const ruleId = taken?.id ?? (await createAutomodRule(guildId, TRIGGER[kind], body));
 		await db().query('INSERT INTO guild_automod (guild_id, kind, rule_id, created) VALUES ($1, $2, $3, $4)', [
 			guildId,

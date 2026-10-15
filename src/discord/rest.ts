@@ -36,7 +36,7 @@ async function request(method: string, path: string, body?: unknown): Promise<Re
 /** GETs a bot route and parses it, failing on anything but a 2xx. */
 async function read<T>(path: string): Promise<T> {
 	const response = await request('GET', path);
-	if (!response.ok) throw new DiscordError(response.status, path);
+	if (!response.ok) throw await DiscordError.from(response, path);
 	return (await response.json()) as T;
 }
 
@@ -45,8 +45,23 @@ export class DiscordError extends Error {
 	constructor(
 		readonly status: number,
 		path: string,
+		/** Discord's own reason, e.g. `50013 Missing Permissions`, which tells what to fix. */
+		reason?: string,
 	) {
-		super(`Discord ${path.replace(/\d{17,20}/g, ':id')} answered ${status}`);
+		super(`Discord ${path.replace(/\d{17,20}/g, ':id')} answered ${status}${reason ? ` (${reason})` : ''}`);
+	}
+
+	/**
+	 * Builds the error from a refused response, with Discord's code and message when it sent
+	 * some. Neither names a member or a server.
+	 */
+	static async from(response: Response, path: string): Promise<DiscordError> {
+		const body = (await response.json().catch(() => null)) as { code?: unknown; message?: unknown } | null;
+		const reason =
+			typeof body?.code === 'number' && typeof body.message === 'string'
+				? `${body.code} ${body.message.slice(0, 100)}`
+				: undefined;
+		return new DiscordError(response.status, path, reason);
 	}
 }
 
@@ -147,7 +162,7 @@ export async function getMember(guildId: string, userId: string): Promise<Member
 		const body = (await response.json().catch(() => ({}))) as { code?: number };
 		if (body.code === UNKNOWN_MEMBER) return null;
 	}
-	throw new DiscordError(response.status, path);
+	throw await DiscordError.from(response, path);
 }
 
 export interface Role {
@@ -224,7 +239,7 @@ export async function createScheduledEvent(guildId: string, body: ScheduledEvent
 	const path = `/guilds/${guildId}/scheduled-events`;
 	// 2 is "guild only", the one privacy level Discord accepts; 3 is an external event.
 	const response = await request('POST', path, { ...body, privacy_level: 2, entity_type: 3 });
-	if (!response.ok) throw new DiscordError(response.status, path);
+	if (!response.ok) throw await DiscordError.from(response, path);
 	return ((await response.json()) as { id: string }).id;
 }
 
@@ -241,7 +256,7 @@ export async function updateScheduledEvent(
 	const path = `/guilds/${guildId}/scheduled-events/${eventId}`;
 	const response = await request('PATCH', path, body);
 	if (response.status === 404) return false;
-	if (!response.ok) throw new DiscordError(response.status, path);
+	if (!response.ok) throw await DiscordError.from(response, path);
 	return true;
 }
 
@@ -285,22 +300,25 @@ export async function createAutomodRule(
 	const path = `/guilds/${guildId}/auto-moderation/rules`;
 	// Event type 1: a member sends or edits a message.
 	const response = await request('POST', path, { ...body, event_type: 1, trigger_type: triggerType });
-	if (!response.ok) throw new DiscordError(response.status, path);
+	if (!response.ok) throw await DiscordError.from(response, path);
 	return ((await response.json()) as { id: string }).id;
 }
 
 /**
  * Updates an AutoMod rule, with only the fields given.
+ * @returns false when Discord does not find it, even if it was just listed
  * @throws {DiscordError}
  */
 export async function updateAutomodRule(
 	guildId: string,
 	ruleId: string,
 	body: Partial<AutomodRuleBody>,
-): Promise<void> {
+): Promise<boolean> {
 	const path = `/guilds/${guildId}/auto-moderation/rules/${ruleId}`;
 	const response = await request('PATCH', path, body);
-	if (!response.ok) throw new DiscordError(response.status, path);
+	if (response.status === 404) return false;
+	if (!response.ok) throw await DiscordError.from(response, path);
+	return true;
 }
 
 /**
@@ -310,7 +328,7 @@ export async function updateAutomodRule(
 export async function deleteAutomodRule(guildId: string, ruleId: string): Promise<void> {
 	const path = `/guilds/${guildId}/auto-moderation/rules/${ruleId}`;
 	const response = await request('DELETE', path);
-	if (!response.ok && response.status !== 404) throw new DiscordError(response.status, path);
+	if (!response.ok && response.status !== 404) throw await DiscordError.from(response, path);
 }
 
 /**
@@ -322,7 +340,7 @@ export async function deleteAutomodRule(guildId: string, ruleId: string): Promis
 export async function renameChannel(channelId: string, name: string): Promise<void> {
 	const path = `/channels/${channelId}`;
 	const response = await request('PATCH', path, { name });
-	if (!response.ok) throw new DiscordError(response.status, path);
+	if (!response.ok) throw await DiscordError.from(response, path);
 }
 
 /**
@@ -375,7 +393,7 @@ async function tokenRequest(grant: Record<string, string>): Promise<DiscordToken
 		}),
 		signal: AbortSignal.timeout(TIMEOUT_MS),
 	});
-	if (!response.ok) throw new DiscordError(response.status, '/oauth2/token');
+	if (!response.ok) throw await DiscordError.from(response, '/oauth2/token');
 	return (await response.json()) as DiscordTokens;
 }
 
@@ -420,7 +438,7 @@ export async function putRoleConnection(
 		body: JSON.stringify(connection),
 		signal: AbortSignal.timeout(TIMEOUT_MS),
 	});
-	if (!response.ok) throw new DiscordError(response.status, path);
+	if (!response.ok) throw await DiscordError.from(response, path);
 }
 
 /**
@@ -432,6 +450,6 @@ export async function readAsUser<T>(token: string, path: string): Promise<T> {
 		headers: { Authorization: `Bearer ${token}` },
 		signal: AbortSignal.timeout(TIMEOUT_MS),
 	});
-	if (!response.ok) throw new DiscordError(response.status, path);
+	if (!response.ok) throw await DiscordError.from(response, path);
 	return (await response.json()) as T;
 }

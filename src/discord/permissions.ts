@@ -13,6 +13,7 @@ const NEEDED: Record<BotPermission, bigint> = {
 	viewChannel: Permissions.VIEW_CHANNEL,
 	sendMessages: Permissions.SEND_MESSAGES,
 	manageEvents: Permissions.MANAGE_EVENTS,
+	createEvents: Permissions.CREATE_EVENTS,
 	manageChannels: Permissions.MANAGE_CHANNELS,
 	manageGuild: Permissions.MANAGE_GUILD,
 };

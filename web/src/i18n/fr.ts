@@ -254,6 +254,7 @@ export const fr = {
 		viewChannel: 'Voir les salons',
 		sendMessages: 'Envoyer des messages',
 		manageEvents: 'Gérer les événements',
+		createEvents: 'Créer des événements',
 		manageChannels: 'Gérer les salons',
 		manageGuild: 'Gérer le serveur',
 	},
