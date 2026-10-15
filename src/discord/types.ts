@@ -2,7 +2,15 @@
 export const SNOWFLAKE = /^\d{17,20}$/;
 
 export const InteractionType = { PING: 1, APPLICATION_COMMAND: 2, MESSAGE_COMPONENT: 3 } as const;
-export const InteractionResponseType = { PONG: 1, CHANNEL_MESSAGE: 4 } as const;
+export const InteractionResponseType = {
+	PONG: 1,
+	CHANNEL_MESSAGE: 4,
+	/** "Thinking…" now, the message later through `editReply`; buys 15 minutes instead of 3 s. */
+	DEFERRED_CHANNEL_MESSAGE: 5,
+} as const;
+
+/** Option types this bot's commands declare. */
+export const OptionType = { STRING: 3, BOOLEAN: 5, USER: 6 } as const;
 
 export const MessageFlags = {
 	EPHEMERAL: 1 << 6,
@@ -10,11 +18,14 @@ export const MessageFlags = {
 	IS_COMPONENTS_V2: 1 << 15,
 } as const;
 
-/** Component types used by the audit log and the verification panel. */
+/** Component types used by the audit log, the verification panel and `/profile`. */
 export const ComponentType = {
 	ACTION_ROW: 1,
 	BUTTON: 2,
+	/** Text with an accessory beside it, here the intra picture. */
+	SECTION: 9,
 	TEXT_DISPLAY: 10,
+	THUMBNAIL: 11,
 	SEPARATOR: 14,
 	CONTAINER: 17,
 } as const;
@@ -37,6 +48,8 @@ export const TEXT_CHANNEL_TYPES = new Set([0, 5]);
 
 export interface Interaction {
 	type: number;
+	/** Lets the reply be edited later, for 15 minutes; as secret as a password meanwhile. */
+	token: string;
 	guild_id?: string;
 	member?: {
 		user: { id: string };
@@ -52,9 +65,16 @@ export interface Interaction {
 		name?: string;
 		/** Present on a component interaction; identifies which button was pressed. */
 		custom_id?: string;
+		/** Options the member filled in; a user option's value is their id. */
+		options?: Array<{ name: string; type: number; value: string | boolean }>;
 	};
 	/** Language of the member running the command. */
 	locale?: string;
 	/** Language of the server, used for messages addressed to its admins. */
 	guild_locale?: string;
+}
+
+/** Returns the value of one option of a command, or undefined when it was left empty. */
+export function optionValue(interaction: Interaction, name: string): string | boolean | undefined {
+	return interaction.data?.options?.find((option) => option.name === name)?.value;
 }

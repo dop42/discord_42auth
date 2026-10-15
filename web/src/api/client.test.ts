@@ -42,6 +42,7 @@ describe('request', () => {
 				nickname: 'login',
 				logChannelId: null,
 				roleRules: [],
+				helpers: false,
 			})
 			.catch((e: unknown) => e)) as HttpError;
 		expect(error.status).toBe(400);
@@ -65,6 +66,7 @@ describe('request', () => {
 			nickname: 'off',
 			logChannelId: null,
 			roleRules: [],
+			helpers: false,
 		});
 		const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 		expect(url).toBe('/api/guilds/a%2Fb');

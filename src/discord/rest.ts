@@ -110,6 +110,23 @@ export async function postMessage(channelId: string, body: unknown): Promise<boo
 	return response?.ok ?? false;
 }
 
+/**
+ * Replaces the reply of a deferred interaction.
+ * @remarks Goes through the interaction's webhook, so it works even where the bot cannot
+ * post. Never throws, like `postMessage`: the member simply keeps seeing "thinking…".
+ * @param token the interaction token, valid 15 minutes
+ */
+export async function editReply(token: string, body: unknown): Promise<void> {
+	const response = await request(
+		'PATCH',
+		`/webhooks/${env.discordAppId}/${token}/messages/@original`,
+		body,
+	).catch(() => null);
+	if (!response?.ok) {
+		console.error(`Could not answer an interaction: ${response?.status ?? 'network'}`);
+	}
+}
+
 export interface Member {
 	user: { id: string };
 	roles: string[];

@@ -38,7 +38,7 @@ export const en: Messages = {
 		{
 			n: '03',
 			title: 'The role',
-			text: 'The role is granted, plus those of their campus, cursus or coalition. Everything is checked again every week.',
+			text: 'The role is granted, plus those of their campus, cursus, coalition, level or projects. Everything is checked again every week.',
 		},
 	],
 	'landing.login': 'Log in with Discord',
@@ -76,6 +76,9 @@ export const en: Messages = {
 	'settings.students': 'Active students only',
 	'settings.students.help':
 		'Refuses alumni. Closed accounts are always refused; staff are always accepted. Checked again every week: a member who becomes alumni loses the role.',
+	'settings.helpers': 'Campus helpers',
+	'settings.helpers.help':
+		'Lets verified members run /helpers minishell to see who from the server is on campus right now and validated the project, with their seat. Each member can hide themselves with /visibility.',
 	'settings.nickname': 'Nickname of verified members',
 	'settings.nickname.help':
 		'The name shown on the server after verification. The login becomes visible to every member.',
@@ -91,7 +94,7 @@ export const en: Messages = {
 		'These messages stay in Discord, under the server admins’ responsibility. Delete them according to your retention policy — 3 months at most is a reasonable period.',
 	'settings.rules': 'Extra roles',
 	'settings.rules.help':
-		'Given on top of the verified role, to members meeting the condition. Checked again every week: the piscine role goes when the piscine ends.',
+		'Given on top of the verified role, to members meeting the condition. Checked again every week: the piscine role goes when the piscine ends, a level role comes once it is reached.',
 	'settings.rules.kind': 'Condition',
 	'settings.rules.value': 'Value',
 	'settings.rules.role': 'Granted role',
@@ -100,11 +103,17 @@ export const en: Messages = {
 		campus: 'Campus',
 		cursus: 'Current cursus',
 		coalition: 'Coalition',
+		level: 'Level at least',
+		project: 'Validated project',
+		pool: 'Piscine',
 	},
 	'settings.rules.placeholders': {
 		campus: 'Paris',
 		cursus: '42cursus or c-piscine',
 		coalition: 'The Order',
+		level: '10',
+		project: 'minishell',
+		pool: '2025 or 2025-07',
 	},
 	'settings.rules.add': 'Add a rule',
 	'settings.rules.remove': (n: number) => `Remove rule ${String(n)}`,
@@ -112,7 +121,7 @@ export const en: Messages = {
 	'settings.rules.empty': 'No rule: only the verified role is granted.',
 	'settings.rules.max': 'You reached the maximum of 25 rules.',
 	'settings.rules.invalid': (n: number) =>
-		`Rule ${String(n)} was refused: empty value, or a role the bot cannot grant.`,
+		`Rule ${String(n)} was refused: empty or malformed value (a level is a number, a piscine is 2025 or 2025-07), or a role the bot cannot grant.`,
 	'settings.dirty': 'Unsaved changes',
 	'settings.clean': 'Everything is saved',
 	'settings.reset': 'Discard',

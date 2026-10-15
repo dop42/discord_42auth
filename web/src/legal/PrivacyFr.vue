@@ -40,15 +40,20 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 		<li>l’identifiant du serveur Discord concerné ;</li>
 		<li>
 			la date de la vérification, celle du dernier contrôle de présence sur le serveur et
-			celle du dernier contrôle du compte 42.
+			celle du dernier contrôle du compte 42 ;
+		</li>
+		<li>
+			s’il a choisi, avec <code>/visibility</code>, de ne pas apparaître dans
+			<code>/helpers</code>.
 		</li>
 	</ul>
 
 	<h2>Données lues sans être conservées</h2>
 	<p>
-		Pendant la vérification, le bot lit le profil 42 public (nom, campus, cursus en cours,
-		statut actif, alumni ou staff) pour appliquer les règles du serveur, et la liste des
-		coalitions si le serveur attribue des rôles par coalition. Seul le scope
+		Pendant la vérification, le bot lit le profil 42 public (nom, campus, cursus et niveau,
+		projets validés, piscine, statut actif, alumni ou staff) pour appliquer les règles du
+		serveur, et la liste des coalitions si le serveur attribue des rôles par coalition. Seul le
+		scope
 		<code>public</code> est demandé à 42. Le jeton d’accès 42 n’est jamais stocké : il est
 		utilisé puis oublié dans la même requête.
 	</p>
@@ -57,6 +62,22 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 		jeton de son application 42, pour vérifier que le compte remplit toujours les règles du
 		serveur et mettre à jour les rôles supplémentaires. Rien de plus n’est conservé : seul le
 		login est mis à jour s’il a changé.
+	</p>
+	<p>
+		La commande <code>/profile</code> relit ce profil public au moment où elle est utilisée,
+		pour afficher une fiche (photo, campus, niveau, projets, poste occupé au campus, piscine) à
+		celui qui la demande, et à lui seul. Seuls les membres vérifiés du serveur, administrateurs
+		compris, peuvent voir la fiche d’un autre membre ; l’échéance de cursus, les points
+		d’évaluation et le wallet ne sont montrés qu’au membre lui-même. Rien de cette lecture n’est
+		conservé.
+	</p>
+	<p>
+		Si les administrateurs du serveur l’activent, la commande <code>/helpers</code> montre à un
+		membre vérifié qui l’a demandée, et à lui seul, les membres du serveur connectés en ce
+		moment sur son campus qui ont validé un projet donné, avec leur poste et leur note. Les
+		postes occupés du campus sont gardés <strong>deux minutes en mémoire</strong> pour limiter
+		les appels à 42, puis oubliés ; rien n’en est écrit en base. Chaque membre peut ne plus
+		apparaître avec <code>/visibility</code>.
 	</p>
 	<p>
 		Votre adresse IP sert, en mémoire et pendant une minute, à limiter le nombre de requêtes.
@@ -70,8 +91,9 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 			(login) » ;
 		</li>
 		<li>
-			des rôles supplémentaires peuvent être donnés selon le campus, le cursus en cours ou la
-			coalition : ils rendent cette information visible des autres membres du serveur ;
+			des rôles supplémentaires peuvent être donnés selon le campus, le cursus en cours, la
+			coalition, le niveau, un projet validé ou la piscine : ils rendent cette information
+			visible des autres membres du serveur ;
 		</li>
 		<li>
 			un message de journal (identifiant Discord, login 42, campus, motif d’un éventuel refus)
@@ -103,8 +125,8 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 			empêcher qu’un même compte 42 serve à plusieurs comptes Discord sur un même serveur ;
 		</li>
 		<li>
-			attribuer, si le serveur le demande, des rôles selon le campus, le cursus ou la
-			coalition ;
+			attribuer, si le serveur le demande, des rôles selon le campus, le cursus, la coalition,
+			le niveau, les projets validés ou la piscine ;
 		</li>
 		<li>retirer l’accès à un compte qui ne remplit plus les règles du serveur.</li>
 	</ul>

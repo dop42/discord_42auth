@@ -62,11 +62,41 @@ export function nicknameFor(user: FtUser, settings: Settings): string | null {
 	}
 }
 
+/** The intra writes the piscine month in English, lowercase. */
+const MONTHS = [
+	'january', 'february', 'march', 'april', 'may', 'june',
+	'july', 'august', 'september', 'october', 'november', 'december',
+];
+
+/**
+ * Returns the piscine as `YYYY-MM`, or `YYYY` when the month is unknown, or null.
+ * @remarks The shape a `pool` rule is written in, so `2025` matches the year by prefix and
+ * `2025-07` matches one month exactly.
+ */
+export function poolOf(user: FtUser): string | null {
+	if (!user.pool_year) return null;
+	const month = MONTHS.indexOf(user.pool_month?.toLowerCase() ?? '');
+	return month < 0 ? user.pool_year : `${user.pool_year}-${String(month + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Returns the highest level reached in a main cursus, or null without one.
+ * @remarks A finished main cursus still counts: a level is earned, not rented. Piscine levels
+ * are left out, they are a different scale.
+ */
+export function mainLevel(user: FtUser): number | null {
+	const levels = (user.cursus_users ?? [])
+		.filter((entry) => entry.cursus.kind === 'main' && entry.level !== undefined)
+		.map((entry) => entry.level ?? 0);
+	return levels.length ? Math.max(...levels) : null;
+}
+
 /**
  * Returns the extra roles a verified account earns from the server's role rules.
  * @remarks A cursus counts only while it runs: a student who finished the piscine keeps a
- * `c-piscine` entry with a past `end_at`, and must not keep the piscine role for it. Names
- * and slugs are both accepted, so an admin can type either.
+ * `c-piscine` entry with a past `end_at`, and must not keep the piscine role for it. A
+ * project counts once validated, whatever cursus it belongs to. Names and slugs are both
+ * accepted, so an admin can type either.
  * @param coalitions empty when the server has no coalition rule
  * @returns role ids, without duplicates
  */
@@ -81,15 +111,32 @@ export function matchingRoles(
 	const cursus = (user.cursus_users ?? [])
 		.filter((entry) => entry.end_at === null || new Date(entry.end_at) > now)
 		.flatMap((entry) => [entry.cursus.name, entry.cursus.slug]);
-	const values = {
+	const projects = (user.projects_users ?? [])
+		.filter((entry) => entry['validated?'] === true)
+		.flatMap((entry) => [entry.project.name, entry.project.slug]);
+	const names = {
 		campus: campus ? [campus] : [],
 		cursus,
 		coalition: coalitions.flatMap((coalition) => [coalition.name, coalition.slug]),
+		project: projects,
+	};
+	const level = mainLevel(user);
+	const pool = poolOf(user);
+
+	const matches = (rule: RoleRule): boolean => {
+		switch (rule.kind) {
+			case 'level':
+				return level !== null && level >= Number(rule.value);
+			case 'pool':
+				return pool !== null && `${pool}-`.startsWith(`${rule.value}-`);
+			default:
+				return names[rule.kind].some((value) => lower(value) === lower(rule.value));
+		}
 	};
 
 	const roles = new Set<string>();
 	for (const rule of rules) {
-		if (values[rule.kind].some((value) => lower(value) === lower(rule.value))) roles.add(rule.roleId);
+		if (matches(rule)) roles.add(rule.roleId);
 	}
 	return [...roles];
 }

@@ -102,3 +102,30 @@ export async function listLinks(
 		total: rows.length ? Number(rows[0]!.total) : 0,
 	};
 }
+
+/**
+ * Returns the links of one server among the given 42 accounts, leaving out the hidden ones.
+ * @remarks `/helpers` asks it with everyone logged in on campus: only the members of this
+ * server who did not hide themselves come back.
+ */
+export async function visibleLinks(guildId: string, ftIds: number[]): Promise<Link[]> {
+	if (!ftIds.length) return [];
+	const { rows } = await db().query<{ user_id: string; ft_id: number; ft_login: string }>(
+		`SELECT user_id, ft_id, ft_login FROM links
+		 WHERE guild_id = $1 AND NOT hidden AND ft_id = ANY($2::int[])`,
+		[guildId, ftIds],
+	);
+	return rows.map((row) => ({ guildId, userId: row.user_id, ftId: row.ft_id, ftLogin: row.ft_login }));
+}
+
+/**
+ * Hides a member from `/helpers` on one server, or shows them again.
+ * @returns whether the member has a link to set it on
+ */
+export async function setHidden(guildId: string, userId: string, hidden: boolean): Promise<boolean> {
+	const { rowCount } = await db().query(
+		'UPDATE links SET hidden = $3 WHERE guild_id = $1 AND user_id = $2',
+		[guildId, userId, hidden],
+	);
+	return (rowCount ?? 0) > 0;
+}

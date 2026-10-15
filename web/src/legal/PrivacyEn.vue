@@ -38,21 +38,40 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 		<li>the ID of the Discord server concerned;</li>
 		<li>
 			the date of the verification, of the last check that they are still in the server, and
-			of the last check of the 42 account.
+			of the last check of the 42 account;
+		</li>
+		<li>
+			whether they chose, with <code>/visibility</code>, not to appear in
+			<code>/helpers</code>.
 		</li>
 	</ul>
 
 	<h2>Data read without being kept</h2>
 	<p>
-		During verification, the bot reads the public 42 profile (name, campus, current cursus,
-		active, alumni or staff status) to apply the server's rules, and the list of coalitions if
-		the server grants roles by coalition. Only the <code>public</code> scope is requested from
-		42. The 42 access token is never stored: it is used and forgotten within the same request.
+		During verification, the bot reads the public 42 profile (name, campus, cursus and level,
+		validated projects, piscine, active, alumni or staff status) to apply the server's rules,
+		and the list of coalitions if the server grants roles by coalition. Only the
+		<code>public</code> scope is requested from 42. The 42 access token is never stored: it is
+		used and forgotten within the same request.
 	</p>
 	<p>
 		Then, <strong>once a week</strong>, the bot reads that same public profile again with its 42
 		application's token, to check the account still meets the server's rules and to update the
 		extra roles. Nothing more is kept: only the login is updated if it changed.
+	</p>
+	<p>
+		The <code>/profile</code> command reads that public profile again when it is used, to show a
+		card (picture, campus, level, projects, seat taken on campus, piscine) to whoever asked, and
+		to them alone. Only verified members of the server, admins included, can see another
+		member's card; the cursus deadline, the evaluation points and the wallet are shown to the
+		member themselves only. Nothing from that read is kept.
+	</p>
+	<p>
+		If the server's admins turn it on, the <code>/helpers</code> command shows a verified member
+		who asked, and them alone, the server's members logged in on their campus right now who
+		validated a given project, with their seat and mark. The campus seats are kept
+		<strong>two minutes in memory</strong> to limit calls to 42, then forgotten; nothing of them
+		is written to the database. Any member can stop appearing with <code>/visibility</code>.
 	</p>
 	<p>
 		Your IP address is used, in memory and for one minute, to limit the number of requests. It
@@ -66,8 +85,8 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 			(login)”;
 		</li>
 		<li>
-			extra roles can be granted by campus, current cursus or coalition: they make that
-			information visible to the server's other members;
+			extra roles can be granted by campus, current cursus, coalition, level, validated
+			project or piscine: they make that information visible to the server's other members;
 		</li>
 		<li>
 			a log message (Discord ID, 42 login, campus, reason of a refusal) can be posted in a
@@ -93,7 +112,10 @@ const hosting = computed(() => meta.meta?.hosting ?? null);
 	<ul>
 		<li>keeping a server's access for valid 42 accounts;</li>
 		<li>preventing one 42 account from serving several Discord accounts in one server;</li>
-		<li>granting, if the server asks for it, roles by campus, cursus or coalition;</li>
+		<li>
+			granting, if the server asks for it, roles by campus, cursus, coalition, level,
+			validated project or piscine;
+		</li>
 		<li>removing access from an account that no longer meets the server's rules.</li>
 	</ul>
 	<p>

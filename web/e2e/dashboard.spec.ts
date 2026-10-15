@@ -37,8 +37,9 @@ test('edit and save settings', async ({ page }) => {
 	const save = page.getByRole('button', { name: 'Enregistrer' });
 	await expect(save).toBeDisabled();
 
-	await page.getByLabel('Campus').fill('Paris');
+	await page.getByLabel('Campus', { exact: true }).fill('Paris');
 	await page.getByRole('switch', { name: 'Étudiants actifs uniquement' }).click();
+	await page.getByRole('switch', { name: 'Entraide au campus' }).click();
 	await page.getByLabel('Nom complet et login').check();
 	await page.getByLabel('Salon de journal').selectOption({ label: '#logs' });
 	await save.click();
@@ -53,6 +54,7 @@ test('edit and save settings', async ({ page }) => {
 			nickname: 'full',
 			logChannelId: '300000000000000001',
 			roleRules: [],
+			helpers: true,
 		},
 	]);
 });

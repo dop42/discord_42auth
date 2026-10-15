@@ -12,6 +12,7 @@ const same = (a: GuildSettings, b: GuildSettings) =>
 	a.studentsOnly === b.studentsOnly &&
 	a.nickname === b.nickname &&
 	a.logChannelId === b.logChannelId &&
+	a.helpers === b.helpers &&
 	a.roleRules.length === b.roleRules.length &&
 	a.roleRules.every((rule, i) => {
 		const other = b.roleRules[i];

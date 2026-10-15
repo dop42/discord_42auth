@@ -40,7 +40,7 @@ export const fr = {
 		{
 			n: '03',
 			title: 'Le rôle',
-			text: 'Le rôle est donné, plus ceux de son campus, de son cursus ou de sa coalition. Tout est revérifié chaque semaine.',
+			text: 'Le rôle est donné, plus ceux de son campus, de son cursus, de sa coalition, de son niveau ou de ses projets. Tout est revérifié chaque semaine.',
 		},
 	],
 	'landing.login': 'Se connecter avec Discord',
@@ -79,6 +79,9 @@ export const fr = {
 	'settings.students': 'Étudiants actifs uniquement',
 	'settings.students.help':
 		'Refuse les alumni. Les comptes fermés sont toujours refusés ; le staff est toujours accepté. Revérifié chaque semaine : un membre devenu alumni perd le rôle.',
+	'settings.helpers': 'Entraide au campus',
+	'settings.helpers.help':
+		'Permet aux membres vérifiés de taper /helpers minishell pour voir qui, sur le serveur, est au campus en ce moment et a validé le projet, avec son poste. Chaque membre peut se masquer avec /visibility.',
 	'settings.nickname': 'Pseudo des membres vérifiés',
 	'settings.nickname.help':
 		'Le nom affiché sur le serveur après la vérification. Le login devient visible de tous les membres.',
@@ -94,7 +97,7 @@ export const fr = {
 		'Ces messages restent dans Discord, sous la responsabilité des admins du serveur. Supprimez-les selon votre politique de conservation — 3 mois maximum est une durée raisonnable.',
 	'settings.rules': 'Rôles supplémentaires',
 	'settings.rules.help':
-		'Donnés en plus du rôle vérifié, aux membres qui remplissent la condition. Revérifiés chaque semaine : le rôle de piscine part quand la piscine se termine.',
+		'Donnés en plus du rôle vérifié, aux membres qui remplissent la condition. Revérifiés chaque semaine : le rôle de piscine part quand la piscine se termine, un rôle de niveau arrive dès qu’il est atteint.',
 	'settings.rules.kind': 'Condition',
 	'settings.rules.value': 'Valeur',
 	'settings.rules.role': 'Rôle donné',
@@ -103,11 +106,17 @@ export const fr = {
 		campus: 'Campus',
 		cursus: 'Cursus en cours',
 		coalition: 'Coalition',
+		level: 'Niveau minimum',
+		project: 'Projet validé',
+		pool: 'Piscine',
 	} satisfies Record<RuleKind, string>,
 	'settings.rules.placeholders': {
 		campus: 'Paris',
 		cursus: '42cursus ou c-piscine',
 		coalition: 'The Order',
+		level: '10',
+		project: 'minishell',
+		pool: '2025 ou 2025-07',
 	} satisfies Record<RuleKind, string>,
 	'settings.rules.add': 'Ajouter une règle',
 	'settings.rules.remove': (n: number) => `Retirer la règle ${String(n)}`,
@@ -115,7 +124,7 @@ export const fr = {
 	'settings.rules.empty': 'Aucune règle : seul le rôle vérifié est donné.',
 	'settings.rules.max': 'Vous avez atteint le maximum de 25 règles.',
 	'settings.rules.invalid': (n: number) =>
-		`La règle ${String(n)} a été refusée : valeur vide ou rôle que le bot ne peut pas donner.`,
+		`La règle ${String(n)} a été refusée : valeur vide ou mal formée (un niveau est un nombre, une piscine s’écrit 2025 ou 2025-07), ou rôle que le bot ne peut pas donner.`,
 	'settings.dirty': 'Modifications non enregistrées',
 	'settings.clean': 'Tout est enregistré',
 	'settings.reset': 'Annuler',

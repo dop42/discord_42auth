@@ -25,3 +25,15 @@ export function componentMessage(components: unknown[], isEphemeral?: boolean): 
 	const flags = MessageFlags.IS_COMPONENTS_V2 | (isEphemeral ? MessageFlags.EPHEMERAL : 0);
 	return json({ type: InteractionResponseType.CHANNEL_MESSAGE, data: { flags, components } });
 }
+
+/**
+ * Acknowledges an interaction now and answers it later with `editReply`.
+ * @remarks For a command that waits on the 42 API, whose rate limit can hold a call longer
+ * than Discord's three-second budget.
+ */
+export function deferred(isEphemeral?: boolean): Response {
+	return json({
+		type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE,
+		data: { flags: isEphemeral ? MessageFlags.EPHEMERAL : 0 },
+	});
+}

@@ -152,6 +152,7 @@ function onChannel(event: Event): void {
 								maxlength="64"
 								autocomplete="off"
 								class="field"
+								:inputmode="rule.kind === 'level' ? 'decimal' : 'text'"
 								:placeholder="prefs.t['settings.rules.placeholders'][rule.kind]"
 							/>
 						</label>
@@ -252,6 +253,31 @@ function onChannel(event: Event): void {
 						},
 					]"
 					@click="store.draft.studentsOnly = !store.draft.studentsOnly"
+				>
+					<span class="switch__track" aria-hidden="true" />
+					<span class="switch__thumb" aria-hidden="true" />
+				</button>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="row__label">
+				<span id="helpers-label" class="row__title">{{ prefs.t['settings.helpers'] }}</span>
+				<p id="helpers-help" class="hint">{{ prefs.t['settings.helpers.help'] }}</p>
+			</div>
+			<div class="row__control">
+				<button
+					id="helpers"
+					type="button"
+					role="switch"
+					:aria-checked="store.draft.helpers"
+					aria-labelledby="helpers-label"
+					aria-describedby="helpers-help"
+					:class="[
+						'switch',
+						{ 'switch--on': store.draft.helpers, 'field--invalid': invalid('helpers') },
+					]"
+					@click="store.draft.helpers = !store.draft.helpers"
 				>
 					<span class="switch__track" aria-hidden="true" />
 					<span class="switch__thumb" aria-hidden="true" />

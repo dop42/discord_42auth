@@ -13,12 +13,14 @@ export const NICKNAME_MODES = ['off', 'login', 'full'] as const;
 /** `off` leaves the nickname alone, `login` sets the intra login, `full` sets "Full Name (login)". */
 export type NicknameMode = (typeof NICKNAME_MODES)[number];
 
-export const RULE_KINDS = ['campus', 'cursus', 'coalition'] as const;
+export const RULE_KINDS = ['campus', 'cursus', 'coalition', 'level', 'project', 'pool'] as const;
 
 /**
  * What a role rule looks at: the primary campus, a cursus the member is currently in
- * (`42cursus`, `c-piscine`…), or one of their coalitions. Compared case-insensitively with
- * the name or the slug the intra uses.
+ * (`42cursus`, `c-piscine`…), one of their coalitions, a level reached in the main cursus
+ * (`10` means 10 or more), a validated project, or the piscine they came from (`2025` for
+ * the year, `2025-07` for one month). Names are compared case-insensitively with the name
+ * or the slug the intra uses.
  */
 export type RuleKind = (typeof RULE_KINDS)[number];
 
@@ -43,8 +45,13 @@ export interface GuildSettings {
 	nickname: NicknameMode;
 	/** Channel receiving one audit message per attempt. `null` disables the audit log. */
 	logChannelId: string | null;
-	/** Extra roles by campus, cursus or coalition, checked again every week. */
+	/** Extra roles by campus, cursus, coalition, level, project or piscine, checked again every week. */
 	roleRules: RoleRule[];
+	/**
+	 * Lets verified members run `/helpers`, which lists who is on campus and validated a
+	 * project, with their seat. Members can still hide themselves with `/visibility`.
+	 */
+	helpers: boolean;
 }
 
 /** `GET /api/meta` — public, no session needed. */

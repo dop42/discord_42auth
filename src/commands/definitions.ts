@@ -1,4 +1,4 @@
-import { Permissions } from '../discord/types';
+import { OptionType, Permissions } from '../discord/types';
 import { FALLBACK, localizations, t, type MessageKey } from '../i18n';
 
 /** Identifies the panel button in the interactions Discord sends back. */
@@ -34,5 +34,31 @@ export const commands = [
 		name: 'forget',
 		...described('cmd.forget'),
 		dm_permission: false,
+	},
+	{
+		name: 'profile',
+		...described('cmd.profile'),
+		dm_permission: false,
+		options: [{ name: 'member', type: OptionType.USER, required: false, ...described('cmd.profile.member') }],
+	},
+	{
+		name: 'helpers',
+		...described('cmd.helpers'),
+		dm_permission: false,
+		options: [
+			{
+				name: 'project',
+				type: OptionType.STRING,
+				required: true,
+				max_length: 64,
+				...described('cmd.helpers.project'),
+			},
+		],
+	},
+	{
+		name: 'visibility',
+		...described('cmd.visibility'),
+		dm_permission: false,
+		options: [{ name: 'shown', type: OptionType.BOOLEAN, required: true, ...described('cmd.visibility.shown') }],
 	},
 ];

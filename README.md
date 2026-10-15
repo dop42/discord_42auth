@@ -24,8 +24,9 @@ straight in.
 
 One instance serves every server that adds the bot. Admins log in on the
 **web dashboard** with Discord, pick the role and the rules, add extra roles by
-campus, cursus or coalition, post the panel, and see or unlink verified members.
-Members can erase their own link with `/forget`. Every account is checked against
+campus, cursus, coalition, level, validated project or piscine, post the panel, and
+see or unlink verified members. Members see their own 42 card, or a fellow
+student's, with `/profile`, and erase their link with `/forget`. Every account is checked against
 the intra again each week: a closed account, a new alumnus or a finished piscine
 loses what it no longer qualifies for.
 

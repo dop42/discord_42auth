@@ -189,6 +189,9 @@ stop Caddy and close 80 and 443.
 | `/panel` | Manage Server | Posts the verification panel, with the button members press |
 | `/config` | Manage Server | Shows the settings and links to the dashboard |
 | `/forget` | Everyone | Erases the caller's 42 link on this server and takes the role back |
+| `/profile [member]` | Everyone | Shows a verified member's 42 card, only to the caller: level, projects, seat on campus, piscine. Another member's card needs the caller verified on this server too, admins included; the deadline, evaluation points and wallet only show on one's own card. Read live, nothing kept, 5 per minute per member |
+| `/helpers <project>` | Verified members | Lists, only to the caller, the server's members logged in on the caller's campus right now who validated the project, with seat and best mark. Off until *Campus helpers* is turned on. Name or slug (`CPP Module 00` or `cpp-module-00`) |
+| `/visibility <shown>` | Verified members | `False` hides the caller from `/helpers` on this server, `True` shows them again. Kept until the link goes |
 
 ### Settings
 
@@ -199,7 +202,8 @@ stop Caddy and close 80 and 443.
 | Active students only | Refuse alumni. Closed accounts are always refused |
 | Nickname | Unchanged, the intra login, or `John Doe (jdoe)` |
 | Log channel | Posts who authenticated as whom, and whose verification the weekly check revoked. Those messages stay in Discord, under your responsibility |
-| Extra roles | Up to 25 rules granting a role on top of the verified one: by primary campus, by cursus currently running (`42cursus`, `c-piscine`), or by coalition. Name or slug, case-insensitive |
+| Extra roles | Up to 25 rules granting a role on top of the verified one: by primary campus, by cursus currently running (`42cursus`, `c-piscine`), by coalition, by validated project (`minishell`), by level reached in the main cursus (`10` means 10 or more, piscine levels do not count), or by piscine (`2025` for the year, `2025-07` for July). Names or slugs, case-insensitive |
+| Campus helpers | Turns on `/helpers`. It tells verified members where people sit, so it is off by default; members can still hide with `/visibility`. The campus seats are cached two minutes in memory and shared by every server, so a search costs one to four 42 calls whatever the server size |
 
 Every account is looked up on the intra again once a week, with the 42
 application's own token. One that was closed, went alumni (with *Active

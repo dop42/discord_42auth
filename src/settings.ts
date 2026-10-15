@@ -20,6 +20,7 @@ export const DEFAULTS: GuildSettings = {
 	nickname: 'login',
 	logChannelId: null,
 	roleRules: [],
+	helpers: false,
 };
 
 const CAMPUS_MAX = 64;
@@ -31,12 +32,13 @@ interface Row {
 	nickname_mode: NicknameMode;
 	log_channel_id: string | null;
 	role_rules: RoleRule[];
+	helpers: boolean;
 }
 
 /** Reads what one server does, or the defaults when it was never configured. */
 export async function getSettings(guildId: string): Promise<GuildSettings> {
 	const { rows } = await db().query<Row>(
-		`SELECT role_id, campus, students_only, nickname_mode, log_channel_id, role_rules
+		`SELECT role_id, campus, students_only, nickname_mode, log_channel_id, role_rules, helpers
 		 FROM guilds WHERE guild_id = $1`,
 		[guildId],
 	);
@@ -49,6 +51,7 @@ export async function getSettings(guildId: string): Promise<GuildSettings> {
 		nickname: row.nickname_mode,
 		logChannelId: row.log_channel_id,
 		roleRules: row.role_rules,
+		helpers: row.helpers,
 	};
 }
 
@@ -56,11 +59,11 @@ export async function getSettings(guildId: string): Promise<GuildSettings> {
 export async function saveSettings(guildId: string, settings: GuildSettings): Promise<void> {
 	await db().query(
 		`INSERT INTO guilds
-			(guild_id, role_id, campus, students_only, nickname_mode, log_channel_id, role_rules)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+			(guild_id, role_id, campus, students_only, nickname_mode, log_channel_id, role_rules, helpers)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		 ON CONFLICT (guild_id) DO UPDATE SET
 			role_id = $2, campus = $3, students_only = $4, nickname_mode = $5,
-			log_channel_id = $6, role_rules = $7, updated_at = now()`,
+			log_channel_id = $6, role_rules = $7, helpers = $8, updated_at = now()`,
 		[
 			guildId,
 			settings.roleId,
@@ -69,6 +72,7 @@ export async function saveSettings(guildId: string, settings: GuildSettings): Pr
 			settings.nickname,
 			settings.logChannelId,
 			JSON.stringify(settings.roleRules),
+			settings.helpers,
 		],
 	);
 }
@@ -103,6 +107,7 @@ export function parseSettings(body: unknown): Parsed {
 	if (!id(input.roleId)) return { ok: false, field: 'roleId' };
 	if (!id(input.logChannelId)) return { ok: false, field: 'logChannelId' };
 	if (typeof input.studentsOnly !== 'boolean') return { ok: false, field: 'studentsOnly' };
+	if (typeof input.helpers !== 'boolean') return { ok: false, field: 'helpers' };
 	if (!NICKNAME_MODES.includes(input.nickname as NicknameMode)) {
 		return { ok: false, field: 'nickname' };
 	}
@@ -134,11 +139,21 @@ export function parseSettings(body: unknown): Parsed {
 			nickname: input.nickname as NicknameMode,
 			logChannelId: input.logChannelId as string | null,
 			roleRules,
+			helpers: input.helpers,
 		},
 	};
 }
 
-/** Validates one role rule, or returns null. */
+/** A level as the intra counts them: 0 to 99, with at most two decimals. */
+const LEVEL = /^\d{1,2}(\.\d{1,2})?$/;
+/** A piscine year, or a year and a month: `2025`, `2025-07`. */
+const POOL = /^\d{4}(-(0[1-9]|1[0-2]))?$/;
+
+/**
+ * Validates one role rule, or returns null.
+ * @remarks A level is stored normalized (`07.50` becomes `7.5`), so the `/config` card shows
+ * what the comparison actually uses.
+ */
 function parseRule(value: unknown): RoleRule | null {
 	if (typeof value !== 'object' || value === null) return null;
 	const { kind, value: text, roleId } = value as Record<string, unknown>;
@@ -147,5 +162,13 @@ function parseRule(value: unknown): RoleRule | null {
 	if (typeof text !== 'string') return null;
 	const trimmed = text.trim();
 	if (!trimmed || [...trimmed].length > CAMPUS_MAX) return null;
-	return { kind: kind as RuleKind, value: trimmed, roleId };
+
+	switch (kind as RuleKind) {
+		case 'level':
+			return LEVEL.test(trimmed) ? { kind: 'level', value: String(Number(trimmed)), roleId } : null;
+		case 'pool':
+			return POOL.test(trimmed) ? { kind: 'pool', value: trimmed, roleId } : null;
+		default:
+			return { kind: kind as RuleKind, value: trimmed, roleId };
+	}
 }

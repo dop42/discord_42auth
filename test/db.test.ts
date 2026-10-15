@@ -58,6 +58,9 @@ const members = new Map<string, string[]>([
 ]);
 let botGuilds = [GUILD];
 
+/** The last validations lookup `/helpers` made, to see which accounts it asked about. */
+let lastValidationQuery = '';
+
 /** Discord calls that change something, as `METHOD path`. */
 const writes: string[] = [];
 
@@ -67,6 +70,23 @@ const fakeFetch = async (input: string | URL | Request, init?: RequestInit): Pro
 	if (String(input) === 'https://api.intra.42.fr/v2/me') return ok(ftUser);
 	if (String(input) === 'https://api.intra.42.fr/v2/users/42') return ok(ftUser);
 	if (String(input) === 'https://api.intra.42.fr/v2/users/42/coalitions') return ok([{ name: 'The Order', slug: 'the-order' }]);
+	if (String(input).startsWith('https://api.intra.42.fr/v2/campus/1/locations?filter[active]=true&page')) {
+		return ok([
+			{ host: 'c1r1p1', user: { id: 42, login: 'jdoe' } },
+			{ host: 'c2r5p8', user: { id: 7, login: 'helper' } },
+			{ host: 'c3r1p2', user: { id: 8, login: 'shy' } },
+		]);
+	}
+	if (String(input) === 'https://api.intra.42.fr/v2/projects/cub3d') return ok({ name: 'cub3d', slug: 'cub3d' });
+	if (String(input).startsWith('https://api.intra.42.fr/v2/projects/cub3d/projects_users?')) {
+		lastValidationQuery = String(input);
+		return ok([
+			{ status: 'finished', 'validated?': false, final_mark: 40, user: { id: 7, login: 'helper' } },
+			{ status: 'finished', 'validated?': true, final_mark: 115, user: { id: 7, login: 'helper' } },
+			{ status: 'finished', 'validated?': true, final_mark: 100, user: { id: 8, login: 'shy' } },
+		]);
+	}
+	if (String(input).startsWith('https://api.intra.42.fr/v2/projects/')) return new Response('{}', { status: 404 });
 	const path = String(input).replace('https://discord.com/api/v10', '');
 	if (init?.method && init.method !== 'GET') {
 		writes.push(`${init.method} ${path}`);
@@ -142,7 +162,7 @@ after(async () => {
 const call = (path: string, init: RequestInit = {}) =>
 	route(new Request(`${ORIGIN}${path}`, { ...init, headers: { cookie, origin: ORIGIN, ...init.headers } }));
 
-const settings = { roleId: ROLE, campus: 'Paris', studentsOnly: true, nickname: 'login', logChannelId: CHANNEL, roleRules: [] as unknown[] };
+const settings = { roleId: ROLE, campus: 'Paris', studentsOnly: true, nickname: 'login', logChannelId: CHANNEL, roleRules: [] as unknown[], helpers: false };
 const rules = [
 	{ kind: 'cursus', value: '42cursus', roleId: CURSUS_ROLE },
 	{ kind: 'coalition', value: 'the-order', roleId: ORDER_ROLE },
@@ -324,4 +344,83 @@ test('too many logins from one address are refused', { skip }, async () => {
 	assert.equal(responses[0]?.status, 302);
 	assert.equal(responses.at(-1)?.status, 429);
 	assert.ok(Number(responses.at(-1)?.headers.get('retry-after')) > 0);
+});
+
+test('/profile is deferred, then answered with the card, to verified members only, admins included', { skip }, async () => {
+	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify(settings) });
+	const { saveLink } = await import('../src/links');
+	const { handleProfile } = await import('../src/commands/profile');
+	await saveLink({ guildId: GUILD, userId: MEMBER, ftId: 42, ftLogin: 'jdoe' });
+	const ask = (callerId: string, memberId?: string) =>
+		handleProfile({
+			type: 2,
+			token: 'itoken',
+			guild_id: GUILD,
+			member: { user: { id: callerId }, roles: [], permissions: '0' },
+			data: { name: 'profile', options: memberId ? [{ name: 'member', type: 6, value: memberId }] : [] },
+			locale: 'en-US',
+		});
+	const reply = async (response: Response) => (await response.json()) as { type: number; data: { content?: string } };
+
+	members.set(LEFT, []);
+	assert.match((await reply(await ask(LEFT, MEMBER))).data.content ?? '', /Verify your own 42 account/);
+	assert.match((await reply(await ask(LEFT))).data.content ?? '', /not verified on this server/);
+	const asAdmin = await handleProfile({
+		type: 2,
+		token: 'itoken',
+		guild_id: GUILD,
+		member: { user: { id: ADMIN }, roles: [HIGH], permissions: '32' },
+		data: { name: 'profile', options: [{ name: 'member', type: 6, value: MEMBER }] },
+		locale: 'en-US',
+	});
+	assert.match((await reply(asAdmin)).data.content ?? '', /Verify your own 42 account/, 'Manage Server is not a 42 account');
+
+	assert.equal((await reply(await ask(MEMBER))).type, 5);
+	const edit = `PATCH /webhooks/${APP}/itoken/messages/@original`;
+	for (let i = 0; i < 50 && !writes.includes(edit); i++) await new Promise((resolve) => setTimeout(resolve, 10));
+	assert.ok(writes.includes(edit), 'the deferred reply is filled in');
+});
+
+test('/helpers lists who is on campus with the project validated, and /visibility hides a member', { skip }, async () => {
+	const { saveLink } = await import('../src/links');
+	const { handleHelpers } = await import('../src/commands/helpers');
+	const { handleVisibility } = await import('../src/commands/visibility');
+	const SHY = '200000000000000012';
+	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify(settings) });
+	await saveLink({ guildId: GUILD, userId: MEMBER, ftId: 42, ftLogin: 'jdoe' });
+	await saveLink({ guildId: GUILD, userId: ADMIN, ftId: 7, ftLogin: 'helper' });
+	await saveLink({ guildId: GUILD, userId: SHY, ftId: 8, ftLogin: 'shy' });
+
+	const command = (name: string, callerId: string, option: { name: string; type: number; value: string | boolean }) => ({
+		type: 2,
+		token: `t-${name}-${callerId}`,
+		guild_id: GUILD,
+		member: { user: { id: callerId }, roles: [], permissions: '0' },
+		data: { name, options: [option] },
+		locale: 'en-US',
+	});
+	const helpers = (callerId: string, project = 'cub3d') =>
+		handleHelpers(command('helpers', callerId, { name: 'project', type: 3, value: project }));
+	const content = async (response: Response) => ((await response.json()) as { data: { content?: string } }).data.content ?? '';
+	const edited = async (token: string) => {
+		const edit = `PATCH /webhooks/${APP}/${token}/messages/@original`;
+		for (let i = 0; i < 50 && !writes.includes(edit); i++) await new Promise((resolve) => setTimeout(resolve, 10));
+		return writes.includes(edit);
+	};
+
+	assert.match(await content(await helpers(MEMBER)), /not enabled/, 'off until an admin turns it on');
+	await call(`/api/guilds/${GUILD}`, { method: 'PUT', body: JSON.stringify({ ...settings, helpers: true }) });
+	assert.match(await content(await helpers(LEFT)), /Verify your own 42 account/);
+	assert.match(await content(await helpers(MEMBER, '../users')), /No project named/);
+
+	assert.equal(((await (await helpers(MEMBER)).json()) as { type: number }).type, 5);
+	assert.ok(await edited(`t-helpers-${MEMBER}`));
+	assert.deepEqual(lastValidationQuery.match(/user_id\]=([\d,]+)/)?.[1]?.split(',').sort(), ['7', '8'], 'the caller is left out');
+
+	assert.match(await content(await handleVisibility(command('visibility', SHY, { name: 'shown', type: 5, value: false }))), /no longer list you/);
+	writes.length = 0;
+	await helpers(MEMBER);
+	assert.ok(await edited(`t-helpers-${MEMBER}`));
+	assert.match(lastValidationQuery, /user_id\]=7&/, 'a hidden member is not even looked up');
+	assert.match(await content(await handleVisibility(command('visibility', LEFT, { name: 'shown', type: 5, value: true }))), /No 42 account is linked/);
 });

@@ -1,3 +1,4 @@
+import type { RoleRule, RuleKind } from '../../shared/api';
 import { canManage } from '../discord/permissions';
 import { componentMessage, ephemeral } from '../discord/responses';
 import { ButtonStyle, ComponentType, type Interaction } from '../discord/types';
@@ -58,16 +59,21 @@ function formatSettings(settings: Settings, locale: string): string {
 		login: t(locale, 'show.nickname.login'),
 		full: t(locale, 'show.nickname.full'),
 	}[settings.nickname];
-	const kinds = {
+	const kinds: Record<RuleKind, string> = {
 		campus: t(locale, 'show.kind.campus'),
 		cursus: t(locale, 'show.kind.cursus'),
 		coalition: t(locale, 'show.kind.coalition'),
+		level: t(locale, 'show.kind.level'),
+		project: t(locale, 'show.kind.project'),
+		pool: t(locale, 'show.kind.pool'),
 	};
+	const condition = (rule: RoleRule) =>
+		rule.kind === 'level' ? `≥ \`${rule.value}\`` : `\`${rule.value}\``;
 
 	const role = settings.roleId ? `<@&${settings.roleId}>` : t(locale, 'show.role.unset');
 	const logs = settings.logChannelId ? `<#${settings.logChannelId}>` : t(locale, 'show.logs.none');
 	const rules = settings.roleRules.length
-		? settings.roleRules.map((rule) => `- <@&${rule.roleId}> ← ${kinds[rule.kind]} \`${rule.value}\``)
+		? settings.roleRules.map((rule) => `- <@&${rule.roleId}> ← ${kinds[rule.kind]} ${condition(rule)}`)
 		: [t(locale, 'show.rules.none')];
 
 	return [
@@ -76,6 +82,7 @@ function formatSettings(settings: Settings, locale: string): string {
 		`**${t(locale, 'show.students')}** — ${settings.studentsOnly ? t(locale, 'show.yes') : t(locale, 'show.no')}`,
 		`**${t(locale, 'show.nickname')}** — ${nickname}`,
 		`**${t(locale, 'show.logs')}** — ${logs}`,
+		`**${t(locale, 'show.helpers')}** — ${settings.helpers ? t(locale, 'show.yes') : t(locale, 'show.no')}`,
 		'',
 		`**${t(locale, 'show.rules')}**`,
 		...rules,
