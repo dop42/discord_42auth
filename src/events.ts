@@ -20,11 +20,28 @@ const MAX_EVENTS = 50;
 export type EventSource = 'event' | 'exam';
 
 
+/**
+ * A web address in an intra description, bare, between `<>`, or as a Markdown link (group 1 is
+ * its text). The Discord event is seen by the whole server, the intra page only by 42 accounts.
+ */
+const ADDRESS = /\[([^\]]*)\]\(\s*(?:https?:\/\/|www\.)[^)]*\)|<?(?:https?:\/\/|www\.)[^\s<>]*[^\s<>.,;:!?)]>?/gi;
+
+/** An intra description without its web addresses, a Markdown link keeping its text. */
+export function withoutAddresses(text: string): string {
+	return text
+		.replace(ADDRESS, (_, label?: string) => label ?? '')
+		.replace(/[ \t]+$/gm, '')
+		.replace(/\n{3,}/g, '\n\n')
+		.trim();
+}
+
 const cut = (text: string, max: number) => ([...text].length > max ? `${[...text].slice(0, max - 1).join('')}…` : text);
 
 /**
  * Builds the Discord event mirroring an intra one.
  * @remarks Discord caps a name at 100 characters, a description at 1000, a location at 100.
+ * The addresses of the intra description are left out; an event links to its intra page
+ * instead, behind a label, which only 42 accounts can open.
  * An exam is named after the projects it lets students take, which says more than its title.
  * An intra event with no place falls back on the campus name: Discord requires one.
  */
@@ -32,14 +49,15 @@ export function eventBody(event: FtEvent, source: EventSource, campus: string, l
 	const projects = (event.projects ?? []).map((project) => project.name).join(' · ');
 	const name =
 		source === 'exam' ? t(locale, 'events.exam', { projects: projects || event.name }) : event.name;
-	const link = source === 'event' ? `\n\nhttps://profile.intra.42.fr/events/${event.id}` : '';
-	const description = cut((event.description ?? '').trim(), 1000 - link.length) + link;
+	const link =
+		source === 'event' ? `\n\n[${t(locale, 'events.link')}](https://profile.intra.42.fr/events/${event.id})` : '';
+	const description = cut(withoutAddresses(event.description ?? ''), 1000 - link.length) + link;
 	return {
 		name: cut(name, 100),
 		description: description.trim() || t(locale, 'events.noDescription'),
 		scheduled_start_time: event.begin_at,
 		scheduled_end_time: event.end_at,
-		entity_metadata: { location: cut(event.location?.trim() || campus, 100) },
+		entity_metadata: { location: cut(withoutAddresses(event.location ?? '') || campus, 100) },
 	};
 }
 

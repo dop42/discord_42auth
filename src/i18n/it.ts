@@ -95,6 +95,7 @@ export const it: Messages = {
 	'fame.line': '{member} ha validato **{project}** — **{mark}**',
 	'events.exam': 'Esame · {projects}',
 	'events.noDescription': 'Evento del campus, copiato dall\'intra 42.',
+	'events.link': 'Vedi sull\'intra',
 	'counter.name': '{count} al campus · {here} qui',
 	'automod.spam': 'Spam sospetto',
 	'automod.mentions': 'Menzioni di massa',

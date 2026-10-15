@@ -208,7 +208,15 @@ test('a Discord event fits Discord limits and names an exam by its projects', ()
 	const base = { id: 7, name: 'x'.repeat(150), description: 'd'.repeat(1500), location: '', begin_at: '2026-10-20T10:00:00Z', end_at: '2026-10-20T12:00:00Z', updated_at: '2026-10-01T00:00:00Z' };
 	const event = eventBody(base, 'event', 'Paris', 'en-US');
 	assert.equal([...event.name].length, 100);
-	assert.ok(event.description.length <= 1000 && event.description.endsWith('https://profile.intra.42.fr/events/7'));
+	assert.ok(event.description.length <= 1000 && event.description.endsWith('[See it on the intra](https://profile.intra.42.fr/events/7)'));
+	const links = eventBody(
+		{ ...base, description: 'Sign up: https://forms.gle/abc\nor [the form](https://x.io/f), or <https://y.io>.', location: 'https://zoom.us/j/1' },
+		'event',
+		'Paris',
+		'fr',
+	);
+	assert.equal(links.description, "Sign up:\nor the form, or .\n\n[Voir sur l'intra](https://profile.intra.42.fr/events/7)");
+	assert.equal(links.entity_metadata.location, 'Paris', 'an online event shows the campus, not its link');
 	assert.equal(event.entity_metadata.location, 'Paris');
 	const exam = eventBody({ ...base, name: 'Exam Stud - https://meta', projects: [{ name: 'Exam Rank 02' }, { name: 'Exam Rank 03' }] }, 'exam', 'Paris', 'en-US');
 	assert.equal(exam.name, 'Exam · Exam Rank 02 · Exam Rank 03');

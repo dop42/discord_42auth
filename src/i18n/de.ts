@@ -95,6 +95,7 @@ export const de: Messages = {
 	'fame.line': '{member} hat **{project}** bestanden — **{mark}**',
 	'events.exam': 'Prüfung · {projects}',
 	'events.noDescription': 'Campus-Event, aus dem 42-Intra übernommen.',
+	'events.link': 'Im Intra ansehen',
 	'counter.name': '{count} auf dem Campus · {here} hier',
 	'automod.spam': 'Verdacht auf Spam',
 	'automod.mentions': 'Massen-Erwähnungen',

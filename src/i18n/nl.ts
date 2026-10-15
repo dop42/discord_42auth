@@ -95,6 +95,7 @@ export const nl: Messages = {
 	'fame.line': '{member} heeft **{project}** gevalideerd — **{mark}**',
 	'events.exam': 'Examen · {projects}',
 	'events.noDescription': 'Campus-evenement, overgenomen van het 42-intra.',
+	'events.link': 'Bekijken op het intra',
 	'counter.name': '{count} op de campus · {here} hier',
 	'automod.spam': 'Vermoedelijke spam',
 	'automod.mentions': 'Massale vermeldingen',

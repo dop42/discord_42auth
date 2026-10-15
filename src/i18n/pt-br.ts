@@ -95,6 +95,7 @@ export const ptBR: Messages = {
 	'fame.line': '{member} validou **{project}** — **{mark}**',
 	'events.exam': 'Prova · {projects}',
 	'events.noDescription': 'Evento do campus, copiado da intra 42.',
+	'events.link': 'Ver na intra',
 	'counter.name': '{count} no campus · {here} aqui',
 	'automod.spam': 'Spam suspeito',
 	'automod.mentions': 'Menções em massa',

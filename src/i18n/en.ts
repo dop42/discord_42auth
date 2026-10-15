@@ -110,6 +110,7 @@ export const en = {
 	'fame.line': '{member} validated **{project}** — **{mark}**',
 	'events.exam': 'Exam · {projects}',
 	'events.noDescription': 'Campus event, copied from the 42 intra.',
+	'events.link': 'See it on the intra',
 	'counter.name': '{count} on campus · {here} here',
 	'automod.spam': 'Suspected spam',
 	'automod.mentions': 'Mention spam',
