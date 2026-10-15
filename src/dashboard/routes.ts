@@ -28,6 +28,8 @@ import { MessageFlags, SNOWFLAKE, TEXT_CHANNEL_TYPES, VOICE_CHANNEL_TYPE } from 
 import { env } from '../env';
 import { apiJson, cookie, readCookie } from '../http';
 import { resolveLocale } from '../i18n';
+import { syncGuildEvents } from '../events';
+import { forEachGuild } from '../jobs';
 import { countLinks, listLinks, PAGE_SIZE } from '../links';
 import { unlink } from '../membership';
 import { panelComponents } from '../panel';
@@ -264,7 +266,16 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 				if (settings.counterChannelId) return error(400, 'invalid', 'counterChannelId');
 			}
 
+			const before = await getSettings(guildId);
 			await saveSettings(guildId, settings);
+			// Switching the events on, off or to another campus shows at once, not at the next hour.
+			if (
+				before.syncEvents !== settings.syncEvents ||
+				before.syncExams !== settings.syncExams ||
+				(before.campus !== settings.campus && (settings.syncEvents || settings.syncExams))
+			) {
+				void forEachGuild('events', async () => void (await syncGuildEvents(guildId)));
+			}
 			return apiJson(settings);
 		}
 		case 'DELETE':
