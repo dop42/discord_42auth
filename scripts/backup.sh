@@ -12,6 +12,8 @@
 #   gpg -d <file>.sql.gz.gpg | gunzip | runuser -u postgres -- psql discord_42auth
 set -euo pipefail
 umask 077
+# cron runs with PATH=/usr/bin:/bin, which leaves out runuser (/usr/sbin).
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
 
 KEEP_DAYS=7
 DIR=${BACKUP_DIR:-backups}
