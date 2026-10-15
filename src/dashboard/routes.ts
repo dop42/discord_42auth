@@ -1,6 +1,7 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import type {
 	ApiError,
+	BotPermission,
 	ChannelOption,
 	GuildDetail,
 	GuildSummary,
@@ -10,7 +11,7 @@ import type {
 	Meta,
 	RoleOption,
 } from '../../shared/api';
-import { basePermissions, canManage, highestPosition, inviteUrl } from '../discord/permissions';
+import { basePermissions, canManage, highestPosition, inviteUrl, missingPermissions } from '../discord/permissions';
 import {
 	botGuildIds,
 	DiscordError,
@@ -191,7 +192,12 @@ async function authorize(session: Session, guildId: string): Promise<Guild | Res
 /** Lists the roles and channels the settings form may offer. */
 async function options(
 	guild: Guild,
-): Promise<{ roles: RoleOption[]; channels: ChannelOption[]; voiceChannels: ChannelOption[] }> {
+): Promise<{
+	roles: RoleOption[];
+	channels: ChannelOption[];
+	voiceChannels: ChannelOption[];
+	missing: BotPermission[];
+}> {
 	const [bot, channels] = await Promise.all([
 		cached(`member:${guild.id}:${env.discordAppId}`, () => getMember(guild.id, env.discordAppId)),
 		cached(`channels:${guild.id}`, () => getChannels(guild.id)),
@@ -215,6 +221,7 @@ async function options(
 			})),
 		channels: ofTypes((type) => TEXT_CHANNEL_TYPES.has(type)),
 		voiceChannels: ofTypes((type) => type === VOICE_CHANNEL_TYPE),
+		missing: bot ? missingPermissions(guild, bot) : [],
 	};
 }
 
@@ -225,7 +232,7 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 
 	switch (request.method) {
 		case 'GET': {
-			const [settings, { roles, channels, voiceChannels }, verifiedCount] = await Promise.all([
+			const [settings, { roles, channels, voiceChannels, missing }, verifiedCount] = await Promise.all([
 				getSettings(guildId),
 				options(guild),
 				countLinks(guildId),
@@ -237,6 +244,8 @@ async function guildRoute(request: Request, session: Session, guildId: string): 
 				channels,
 				voiceChannels,
 				verifiedCount,
+				missingPermissions: missing,
+				inviteUrl: inviteUrl(guild.id),
 			};
 			return apiJson(detail);
 		}

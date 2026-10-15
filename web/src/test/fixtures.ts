@@ -27,4 +27,6 @@ export const sampleDetail = (): GuildDetail => ({
 	channels: [{ id: '300000000000000001', name: 'logs' }],
 	voiceChannels: [{ id: '300000000000000002', name: 'Général' }],
 	verifiedCount: 3,
+	missingPermissions: [],
+	inviteUrl: 'https://discord.com/oauth2/authorize?client_id=1',
 });

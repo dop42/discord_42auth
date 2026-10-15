@@ -10,6 +10,7 @@ import {
 import DangerZone from '@/components/DangerZone.vue';
 import MembersPanel from '@/components/MembersPanel.vue';
 import PanelPost from '@/components/PanelPost.vue';
+import BotPermissions from '@/components/BotPermissions.vue';
 import SettingsForm from '@/components/SettingsForm.vue';
 import SettingsNav from '@/components/SettingsNav.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
@@ -101,6 +102,8 @@ async function onErased(): Promise<void> {
 				}}</span>
 			</p>
 		</header>
+
+		<BotPermissions />
 
 		<nav class="tabs" :aria-label="prefs.t['tabs.label']">
 			<RouterLink

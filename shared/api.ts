@@ -34,6 +34,18 @@ export interface RoleRule {
 /** Most rules a server may have. */
 export const MAX_ROLE_RULES = 25;
 
+/** The server-wide permissions the bot asks for, as the dashboard names them. */
+export const BOT_PERMISSIONS = [
+	'manageRoles',
+	'manageNicknames',
+	'viewChannel',
+	'sendMessages',
+	'manageEvents',
+	'manageChannels',
+	'manageGuild',
+] as const;
+export type BotPermission = (typeof BOT_PERMISSIONS)[number];
+
 /** Most words the custom AutoMod filter takes, and the longest word: Discord's own limits. */
 export const MAX_AUTOMOD_KEYWORDS = 1000;
 export const AUTOMOD_KEYWORD_MAX = 60;
@@ -134,6 +146,13 @@ export interface GuildDetail {
 	voiceChannels: ChannelOption[];
 	/** Members currently linked to a 42 account in this server. */
 	verifiedCount: number;
+	/**
+	 * Permissions the bot's roles lack on this server: the features needing them fail until
+	 * an admin grants them. Discord never adds a permission to the role a bot was invited with.
+	 */
+	missingPermissions: BotPermission[];
+	/** Add-the-bot link for this server, which also grants the missing permissions. */
+	inviteUrl: string;
 }
 
 /** One verified member, as the members tab lists them. */

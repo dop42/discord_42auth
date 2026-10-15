@@ -239,6 +239,19 @@ export const en: Messages = {
 	'error.forbidden': 'You do not have the “Manage Server” permission on this server.',
 	'error.notFound': 'The bot is not in this server.',
 	'error.generic': 'Could not load the data.',
+	'permissions.title': 'The bot is missing permissions on this server:',
+	'permissions.help':
+		'The features needing them fail until they are granted. Discord never adds a permission to the role the bot was invited with: authorise the bot again on this server, it stays where it is.',
+	'permissions.grant': 'Grant the permissions',
+	'permissions.names': {
+		manageRoles: 'Manage Roles',
+		manageNicknames: 'Manage Nicknames',
+		viewChannel: 'View Channels',
+		sendMessages: 'Send Messages',
+		manageEvents: 'Manage Events',
+		manageChannels: 'Manage Channels',
+		manageGuild: 'Manage Server',
+	},
 	'error.rateLimited': 'Too many requests. Wait a minute before trying again.',
 
 	'footer.tagline':

@@ -1,3 +1,4 @@
+import type { BotPermission } from '../../shared/api';
 import { env } from '../env';
 import type { Guild, Member } from './rest';
 import { Permissions } from './types';
@@ -6,14 +7,28 @@ import { Permissions } from './types';
  * What the bot needs: grant the role, rename, write in the log and hall of fame channels,
  * mirror the campus events, rename the counter channel, and keep the AutoMod rules.
  */
-const BOT_PERMISSIONS =
-	Permissions.MANAGE_ROLES |
-	Permissions.MANAGE_NICKNAMES |
-	Permissions.VIEW_CHANNEL |
-	Permissions.SEND_MESSAGES |
-	Permissions.MANAGE_EVENTS |
-	Permissions.MANAGE_CHANNELS |
-	Permissions.MANAGE_GUILD;
+const NEEDED: Record<BotPermission, bigint> = {
+	manageRoles: Permissions.MANAGE_ROLES,
+	manageNicknames: Permissions.MANAGE_NICKNAMES,
+	viewChannel: Permissions.VIEW_CHANNEL,
+	sendMessages: Permissions.SEND_MESSAGES,
+	manageEvents: Permissions.MANAGE_EVENTS,
+	manageChannels: Permissions.MANAGE_CHANNELS,
+	manageGuild: Permissions.MANAGE_GUILD,
+};
+const BOT_PERMISSIONS = Object.values(NEEDED).reduce((bits, bit) => bits | bit, 0n);
+
+/**
+ * Lists what the bot asks for and its roles do not give it on a server.
+ * @remarks Server-wide only: a channel overwrite can still take one back in a single channel.
+ */
+export function missingPermissions(guild: Guild, bot: Member): BotPermission[] {
+	const held = basePermissions(guild, bot);
+	if (held & Permissions.ADMINISTRATOR) return [];
+	return (Object.entries(NEEDED) as Array<[BotPermission, bigint]>)
+		.filter(([, bit]) => (held & bit) === 0n)
+		.map(([name]) => name);
+}
 
 /**
  * Tells whether a set of permission bits allows configuring the bot.

@@ -244,6 +244,19 @@ export const fr = {
 	'error.forbidden': 'Vous n’avez pas la permission « Gérer le serveur » sur ce serveur.',
 	'error.notFound': 'Le bot n’est pas sur ce serveur.',
 	'error.generic': 'Impossible de charger les données.',
+	'permissions.title': 'Il manque des permissions au bot sur ce serveur :',
+	'permissions.help':
+		'Les fonctionnalités qui en ont besoin échouent tant qu’elles ne sont pas accordées. Discord n’ajoute jamais de permission au rôle avec lequel le bot a été invité : autorisez à nouveau le bot sur ce serveur, il y reste.',
+	'permissions.grant': 'Accorder les permissions',
+	'permissions.names': {
+		manageRoles: 'Gérer les rôles',
+		manageNicknames: 'Gérer les pseudos',
+		viewChannel: 'Voir les salons',
+		sendMessages: 'Envoyer des messages',
+		manageEvents: 'Gérer les événements',
+		manageChannels: 'Gérer les salons',
+		manageGuild: 'Gérer le serveur',
+	},
 	'error.rateLimited': 'Trop de requêtes. Patientez une minute avant de réessayer.',
 
 	'footer.tagline':

@@ -61,6 +61,8 @@ export const detail: GuildDetail = {
 	channels: [{ id: '300000000000000001', name: 'logs' }],
 	voiceChannels: [{ id: '300000000000000002', name: 'Général' }],
 	verifiedCount: 12,
+	missingPermissions: [],
+	inviteUrl: 'https://discord.com/oauth2/authorize?client_id=1',
 };
 
 const json = (route: Route, status: number, body?: unknown) =>

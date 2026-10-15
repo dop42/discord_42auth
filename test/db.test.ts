@@ -520,6 +520,9 @@ test('the AutoMod filters become Discord rules, an existing one is taken over, a
 	assert.deepEqual(await refused.json(), { error: 'automod_forbidden' });
 	const kept = (await (await call(`/api/guilds/${GUILD}`)).json()) as { settings: { automodLanguage: boolean } };
 	assert.equal(kept.settings.automodLanguage, false, 'nothing is saved when Discord refuses');
+	const detail = (await (await call(`/api/guilds/${GUILD}`)).json()) as { missingPermissions: string[]; inviteUrl: string };
+	assert.ok(detail.missingPermissions.includes('manageGuild'), 'the dashboard says which permission the bot lacks');
+	assert.match(detail.inviteUrl, new RegExp(`guild_id=${GUILD}`));
 
 	automodStatus = 200;
 	assert.deepEqual(await (await save({ automodMentions: 51 })).json(), { error: 'invalid', field: 'automodMentions' });
