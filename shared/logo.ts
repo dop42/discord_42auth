@@ -1,6 +1,7 @@
 /**
  * The brand mark, as one path. Drawn by the dashboard's `AppLogo` and the server's own pages;
- * `web/public/favicon.svg` and `web/public/logo.svg` hold copies.
+ * `web/public/icon.svg` and `web/public/logo.svg` hold copies; `favicon.ico` and
+ * `apple-touch-icon.png` are renderings of it, pink on plum.
  */
 export const LOGO_VIEWBOX = '0 0 355 354';
 

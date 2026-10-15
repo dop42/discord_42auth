@@ -11,6 +11,7 @@ const TYPES: Record<string, string> = {
 	'.svg': 'image/svg+xml',
 	'.webp': 'image/webp',
 	'.ico': 'image/x-icon',
+	'.png': 'image/png',
 	'.json': 'application/json',
 	'.txt': 'text/plain; charset=utf-8',
 	'.woff2': 'font/woff2',
