@@ -10,10 +10,12 @@ const UNKNOWN_MEMBER = 10007;
 
 /**
  * Calls the Discord REST API with the bot token.
- * @remarks One retry on 429, after the delay Discord asks for when it is short. Longer
- * waits are not worth holding a request for, so the 429 is handed back to the caller.
+ * @remarks On 429, retries after the delay Discord asks for when it is at most `patience`
+ * seconds, a few times. Two seconds by default: longer waits are not worth holding a
+ * dashboard request for, so the 429 is handed back to the caller. Background work that must
+ * go through, like copying the campus events, passes more.
  */
-async function request(method: string, path: string, body?: unknown): Promise<Response> {
+async function request(method: string, path: string, body?: unknown, patience = 2): Promise<Response> {
 	const send = () =>
 		fetch(`${DISCORD_API}${path}`, {
 			method,
@@ -25,13 +27,18 @@ async function request(method: string, path: string, body?: unknown): Promise<Re
 			signal: AbortSignal.timeout(TIMEOUT_MS),
 		});
 
-	const response = await send();
-	if (response.status !== 429) return response;
-	const wait = Number(response.headers.get('retry-after') ?? 'NaN');
-	if (!(wait <= 2)) return response;
-	await new Promise((resolve) => setTimeout(resolve, wait * 1000));
-	return send();
+	let response = await send();
+	for (let retry = 0; response.status === 429 && retry < 5; retry++) {
+		const wait = Number(response.headers.get('retry-after') ?? 'NaN');
+		if (!(wait <= patience)) return response;
+		await new Promise((resolve) => setTimeout(resolve, wait * 1000));
+		response = await send();
+	}
+	return response;
 }
+
+/** How long the event copy waits on Discord's rate limit, which is tight for events. */
+const EVENTS_PATIENCE = 120;
 
 /** GETs a bot route and parses it, failing on anything but a 2xx. */
 async function read<T>(path: string): Promise<T> {
@@ -238,7 +245,7 @@ export interface ScheduledEventBody {
 export async function createScheduledEvent(guildId: string, body: ScheduledEventBody): Promise<string> {
 	const path = `/guilds/${guildId}/scheduled-events`;
 	// 2 is "guild only", the one privacy level Discord accepts; 3 is an external event.
-	const response = await request('POST', path, { ...body, privacy_level: 2, entity_type: 3 });
+	const response = await request('POST', path, { ...body, privacy_level: 2, entity_type: 3 }, EVENTS_PATIENCE);
 	if (!response.ok) throw await DiscordError.from(response, path);
 	return ((await response.json()) as { id: string }).id;
 }
@@ -254,7 +261,7 @@ export async function updateScheduledEvent(
 	body: ScheduledEventBody,
 ): Promise<boolean> {
 	const path = `/guilds/${guildId}/scheduled-events/${eventId}`;
-	const response = await request('PATCH', path, body);
+	const response = await request('PATCH', path, body, EVENTS_PATIENCE);
 	if (response.status === 404) return false;
 	if (!response.ok) throw await DiscordError.from(response, path);
 	return true;
@@ -262,7 +269,9 @@ export async function updateScheduledEvent(
 
 /** Deletes a Discord event the bot created, best-effort: one already gone is fine. */
 export async function deleteScheduledEvent(guildId: string, eventId: string): Promise<void> {
-	await request('DELETE', `/guilds/${guildId}/scheduled-events/${eventId}`).catch(() => null);
+	await request('DELETE', `/guilds/${guildId}/scheduled-events/${eventId}`, undefined, EVENTS_PATIENCE).catch(
+		() => null,
+	);
 }
 
 /** A Discord AutoMod rule, as far as the bot reads it. */
